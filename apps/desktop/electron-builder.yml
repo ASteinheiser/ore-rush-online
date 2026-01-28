@@ -1,5 +1,5 @@
-appId: io.iamandrew.demo-game
-productName: Demo Game
+appId: io.iamandrew.ore-rush-online
+productName: Ore Rush Online
 directories:
   buildResources: build
 files:

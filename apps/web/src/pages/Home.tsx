@@ -18,9 +18,9 @@ export const Home = () => {
         <div className="w-[2px] h-40 bg-secondary hidden md:block" />
 
         <div className="flex flex-col gap-4 text-center md:text-left">
-          <h1 className="text-5xl font-label text-muted">TypeScript</h1>
-          <h1 className="text-5xl font-pixel text-primary">Online Game</h1>
-          <h1 className="text-4xl font-isometric text-muted">Template</h1>
+          <h1 className="text-5xl font-label text-muted">Ore</h1>
+          <h1 className="text-5xl font-pixel text-primary">Rush</h1>
+          <h1 className="text-4xl font-isometric text-muted">Online</h1>
         </div>
 
         <button
@@ -37,7 +37,7 @@ export const Home = () => {
             {`Welcome! This is the template's "marketing site", which comes with a sample landing page, developer log, download page, and user login. To get started,`}
           </p>
           <Link
-            to="https://github.com/asteinheiser/ts-online-game-template"
+            to="https://github.com/asteinheiser/ore-rush-online"
             target="_blank"
             className="font-pixel text-primary text-3xl underline"
           >

@@ -27,8 +27,8 @@ export default defineConfig({
       devOptions: { enabled: false },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Marketing Site',
-        short_name: 'Marketing Site',
+        name: 'Ore Rush Online',
+        short_name: 'Ore Rush Online',
         theme_color: '#6118ad',
         background_color: '#09090b',
         icons: [

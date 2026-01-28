@@ -1,8 +1,8 @@
-# TypeScript Online Game Template
+# Ore Rush Online
 
 A _highly opinionated_ template for creating real-time, online games using [TypeScript](https://www.typescriptlang.org/)! Quickly create mmo-style games using [React](https://react.dev/) + [Phaser](https://phaser.io/) for rendering, [Colyseus](https://colyseus.io/) for websockets and [Electron](https://www.electronjs.org/) for native builds! Also has support for [Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) (PWA). Oh, and lots and lots of [Vite](https://vite.dev/) for builds and testing!
 
-Try the demo: https://ts-game.online/download
+Try the demo: https://ore-rush.online/download
 
 - [Overview](#overview)
 - [Third-party Dependencies](#third-party-dependencies)
@@ -21,7 +21,7 @@ Try the demo: https://ts-game.online/download
 
 #### Comes with 3 apps:
 
-- `desktop`/`demo-game`: Frontend rendering for the game written in TypeScript using Electron, React, Phaser, Colyseus and GraphQL. When built, compiles an executable that runs a version of Chromium to render the game.
+- `desktop`/`ore-rush-online`: Frontend rendering for the game written in TypeScript using Electron, React, Phaser, Colyseus and GraphQL. When built, compiles an executable that runs a version of Chromium to render the game.
 - `game-api`: Backend server that handles the game state and data via WebSockets and GraphQL. Written in TypeScript with Colyseus, Express and [Apollo GraphQL](https://www.apollographql.com/docs).
 - `web`: Static webpage that can serve as a marketing site, devlog, roadmap, wiki etc. Written in Typescript with React and GraphQL. Could also be used to serve the Phaser/Colyseus game (with support for PWA).
 
@@ -45,7 +45,7 @@ You'll need to create a free tier [project](https://supabase.com/dashboard/) and
 - `apps/game-api/.env`
 - `apps/web/.env`
 
-**NOTE:** You'll need to add `Redirect URLs` (under `Authentication` > `URL Configuration`) to send email links to the auth redirect route. For example, if your custom domain is `https://ts-game.online`, you should add: `https://ts-game.online/auth/redirect*`. You can also add `http://localhost:4200/auth/redirect*` for local development. Configure this here:
+**NOTE:** You'll need to add `Redirect URLs` (under `Authentication` > `URL Configuration`) to send email links to the auth redirect route. For example, if your custom domain is `https://ore-rush.online`, you should add: `https://ore-rush.online/auth/redirect*`. You can also add `http://localhost:4200/auth/redirect*` for local development. Configure this here:
 
 `https://supabase.com/dashboard/project/<PROJECT_ID>/auth/url-configuration`
 
@@ -198,7 +198,7 @@ cloud.digitalocean.com/droplets/<DROPLET_ID>/graphs
 ```
 I also like to SSH into the server to see current usage and logs:
 ```bash
-ssh deployer@api.ts-game.online
+ssh deployer@api.ore-rush.online
 pm2 monit
 ```
 

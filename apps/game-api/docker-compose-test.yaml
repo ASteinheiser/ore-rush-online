@@ -1,7 +1,7 @@
 services:
   postgres-db-test:
     image: postgres:17.5
-    container_name: game_postgres_db_test
+    container_name: ore_rush_postgres_db_test
     restart: always
     environment:
       POSTGRES_USER: guest

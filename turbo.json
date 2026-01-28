@@ -92,20 +92,20 @@
       "persistent": true
     },
     "build:win": {
-      "dependsOn": ["demo-game#build"],
+      "dependsOn": ["ore-rush-online#build"],
       "outputs": ["dist/**"],
       "env": ["AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET", "LOCALAPPDATA", "APPDATA"]
     },
     "build:mac": {
-      "dependsOn": ["demo-game#build"],
+      "dependsOn": ["ore-rush-online#build"],
       "outputs": ["dist/**"],
       "env": ["APPLE_ID", "APPLE_TEAM_ID", "APPLE_APP_SPECIFIC_PASSWORD"]
     },
     "build:linux": {
-      "dependsOn": ["demo-game#build"],
+      "dependsOn": ["ore-rush-online#build"],
       "outputs": ["dist/**"]
     },
-    "demo-game#build": {
+    "ore-rush-online#build": {
       "dependsOn": ["@repo/core-game#build"]
     }
   }
