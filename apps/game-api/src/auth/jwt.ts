@@ -22,7 +22,7 @@ export const validateJwt = (authHeader?: string): User | null => {
   if (!authHeader) return null;
 
   try {
-    const decoded = jwt.verify(authHeader, JWT_SECRET) as DecodedToken;
+    const decoded = jwt.verify(authHeader, JWT_SECRET, { algorithms: ['HS256'] }) as DecodedToken;
 
     if (!decoded?.sub || !decoded?.email || !decoded?.exp) {
       throw new Error('Invalid token');
