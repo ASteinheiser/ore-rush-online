@@ -1,0 +1,23 @@
+type Profile {
+  userName: String!
+}
+
+type GameResult {
+  username: String!
+  attackCount: Int!
+  killCount: Int!
+}
+
+type Query {
+  healthCheck: Boolean
+  profile: Profile
+  userExists(userName: String!): Boolean
+  totalPlayers: Int
+  gameResults(roomId: String!): [GameResult!]
+}
+
+type Mutation {
+  createProfile(userName: String!): Profile
+  updateProfile(userName: String!): Profile
+  deleteProfile: Boolean
+}

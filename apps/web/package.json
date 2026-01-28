@@ -1,0 +1,51 @@
+{
+  "name": "web",
+  "version": "0.0.1",
+  "repository": "https://github.com/asteinheiser/ts-online-game-template",
+  "author": "Andrew Steinheiser <me@iamandrew.io>",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "test": "vitest",
+    "test:watch": "vitest --watch --coverage",
+    "generate:gql-types": "graphql-codegen",
+    "generate:gql-types:watch": "graphql-codegen --watch",
+    "generate:pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg",
+    "check-types": "tsc --noEmit",
+    "dev": "vite --clearScreen false",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@apollo/client": "catalog:",
+    "@repo/client-auth": "workspace:*",
+    "@repo/core-game": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "graphql": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-router-dom": "catalog:",
+    "rxjs": "catalog:"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "catalog:",
+    "@graphql-typed-document-node/core": "catalog:",
+    "@parcel/watcher": "catalog:",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vite-pwa/assets-generator": "^1.0.0",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "catalog:"
+  }
+}

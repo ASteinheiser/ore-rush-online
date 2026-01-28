@@ -1,0 +1,54 @@
+appId: io.iamandrew.demo-game
+productName: Demo Game
+directories:
+  buildResources: build
+files:
+  - dist/main/**/*
+  - dist/preload/**/*
+  - dist/renderer/**/*
+  - package.json
+  - resources/**/*
+  - '!src/*'
+  - '!{electron.vite.config.ts,vitest.config.ts}'
+  - '!{.eslintcache,eslint.config.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asarUnpack:
+  - resources/**
+win:
+  azureSignOptions:
+    endpoint: "https://eus.codesigning.azure.net"
+    codeSigningAccountName: "Andrew-Steinheiser"
+    certificateProfileName: "Andrew-Steinheiser"
+    publisherName: "CN=Andrew Steinheiser, O=Andrew Steinheiser, L=Tempe, S=Arizona, C=US"
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: true
+dmg:
+  artifactName: ${name}-${version}.${ext}
+linux:
+  target:
+    - AppImage
+  maintainer: me@iamandrew.io
+  category: Games
+appImage:
+  artifactName: ${name}-${version}.${ext}
+npmRebuild: false
+publish:
+  provider: github
+  releaseType: release
+protocols:
+  - name: ${productName}
+    schemes:
+      - ${name}

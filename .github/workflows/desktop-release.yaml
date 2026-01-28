@@ -1,0 +1,95 @@
+name: Publish Desktop App to GitHub Releases
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    name: Build desktop binaries
+    runs-on: ${{ matrix.os }}
+    environment:
+      name: github-releases
+    env:
+      NODE_ENV: production
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      VITE_WEBSOCKET_URL: ${{ secrets.VITE_WEBSOCKET_URL }}
+      VITE_PUBLIC_WEB_BASE_URL: ${{ secrets.VITE_PUBLIC_WEB_BASE_URL }}
+      VITE_DEEP_LINK_PROTOCOL: ${{ secrets.VITE_DEEP_LINK_PROTOCOL }}
+      MAC_CERT_B64: ${{ secrets.MAC_CERT_B64 }}
+      MAC_CERT_PASS: ${{ secrets.MAC_CERT_PASS }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Disable Windows CRLF translation
+        if: matrix.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+          git reset --hard
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --filter="!game-api" --frozen-lockfile
+
+      - name: Import macOS signing cert
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "$MAC_CERT_B64" | base64 --decode > mac_cert.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import mac_cert.p12 -k build.keychain -P "$MAC_CERT_PASS" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "" build.keychain
+
+      - name: Build desktop app
+        if: matrix.os == 'macos-latest'
+        run: pnpm build:mac -- --publish=always
+
+      - name: Build desktop app
+        if: matrix.os == 'windows-latest'
+        env:
+          LOCALAPPDATA: C:\Users\runneradmin\AppData\Local
+          APPDATA: C:\Users\runneradmin\AppData\Roaming
+        run: pnpm build:win -- --publish=always
+
+      - name: Build desktop app
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm build:linux -- --publish=always

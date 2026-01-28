@@ -1,0 +1,62 @@
+{
+  "name": "ts-online-game-template",
+  "packageManager": "pnpm@10.27.0",
+  "version": "0.0.1",
+  "author": "Andrew Steinheiser <me@iamandrew.io>",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "install:clean": "./scripts/clean-install.sh",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:load": "turbo run test:load",
+    "test:load:prod": "turbo run test:load:prod",
+    "check-types": "turbo run check-types",
+    "generate:gql-types": "turbo run generate:gql-types",
+    "generate:gql-types:watch": "turbo run generate:gql-types:watch",
+    "generate:db-types": "turbo run generate:db-types",
+    "generate:db-types:watch": "turbo run generate:db-types:watch",
+    "ci:all-checks": "turbo run ci:all-checks",
+    "dev": "turbo run dev",
+    "generate:app-icons": "turbo run generate:app-icons",
+    "generate:pwa-assets": "turbo run generate:pwa-assets",
+    "db:start": "turbo run db:start",
+    "db:stop": "turbo run db:stop",
+    "db:sync": "turbo run db:sync",
+    "db:test:start": "turbo run db:test:start",
+    "db:test:stop": "turbo run db:test:stop",
+    "db:test:sync": "turbo run db:test:sync",
+    "db:deploy": "turbo run db:deploy",
+    "build": "turbo run build",
+    "preview": "turbo run preview",
+    "build:win": "turbo run build:win",
+    "build:mac": "turbo run build:mac",
+    "build:linux": "turbo run build:linux"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "turbo": "^2.7.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@apollo/protobufjs",
+      "@parcel/watcher",
+      "@prisma/client",
+      "@prisma/engines",
+      "@tailwindcss/oxide",
+      "electron",
+      "electron-winstaller",
+      "esbuild",
+      "msgpackr-extract",
+      "prisma",
+      "sharp"
+    ],
+    "overrides": {
+      "msgpackr-extract": "^3.1.0"
+    }
+  }
+}

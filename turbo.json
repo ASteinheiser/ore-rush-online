@@ -1,0 +1,112 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "concurrency": "13",
+  "globalEnv": ["GH_TOKEN"],
+  "tasks": {
+    "generate:gql-types": {
+      "inputs": ["$TURBO_DEFAULT$", "../../apps/game-api/src/graphql/schema.graphql"],
+      "outputs": ["**/graphql/generated-types/**", "**/graphql/generated-types.ts"]
+    },
+    "generate:gql-types:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "generate:db-types": {
+      "inputs": ["prisma/schema.prisma"],
+      "outputs": ["**/prisma-client/**"],
+      "env": ["DATABASE_URL"]
+    },
+    "generate:db-types:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "check-types": {
+      "dependsOn": ["^check-types", "generate:db-types", "generate:gql-types"]
+    },
+    "lint": {
+      "dependsOn": ["^lint", "check-types"]
+    },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"]
+    },
+    "test": {
+      "dependsOn": ["lint"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "env": ["JWT_SECRET"]
+    },
+    "test:watch": {
+      "with": ["generate:gql-types:watch", "generate:db-types:watch"],
+      "cache": false,
+      "persistent": true
+    },
+    "test:load": {
+      "dependsOn": ["game-api#build"],
+      "with": ["game-api#preview"],
+      "cache": false,
+      "persistent": true
+    },
+    "test:load:prod": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:start": { "cache": false },
+    "db:stop": { "cache": false },
+    "db:sync": { "cache": false },
+    "db:test:start": { "cache": false },
+    "db:test:stop": { "cache": false },
+    "db:test:sync": { "cache": false },
+    "db:deploy": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    },
+    "dev": {
+      "with": ["generate:gql-types:watch", "generate:db-types:watch"],
+      "cache": false,
+      "persistent": true
+    },
+    "generate:pwa-assets": {
+      "inputs": ["public/logo.svg"],
+      "outputs": ["public/favicon.ico", "public/*.png"]
+    },
+    "generate:app-icons": {
+      "dependsOn": ["generate:pwa-assets"],
+      "inputs": ["../../apps/web/public/logo.svg"],
+      "outputs": ["build/icon.png", "resources/icon.png"]
+    },
+    "build": {
+      "dependsOn": ["^build", "generate:app-icons", "test"],
+      "outputs": ["dist/**"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "env": [
+        "SUPABASE_URL",
+        "SUPABASE_SERVICE_ROLE",
+        "JWT_SECRET",
+        "DATABASE_URL",
+        "PORT"
+      ]
+    },
+    "preview": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true
+    },
+    "build:win": {
+      "dependsOn": ["demo-game#build"],
+      "outputs": ["dist/**"],
+      "env": ["AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET", "LOCALAPPDATA", "APPDATA"]
+    },
+    "build:mac": {
+      "dependsOn": ["demo-game#build"],
+      "outputs": ["dist/**"],
+      "env": ["APPLE_ID", "APPLE_TEAM_ID", "APPLE_APP_SPECIFIC_PASSWORD"]
+    },
+    "build:linux": {
+      "dependsOn": ["demo-game#build"],
+      "outputs": ["dist/**"]
+    },
+    "demo-game#build": {
+      "dependsOn": ["@repo/core-game#build"]
+    }
+  }
+}
