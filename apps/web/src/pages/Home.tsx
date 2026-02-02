@@ -18,8 +18,7 @@ export const Home = () => {
         <div className="w-[2px] h-40 bg-secondary hidden md:block" />
 
         <div className="flex flex-col gap-4 text-center md:text-left">
-          <h1 className="text-5xl font-label text-muted">Ore</h1>
-          <h1 className="text-5xl font-pixel text-primary">Rush</h1>
+          <h1 className="text-5xl font-pixel text-primary">Ore Rush</h1>
           <h1 className="text-4xl font-isometric text-muted">Online</h1>
         </div>
 

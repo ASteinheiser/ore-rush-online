@@ -29,8 +29,8 @@ export default defineConfig({
       manifest: {
         name: 'Ore Rush Online',
         short_name: 'Ore Rush Online',
-        theme_color: '#6118ad',
-        background_color: '#09090b',
+        theme_color: '#D4AF37',
+        background_color: '#09090B',
         icons: [
           {
             src: 'pwa-64x64.png',
