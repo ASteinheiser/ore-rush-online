@@ -47,25 +47,25 @@
       <circle
         r="65"
         transform="translate(9.026955 85.108269)"
-        fill="#5700a1"
+        fill="#D4AF37"
         fill-rule="evenodd"
       />
       <circle
         r="65"
         transform="translate(-560.973045 755.108269)"
-        fill="#5700a1"
+        fill="#D4AF37"
         fill-rule="evenodd"
       />
       <circle
         r="65"
         transform="translate(-55.973045 485.108269)"
-        fill="#5700a1"
+        fill="#D4AF37"
         fill-rule="evenodd"
       />
       <circle
         r="65"
         transform="translate(-495.973045 355.108269)"
-        fill="#5700a1"
+        fill="#D4AF37"
         fill-rule="evenodd"
       />
     </g>
