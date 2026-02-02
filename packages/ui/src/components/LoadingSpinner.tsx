@@ -1,7 +1,7 @@
 import { cn } from '../utils';
 
 type LoadingSpinnerSize = 'sm' | 'md' | 'lg';
-type LoadingSpinnerColor = 'primary' | 'secondary' | 'foreground';
+export type LoadingSpinnerColor = 'primary' | 'secondary' | 'foreground';
 
 interface LoadingSpinnerProps {
   size?: LoadingSpinnerSize;

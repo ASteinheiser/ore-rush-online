@@ -3,7 +3,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '../utils';
-import { LoadingSpinner } from './LoadingSpinner';
+import { LoadingSpinner, type LoadingSpinnerColor } from './LoadingSpinner';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer font-title',
@@ -43,6 +43,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const isDisabled = disabled || loading;
 
+    let spinnerColor: LoadingSpinnerColor = 'foreground';
+    if (!variant || variant === 'default') {
+      spinnerColor = 'secondary';
+    } else if (variant === 'link') {
+      spinnerColor = 'primary';
+    }
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
@@ -50,7 +57,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={isDisabled}
         {...props}
       >
-        {loading ? <LoadingSpinner size="sm" color="foreground" /> : children}
+        {loading ? <LoadingSpinner size="sm" color={spinnerColor} /> : children}
       </Comp>
     );
   }
