@@ -12,7 +12,7 @@ export class MainMenu extends Scene {
   create() {
     const bg = this.add.image(0, 0, ASSET.BACKGROUND).setOrigin(0.5);
 
-    const titleText = new CustomText(this, 0, 0, 'Duck, Duck, Punch', {
+    const titleText = new CustomText(this, 0, 0, 'Ore Rush Online', {
       fontFamily: 'Tiny5',
       fontSize: 52,
       strokeThickness: 8,
