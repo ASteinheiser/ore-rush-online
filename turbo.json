@@ -106,7 +106,7 @@
       "outputs": ["dist/**"]
     },
     "ore-rush-online#build": {
-      "dependsOn": ["@repo/core-game#build"]
+      "dependsOn": ["@repo/core-game#build", "test"]
     }
   }
 }
