@@ -389,6 +389,21 @@ export class GameRoom extends Room {
 
       this.expectingReconnections.add(sessionId);
       await this.allowReconnection(client, this.reconnectionTimeout);
+      this.expectingReconnections.delete(sessionId);
+
+      const player = this.state.players.get(sessionId);
+      if (!player) {
+        // do not allow reconnection, client will need to re-join
+        return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+      }
+      // players should have inputs cleared on reconnection
+      player.inputQueue = [];
+      player.lastActivityTime = Date.now();
+
+      logger.info({
+        message: `Client reconnected`,
+        data: { roomId: this.roomId, clientId: sessionId },
+      });
     } catch {
       logger.info({
         message: `Client failed to reconnect in time`,
@@ -397,26 +412,6 @@ export class GameRoom extends Room {
 
       this.cleanupPlayer(sessionId);
     }
-  }
-
-  onReconnect(client: Client) {
-    const { sessionId } = client;
-
-    this.expectingReconnections.delete(sessionId);
-
-    const player = this.state.players.get(sessionId);
-    if (!player) {
-      // do not allow reconnection, client will need to re-join
-      return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
-    }
-    // players should have inputs cleared on reconnection
-    player.inputQueue = [];
-    player.lastActivityTime = Date.now();
-
-    logger.info({
-      message: `Client reconnected`,
-      data: { roomId: this.roomId, clientId: sessionId },
-    });
   }
 
   cleanupPlayer(sessionId: string) {
