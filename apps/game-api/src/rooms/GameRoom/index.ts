@@ -1,4 +1,5 @@
 import { Room, ServerError, type AuthContext, type Client } from '@colyseus/core';
+import { CloseCode } from 'colyseus';
 import { nanoid } from 'nanoid';
 import {
   calculateMovement,
@@ -55,7 +56,7 @@ interface GameRoomArgs {
   connectionCheckInterval: number;
 }
 
-export class GameRoom extends Room<GameRoomState> {
+export class GameRoom extends Room {
   maxClients = MAX_PLAYERS_PER_ROOM;
   patchRate = SERVER_PATCH_RATE;
 
@@ -367,8 +368,9 @@ export class GameRoom extends Room<GameRoomState> {
     client.leave(code, message);
   }
 
-  async onLeave(client: Client, consented?: boolean) {
+  async onLeave(client: Client, code: number) {
     const { sessionId } = client;
+    const consented = code === CloseCode.CONSENTED;
 
     logger.info({
       message: `Client left...`,
@@ -387,21 +389,6 @@ export class GameRoom extends Room<GameRoomState> {
 
       this.expectingReconnections.add(sessionId);
       await this.allowReconnection(client, this.reconnectionTimeout);
-      this.expectingReconnections.delete(sessionId);
-
-      const player = this.state.players.get(sessionId);
-      if (!player) {
-        // do not allow reconnection, client will need to re-join
-        return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
-      }
-      // players should have inputs cleared on reconnection
-      player.inputQueue = [];
-      player.lastActivityTime = Date.now();
-
-      logger.info({
-        message: `Client reconnected`,
-        data: { roomId: this.roomId, clientId: sessionId },
-      });
     } catch {
       logger.info({
         message: `Client failed to reconnect in time`,
@@ -410,6 +397,26 @@ export class GameRoom extends Room<GameRoomState> {
 
       this.cleanupPlayer(sessionId);
     }
+  }
+
+  onReconnect(client: Client) {
+    const { sessionId } = client;
+
+    this.expectingReconnections.delete(sessionId);
+
+    const player = this.state.players.get(sessionId);
+    if (!player) {
+      // do not allow reconnection, client will need to re-join
+      return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+    }
+    // players should have inputs cleared on reconnection
+    player.inputQueue = [];
+    player.lastActivityTime = Date.now();
+
+    logger.info({
+      message: `Client reconnected`,
+      data: { roomId: this.roomId, clientId: sessionId },
+    });
   }
 
   cleanupPlayer(sessionId: string) {
