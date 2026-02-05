@@ -446,7 +446,7 @@ export class GameRoom extends Room {
     // log any uncaught errors for debugging purposes
     logger.error({
       message: `Uncaught exception`,
-      data: { roomId: this.roomId, methodName, error },
+      data: { roomId: this.roomId, methodName, error: error.message },
     });
 
     // possibly handle saving game state
