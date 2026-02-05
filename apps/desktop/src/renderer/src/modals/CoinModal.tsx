@@ -35,7 +35,7 @@ export const CoinModal = ({ isOpen, onOpenChange }: CoinModalProps) => {
           <h1 className="text-lg font-label text-center">{'"What am I supposed to do with this?"'}</h1>
 
           <Button size="lg" className="py-7 px-8" onClick={() => onOpenChange(false)}>
-            <h1 className="text-2xl font-pixel">Hell yeah!</h1>
+            <h1 className="text-2xl font-pixel font-normal">Hell yeah!</h1>
           </Button>
         </DialogFooter>
       </DialogContent>
