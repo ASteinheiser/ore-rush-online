@@ -102,11 +102,8 @@
       "env": ["APPLE_ID", "APPLE_TEAM_ID", "APPLE_APP_SPECIFIC_PASSWORD"]
     },
     "build:linux": {
-      "dependsOn": ["ore-rush-online#build"],
+      "dependsOn": ["ore-rush-online#build", "@repo/core-game#build"],
       "outputs": ["dist/**"]
-    },
-    "ore-rush-online#build": {
-      "dependsOn": ["@repo/core-game#build", "test"]
     }
   }
 }
