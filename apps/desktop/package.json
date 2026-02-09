@@ -5,7 +5,7 @@
   "repository": "https://github.com/asteinheiser/ore-rush-online",
   "homepage": "https://ore-rush.online",
   "author": "Andrew Steinheiser <me@iamandrew.io>",
-  "license": "PolyForm NC 1.0.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": false,
   "type": "module",
   "main": "./dist/main/index.js",
