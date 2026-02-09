@@ -1,5 +1,7 @@
 # Ore Rush Online
 
+This project was created with [TS Online Game Template](https://github.com/asteinheiser/ts-online-game-template) under the [MIT license](/LICENSE-MIT). All game systems, components, art, etc. that are NOT included in the starter template are considered part of Ore Rush Online, and are licensed under [CC BY-NC 4.0](/LICENSE).
+
 [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
 
 [cc-by-nc]: https://creativecommons.org/licenses/by-nc/4.0/
