@@ -1,11 +1,11 @@
 # Ore Rush Online
 
-This project was created with [TS Online Game Template](https://github.com/asteinheiser/ts-online-game-template) under the [MIT license](/LICENSE-MIT). All game systems, components, art, etc. that are NOT included in the starter template are considered part of Ore Rush Online, and are licensed under [CC BY-NC 4.0](/LICENSE).
+Ore Rush Online is licensed under [PolyForm NC 1.0.0](/LICENSE). This project was created with [TS Online Game Template](https://github.com/asteinheiser/ts-online-game-template), which is available separately under the [MIT license](https://github.com/ASteinheiser/ts-online-game-template/blob/main/LICENSE).
 
-[![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
+[![PolyForm NC 1.0.0][poly-form-nc-shield]][poly-form-nc]
 
-[cc-by-nc]: https://creativecommons.org/licenses/by-nc/4.0/
-[cc-by-nc-shield]: https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg
+[poly-form-nc]: https://polyformproject.org/licenses/noncommercial/1.0.0/
+[poly-form-nc-shield]: https://img.shields.io/badge/License-PolyForm_NC_1.0.0-lightgrey.svg
 
 A _highly opinionated_ template for creating real-time, online games using [TypeScript](https://www.typescriptlang.org/)! Quickly create mmo-style games using [React](https://react.dev/) + [Phaser](https://phaser.io/) for rendering, [Colyseus](https://colyseus.io/) for websockets and [Electron](https://www.electronjs.org/) for native builds! Also has support for [Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) (PWA). Oh, and lots and lots of [Vite](https://vite.dev/) for builds and testing!
 
