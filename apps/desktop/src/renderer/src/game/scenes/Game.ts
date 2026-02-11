@@ -29,6 +29,9 @@ const RECONNECTION_STORAGE_KEY = 'game_reconnection_token';
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_BACKOFF_MS = 1000;
 
+/** Size of the visible hole in the fog overlay, centered on the player (pixels) */
+const FOG_HOLE_SIZE = 600;
+
 export class Game extends Scene {
   client: Client;
   room?: Room;
@@ -50,6 +53,9 @@ export class Game extends Scene {
   inputSeq = 0;
   serverAckSeq = 0;
 
+  /** Inverted box overlay (hollow center, filled edges) - follows player in world space */
+  fogOverlay?: Phaser.GameObjects.Graphics;
+
   constructor() {
     super(SCENE.GAME);
 
@@ -59,6 +65,34 @@ export class Game extends Scene {
   preload() {
     this.escapeKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     this.cursorKeys = this.input.keyboard?.createCursorKeys();
+  }
+
+  /**
+   * Updates the fog overlay: filled edges covering the map, hollow center following the player.
+   * Uses four rectangles. Good for fog of war. In world space, scrolls with camera.
+   */
+  private updateFogOverlay(): void {
+    if (!this.currentPlayer) return;
+
+    const graphics = this.fogOverlay ?? this.add.graphics().setDepth(100).setScrollFactor(1);
+    this.fogOverlay = graphics;
+
+    const { x, y } = this.currentPlayer.entity;
+    const halfHole = FOG_HOLE_SIZE / 2;
+    const innerX = x - halfHole;
+    const innerY = y - halfHole;
+
+    graphics.clear();
+    graphics.fillStyle(0x000000, 1);
+
+    // Top
+    graphics.fillRect(0, 0, MAP_SIZE.width, innerY);
+    // Bottom
+    graphics.fillRect(0, innerY + FOG_HOLE_SIZE, MAP_SIZE.width, MAP_SIZE.height - innerY - FOG_HOLE_SIZE);
+    // Left
+    graphics.fillRect(0, innerY, innerX, FOG_HOLE_SIZE);
+    // Right
+    graphics.fillRect(innerX + FOG_HOLE_SIZE, innerY, MAP_SIZE.width - innerX - FOG_HOLE_SIZE, FOG_HOLE_SIZE);
   }
 
   async refreshToken({ token }: AuthPayload) {
@@ -80,7 +114,7 @@ export class Game extends Scene {
     this.add
       .rectangle(0, 0, MAP_SIZE.width, MAP_SIZE.height)
       .setOrigin(0, 0)
-      .setDepth(99)
+      .setDepth(100)
       .setStrokeStyle(8, 0x990099);
 
     // set the background image to cover the entire map area
@@ -203,14 +237,14 @@ export class Game extends Scene {
     const $ = getStateCallbacks(this.room);
 
     $(this.room.state).players.onAdd((player, sessionId) => {
-      const entity = this.physics.add.sprite(player.x, player.y, ASSET.PLAYER).setDepth(200);
+      const entity = this.physics.add.sprite(player.x, player.y, ASSET.PLAYER).setDepth(101);
 
       const nameText = new CustomText(this, player.x, player.y, player.username, {
         fontFamily: 'Tiny5',
         fontSize: 12,
       })
         .setOrigin(0.5, 2.75)
-        .setDepth(200);
+        .setDepth(101);
 
       const newPlayer = new Player(this, entity, nameText);
 
@@ -223,7 +257,7 @@ export class Game extends Scene {
         this.cameras.main.startFollow(entity, true, 0.1, 0.1);
 
         // #region FOR DEBUGGING PURPOSES
-        this.currentPlayerServer = this.add.rectangle(0, 0, entity.width, entity.height).setDepth(200);
+        this.currentPlayerServer = this.add.rectangle(0, 0, entity.width, entity.height).setDepth(101);
         this.currentPlayerServer.setStrokeStyle(1, 0xff0000);
         // #endregion FOR DEBUGGING PURPOSES
 
@@ -332,6 +366,8 @@ export class Game extends Scene {
     // skip if not yet connected
     if (!this.currentPlayer) return;
 
+    this.updateFogOverlay();
+
     this.elapsedTime += delta;
     while (this.elapsedTime >= FIXED_TIME_STEP) {
       this.elapsedTime -= FIXED_TIME_STEP;
@@ -408,6 +444,9 @@ export class Game extends Scene {
 
     Object.values(this.oreEntities).forEach((enemy) => enemy.destroy());
     this.oreEntities = {};
+
+    this.fogOverlay?.destroy();
+    delete this.fogOverlay;
   }
 
   cleanupRoom() {

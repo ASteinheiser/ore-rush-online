@@ -8,7 +8,7 @@ export class PunchBox {
 
   constructor(scene: Phaser.Scene, x: number, y: number, color: number) {
     const { width, height } = ATTACK_SIZE;
-    this.punchBox = scene.add.rectangle(x, y, width, height, color, 0.5).setDepth(100);
+    this.punchBox = scene.add.rectangle(x, y, width, height, color, 0.5).setDepth(99);
 
     scene.time.delayedCall(PUNCH_BOX_LIFETIME, () => {
       this.destroy();

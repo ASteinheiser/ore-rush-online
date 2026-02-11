@@ -23,7 +23,7 @@ export class CustomText extends GameObjects.Text {
     const mergedStyle = { ...defaultStyle, ...style };
 
     super(scene, x, y, text, mergedStyle);
-    this.setDepth(100);
+    this.setDepth(102);
 
     this.color = mergedStyle.color as string;
 

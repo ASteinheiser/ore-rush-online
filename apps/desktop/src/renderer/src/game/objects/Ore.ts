@@ -33,7 +33,7 @@ export class Ore {
     this.hitbox.setStrokeStyle(1, color);
     this.hitbox.setFillStyle(color);
 
-    this.cracks = scene.add.graphics().setDepth(101);
+    this.cracks = scene.add.graphics().setDepth(99);
     this.drawCracks(currentHp);
   }
 
