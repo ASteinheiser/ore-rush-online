@@ -254,7 +254,6 @@ export class GameRoom extends Room {
               : player.x - ATTACK_OFFSET_X;
             player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
 
-            const oresToDestroy: Array<string> = [];
             // check if the attack hit an ore
             for (const ore of this.state.ores) {
               if (
@@ -269,13 +268,11 @@ export class GameRoom extends Room {
 
                 ore.hp--;
                 if (ore.hp <= 0) {
-                  oresToDestroy.push(ore.id);
                   player.inventory[ore.type]++;
+                  ore.type = 'destroyed';
                 }
               }
             }
-
-            oresToDestroy.forEach((oreId) => this.destroyOre(oreId));
           } else {
             player.attackDamageFrameX = undefined;
             player.attackDamageFrameY = undefined;
@@ -303,11 +300,6 @@ export class GameRoom extends Room {
         }
       }
     });
-  }
-
-  destroyOre(oreId: string) {
-    const ore = this.state.ores.find((ore) => ore.id === oreId);
-    ore.type = 'destroyed';
   }
 
   checkPlayerConnection() {
