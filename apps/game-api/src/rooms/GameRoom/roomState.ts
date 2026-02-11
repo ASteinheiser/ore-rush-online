@@ -1,17 +1,32 @@
-import { ArraySchema, MapSchema, Schema, type } from '@colyseus/schema';
+import { ArraySchema, MapSchema, Schema, type, view } from '@colyseus/schema';
 import type { InputPayload } from '@repo/core-game';
+
+export class Inventory extends Schema {
+  @type('number') iron: number = 0;
+  @type('number') gold: number = 0;
+}
+
+export class Ore extends Schema {
+  @type('string') id: string;
+  @type('number') x: number;
+  @type('number') y: number;
+  @type('number') hp: number;
+  @type('string') type: 'iron' | 'gold' | 'destroyed';
+}
 
 export class Player extends Schema {
   @type('string') userId: string;
-  @type('number') tokenExpiresAt: number;
+  tokenExpiresAt: number;
   @type('string') username: string;
   @type('number') x: number;
   @type('number') y: number;
   @type('boolean') isFacingRight: boolean = true;
   @type('boolean') isAttacking: boolean = false;
-  @type('number') attackCount: number = 0;
-  @type('number') lastAttackTime: number = 0;
+  attackCount: number = 0;
+  lastAttackTime: number = 0;
+  oresHit: Array<string> = [];
   @type('number') killCount: number = 0;
+  @type(Inventory) inventory: Inventory = new Inventory();
   inputQueue: Array<InputPayload> = [];
   /** Latest input sequence processed by the server for this player */
   @type('number') lastProcessedInputSeq: number = 0;
@@ -23,13 +38,7 @@ export class Player extends Schema {
   @type('number') attackDamageFrameY: number;
 }
 
-export class Enemy extends Schema {
-  @type('string') id: string;
-  @type('number') x: number;
-  @type('number') y: number;
-}
-
 export class GameRoomState extends Schema {
   @type({ map: Player }) players = new MapSchema<Player>();
-  @type({ array: Enemy }) enemies = new ArraySchema<Enemy>();
+  @view() @type({ array: Ore }) ores = new ArraySchema<Ore>();
 }

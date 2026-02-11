@@ -17,7 +17,7 @@ import type { Desktop_GetGameResultsQuery, Desktop_GetGameResultsQueryVariables 
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { Player } from '../objects/Player';
 import { PunchBox } from '../objects/PunchBox';
-import { Enemy } from '../objects/Enemy';
+import { Ore } from '../objects/Ore';
 import { CustomText } from '../objects/CustomText';
 import { PingDisplay } from '../objects/PingDisplay';
 import { ASSET, SCENE } from '../constants';
@@ -40,7 +40,9 @@ export class Game extends Scene {
   currentPlayer?: Player;
   /** This is used to track the player according to the server */
   currentPlayerServer?: Phaser.GameObjects.Rectangle;
-  enemyEntities: Record<string, Enemy> = {};
+  oreEntities: Record<string, Ore> = {};
+  ironCountText?: CustomText;
+  goldCountText?: CustomText;
 
   escapeKey?: Phaser.Input.Keyboard.Key;
   cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -94,9 +96,21 @@ export class Game extends Scene {
       fontSize: 20,
     }).setScrollFactor(0);
 
+    this.ironCountText = new CustomText(this, 0, 0, 'Iron: 0', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+    }).setScrollFactor(0);
+
+    this.goldCountText = new CustomText(this, 0, 0, 'Gold: 0', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+    }).setScrollFactor(0);
+
     const layout = () => {
       const { width } = this.scale;
       leaveText.setPosition((width - leaveText.width) / 2, 20);
+      this.ironCountText?.setPosition(20, 20);
+      this.goldCountText?.setPosition(20, 40);
     };
 
     layout();
@@ -189,12 +203,14 @@ export class Game extends Scene {
     const $ = getStateCallbacks(this.room);
 
     $(this.room.state).players.onAdd((player, sessionId) => {
-      const entity = this.physics.add.sprite(player.x, player.y, ASSET.PLAYER).setDepth(100);
+      const entity = this.physics.add.sprite(player.x, player.y, ASSET.PLAYER).setDepth(200);
 
       const nameText = new CustomText(this, player.x, player.y, player.username, {
         fontFamily: 'Tiny5',
         fontSize: 12,
-      }).setOrigin(0.5, 2.75);
+      })
+        .setOrigin(0.5, 2.75)
+        .setDepth(200);
 
       const newPlayer = new Player(this, entity, nameText);
 
@@ -207,11 +223,14 @@ export class Game extends Scene {
         this.cameras.main.startFollow(entity, true, 0.1, 0.1);
 
         // #region FOR DEBUGGING PURPOSES
-        this.currentPlayerServer = this.add.rectangle(0, 0, entity.width, entity.height).setDepth(100);
+        this.currentPlayerServer = this.add.rectangle(0, 0, entity.width, entity.height).setDepth(200);
         this.currentPlayerServer.setStrokeStyle(1, 0xff0000);
         // #endregion FOR DEBUGGING PURPOSES
 
         $(player).onChange(() => {
+          this.ironCountText?.setText(`Iron: ${player.inventory.iron}`);
+          this.goldCountText?.setText(`Gold: ${player.inventory.gold}`);
+
           // #region FOR DEBUGGING PURPOSES
           if (this.currentPlayerServer) {
             this.currentPlayerServer.x = player.x;
@@ -290,24 +309,21 @@ export class Game extends Scene {
       }
     });
 
-    $(this.room.state).enemies.onAdd((enemy) => {
-      const entity = new Enemy(this, enemy.x, enemy.y);
-      this.enemyEntities[enemy.id] = entity;
+    $(this.room.state).ores.onAdd((ore) => {
+      const entity = new Ore(this, ore.x, ore.y, ore.type, ore.hp);
+      this.oreEntities[ore.id] = entity;
 
-      $(enemy).onChange(() => {
-        entity.move(
-          Phaser.Math.Linear(entity.entity.x, enemy.x, 0.2),
-          Phaser.Math.Linear(entity.entity.y, enemy.y, 0.2)
-        );
+      $(ore).onChange(() => {
+        entity.update(ore.hp, ore.type);
       });
     });
 
-    $(this.room.state).enemies.onRemove((enemy) => {
-      const foundEnemy = this.enemyEntities[enemy.id];
-      if (foundEnemy) {
-        this.currentPlayer?.hit();
-        foundEnemy.destroy();
-        delete this.enemyEntities[enemy.id];
+    $(this.room.state).ores.onRemove((ore) => {
+      const foundOre = this.oreEntities[ore.id];
+      if (foundOre) {
+        // this.currentPlayer?.hit();
+        foundOre.destroy();
+        delete this.oreEntities[ore.id];
       }
     });
   }
@@ -390,8 +406,8 @@ export class Game extends Scene {
     Object.values(this.playerEntities).forEach((player) => player.destroy());
     this.playerEntities = {};
 
-    Object.values(this.enemyEntities).forEach((enemy) => enemy.destroy());
-    this.enemyEntities = {};
+    Object.values(this.oreEntities).forEach((enemy) => enemy.destroy());
+    this.oreEntities = {};
   }
 
   cleanupRoom() {
