@@ -1,14 +1,12 @@
-import { ENEMY_SIZE } from '@repo/core-game';
+import { BLOCK_SIZE, BLOCK_TYPES, type BLOCK_TYPE } from '@repo/core-game';
+
+const DIRT_COLOR = 0x8b4513;
+const IRON_COLOR = 0xa19d94;
+const GOLD_COLOR = 0xffd700;
 
 const CRACK_COLOR = 0x1a1a1a;
 const MAX_CRACKS = 12;
 const CRACK_STROKE = 1.5;
-
-/** Deterministic pseudo-random in [0, 1) from a seed */
-function seeded(seed: number): number {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
-}
 
 export class Ore {
   hitbox: Phaser.GameObjects.Rectangle;
@@ -16,24 +14,51 @@ export class Ore {
   x: number;
   y: number;
 
-  constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    type: 'iron' | 'gold' | 'destroyed',
-    hp: number,
-    maxHp: number
-  ) {
+  constructor(scene: Phaser.Scene, x: number, y: number, type: BLOCK_TYPE, hp: number, maxHp: number) {
     this.x = x;
     this.y = y;
 
-    this.hitbox = scene.add.rectangle(x, y, ENEMY_SIZE.width, ENEMY_SIZE.height);
-    const color = type === 'iron' ? 0xa19d94 : type === 'gold' ? 0xffd700 : 0x000000;
-    this.hitbox.setStrokeStyle(1, color);
-    this.hitbox.setFillStyle(color);
-
+    this.hitbox = scene.add.rectangle(x, y, BLOCK_SIZE.width, BLOCK_SIZE.height);
     this.cracks = scene.add.graphics().setDepth(99);
+
+    this.setColor(type);
     this.drawCracks(hp, maxHp);
+  }
+
+  destroy() {
+    this.cracks.destroy();
+    this.hitbox.destroy();
+  }
+
+  update(hp: number, maxHp: number, type: BLOCK_TYPE) {
+    if (type === BLOCK_TYPES.EMPTY) {
+      this.cracks.clear();
+    } else {
+      this.drawCracks(hp, maxHp);
+    }
+    this.setColor(type);
+  }
+
+  private setColor(type: BLOCK_TYPE) {
+    switch (type) {
+      case BLOCK_TYPES.DIRT:
+        this.hitbox.setStrokeStyle(1, DIRT_COLOR);
+        this.hitbox.setFillStyle(DIRT_COLOR);
+        break;
+      case BLOCK_TYPES.IRON:
+        this.hitbox.setStrokeStyle(1, IRON_COLOR);
+        this.hitbox.setFillStyle(IRON_COLOR);
+        break;
+      case BLOCK_TYPES.GOLD:
+        this.hitbox.setStrokeStyle(1, GOLD_COLOR);
+        this.hitbox.setFillStyle(GOLD_COLOR);
+        break;
+      case BLOCK_TYPES.EMPTY:
+      default:
+        this.hitbox.setStrokeStyle(1, 0x000000, 0);
+        this.hitbox.setFillStyle(0x000000, 0);
+        break;
+    }
   }
 
   private drawCracks(hp: number, maxHp: number) {
@@ -42,11 +67,17 @@ export class Ore {
 
     const damageRatio = 1 - hp / maxHp;
     const count = Math.max(1, Math.floor(damageRatio * MAX_CRACKS));
-    const w = ENEMY_SIZE.width;
-    const h = ENEMY_SIZE.height;
+    const w = BLOCK_SIZE.width;
+    const h = BLOCK_SIZE.height;
     const left = this.x - w / 2;
     const top = this.y - h / 2;
     const seedBase = this.x * 7 + this.y * 13;
+
+    /** Deterministic pseudo-random in [0, 1] from a seed */
+    const seeded = (seed: number): number => {
+      const x = Math.sin(seed * 9999) * 10000;
+      return x - Math.floor(x);
+    };
 
     for (let i = 0; i < count; i++) {
       const seed = seedBase + i * 31;
@@ -86,21 +117,5 @@ export class Ore {
       }
       this.cracks.strokePath();
     }
-  }
-
-  update(hp: number, maxHp: number, type: 'iron' | 'gold' | 'destroyed') {
-    if (type === 'destroyed') {
-      this.cracks.clear();
-    } else {
-      this.drawCracks(hp, maxHp);
-    }
-    const color = type === 'iron' ? 0xa19d94 : type === 'gold' ? 0xffd700 : 0x000000;
-    this.hitbox.setStrokeStyle(1, color);
-    this.hitbox.setFillStyle(color);
-  }
-
-  destroy() {
-    this.cracks.destroy();
-    this.hitbox.destroy();
   }
 }
