@@ -11,6 +11,7 @@ export class Ore extends Schema {
   @type('number') x: number;
   @type('number') y: number;
   @type('number') hp: number;
+  @type('number') maxHp: number;
   @type('string') type: 'iron' | 'gold' | 'destroyed';
 }
 

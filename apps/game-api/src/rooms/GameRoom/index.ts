@@ -173,7 +173,8 @@ export class GameRoom extends Room {
       ore.x = col * ENEMY_SIZE.width + ENEMY_SIZE.width / 2;
       ore.y = row * ENEMY_SIZE.height + ENEMY_SIZE.height / 2;
       ore.type = Math.random() < 0.5 ? 'iron' : 'gold';
-      ore.hp = ore.type === 'iron' ? 2 : 4;
+      ore.maxHp = ore.type === 'iron' ? 2 : 4;
+      ore.hp = ore.maxHp;
 
       this.state.ores.push(ore);
 
@@ -270,6 +271,7 @@ export class GameRoom extends Room {
                 if (ore.hp <= 0) {
                   player.inventory[ore.type]++;
                   ore.type = 'destroyed';
+                  ore.maxHp = 0;
                 }
               }
             }

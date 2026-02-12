@@ -344,11 +344,11 @@ export class Game extends Scene {
     });
 
     $(this.room.state).ores.onAdd((ore) => {
-      const entity = new Ore(this, ore.x, ore.y, ore.type, ore.hp);
+      const entity = new Ore(this, ore.x, ore.y, ore.type, ore.hp, ore.maxHp);
       this.oreEntities[ore.id] = entity;
 
       $(ore).onChange(() => {
-        entity.update(ore.hp, ore.type);
+        entity.update(ore.hp, ore.maxHp, ore.type);
       });
     });
 

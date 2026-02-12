@@ -11,7 +11,6 @@ function seeded(seed: number): number {
 }
 
 export class Ore {
-  totalHp: number;
   hitbox: Phaser.GameObjects.Rectangle;
   cracks: Phaser.GameObjects.Graphics;
   x: number;
@@ -22,11 +21,11 @@ export class Ore {
     x: number,
     y: number,
     type: 'iron' | 'gold' | 'destroyed',
-    currentHp: number
+    hp: number,
+    maxHp: number
   ) {
     this.x = x;
     this.y = y;
-    this.totalHp = type === 'destroyed' ? 0 : type === 'iron' ? 2 : 4;
 
     this.hitbox = scene.add.rectangle(x, y, ENEMY_SIZE.width, ENEMY_SIZE.height);
     const color = type === 'iron' ? 0xa19d94 : type === 'gold' ? 0xffd700 : 0x000000;
@@ -34,14 +33,14 @@ export class Ore {
     this.hitbox.setFillStyle(color);
 
     this.cracks = scene.add.graphics().setDepth(99);
-    this.drawCracks(currentHp);
+    this.drawCracks(hp, maxHp);
   }
 
-  private drawCracks(hp: number) {
+  private drawCracks(hp: number, maxHp: number) {
     this.cracks.clear();
-    if (this.totalHp <= 0 || hp >= this.totalHp) return;
+    if (maxHp <= 0 || hp >= maxHp) return;
 
-    const damageRatio = 1 - hp / this.totalHp;
+    const damageRatio = 1 - hp / maxHp;
     const count = Math.max(1, Math.floor(damageRatio * MAX_CRACKS));
     const w = ENEMY_SIZE.width;
     const h = ENEMY_SIZE.height;
@@ -89,11 +88,11 @@ export class Ore {
     }
   }
 
-  update(hp: number, type: 'iron' | 'gold' | 'destroyed') {
+  update(hp: number, maxHp: number, type: 'iron' | 'gold' | 'destroyed') {
     if (type === 'destroyed') {
       this.cracks.clear();
     } else {
-      this.drawCracks(hp);
+      this.drawCracks(hp, maxHp);
     }
     const color = type === 'iron' ? 0xa19d94 : type === 'gold' ? 0xffd700 : 0x000000;
     this.hitbox.setStrokeStyle(1, color);
