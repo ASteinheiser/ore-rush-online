@@ -14,9 +14,7 @@ import {
   ATTACK_COOLDOWN,
   ATTACK_DAMAGE__DELAY,
   ATTACK_DAMAGE__FRAME_TIME,
-  // ENEMY_SPAWN_RATE,
-  // MAX_ENEMIES,
-  ENEMY_SIZE,
+  BLOCK_SIZE,
   WS_EVENT,
   WS_CODE,
   INACTIVITY_TIMEOUT,
@@ -160,8 +158,8 @@ export class GameRoom extends Room {
   }
 
   generateOreMap() {
-    const cols = Math.ceil(MAP_SIZE.width / ENEMY_SIZE.width);
-    const rows = Math.ceil(MAP_SIZE.height / ENEMY_SIZE.height);
+    const cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
+    const rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
     const totalBlocks = cols * rows;
 
     for (let i = 0; i < totalBlocks; i++) {
@@ -170,8 +168,8 @@ export class GameRoom extends Room {
 
       const ore = new Ore();
       ore.id = nanoid();
-      ore.x = col * ENEMY_SIZE.width + ENEMY_SIZE.width / 2;
-      ore.y = row * ENEMY_SIZE.height + ENEMY_SIZE.height / 2;
+      ore.x = col * BLOCK_SIZE.width + BLOCK_SIZE.width / 2;
+      ore.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
       ore.type = Math.random() < 0.5 ? 'iron' : 'gold';
       ore.maxHp = ore.type === 'iron' ? 2 : 4;
       ore.hp = ore.maxHp;
@@ -179,10 +177,10 @@ export class GameRoom extends Room {
       this.state.ores.push(ore);
 
       const rect = new Rectangle({
-        x: ore.x - ENEMY_SIZE.width / 2,
-        y: ore.y - ENEMY_SIZE.height / 2,
-        width: ENEMY_SIZE.width,
-        height: ENEMY_SIZE.height,
+        x: ore.x - BLOCK_SIZE.width / 2,
+        y: ore.y - BLOCK_SIZE.height / 2,
+        width: BLOCK_SIZE.width,
+        height: BLOCK_SIZE.height,
         data: ore as unknown as void,
       });
       this.oreQuadtree.insert(rect);
@@ -260,10 +258,10 @@ export class GameRoom extends Room {
               if (
                 ore.type !== 'destroyed' &&
                 !player.oresHit.includes(ore.id) &&
-                ore.x - ENEMY_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
-                ore.x + ENEMY_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
-                ore.y - ENEMY_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
-                ore.y + ENEMY_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
+                ore.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
+                ore.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
+                ore.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
+                ore.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
               ) {
                 player.oresHit.push(ore.id);
 
