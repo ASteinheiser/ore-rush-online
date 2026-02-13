@@ -14,7 +14,6 @@ export class Player {
   entity: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   nameText: Phaser.GameObjects.Text;
   punchSfx: Phaser.Sound.BaseSound;
-  hitSfx: Phaser.Sound.BaseSound;
   killCount = 0;
 
   constructor(
@@ -25,7 +24,6 @@ export class Player {
     this.entity = entity;
     this.nameText = nameText;
     this.punchSfx = scene.sound.add(SOUND.PUNCH);
-    this.hitSfx = scene.sound.add(SOUND.ENEMY_HIT);
   }
 
   /** Force the player to move to a specific position, skips animations, interpolation, etc. */
@@ -65,10 +63,6 @@ export class Player {
     this.punchSfx.play('', { delay: ATTACK_DAMAGE__DELAY / 1000 });
   }
 
-  hit() {
-    this.hitSfx.play();
-  }
-
   stopPunch() {
     if (!this.isPunching()) return;
     this.entity.anims.stop();
@@ -86,6 +80,5 @@ export class Player {
     this.entity.destroy();
     this.nameText.destroy();
     this.punchSfx.destroy();
-    this.hitSfx.destroy();
   }
 }
