@@ -7,7 +7,7 @@ export class Inventory extends Schema {
 }
 
 export class Ore extends Schema {
-  @type('string') id: string;
+  id: string;
   @type('number') x: number;
   @type('number') y: number;
   @type('number') hp: number;
@@ -16,7 +16,7 @@ export class Ore extends Schema {
 }
 
 export class Player extends Schema {
-  @type('string') userId: string;
+  userId: string;
   tokenExpiresAt: number;
   @type('string') username: string;
   @type('number') x: number;
@@ -32,10 +32,10 @@ export class Player extends Schema {
   /** Latest input sequence processed by the server for this player */
   @type('number') lastProcessedInputSeq: number = 0;
   /** This is used for networking checks */
-  @type('number') lastActivityTime: number = Date.now();
-  /** This is stored for debugging purposes */
+  lastActivityTime: number = Date.now();
+  /** This is stored and synced for debugging purposes */
   @type('number') attackDamageFrameX: number;
-  /** This is stored for debugging purposes */
+  /** This is stored and synced for debugging purposes */
   @type('number') attackDamageFrameY: number;
 }
 
