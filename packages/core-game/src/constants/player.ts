@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** The radius of the player's view in pixels */
+export const PLAYER_VIEW_RADIUS = 300;
+
 /** The number of frames per second the player animates at (8fps) */
 export const PLAYER_FRAME_RATE = 8;
 /** The speed of the player in pixels per tick */
