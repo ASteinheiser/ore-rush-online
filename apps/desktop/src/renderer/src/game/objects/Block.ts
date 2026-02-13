@@ -8,7 +8,7 @@ const CRACK_COLOR = 0x1a1a1a;
 const MAX_CRACKS = 12;
 const CRACK_STROKE = 1.5;
 
-export class Ore {
+export class Block {
   hitbox: Phaser.GameObjects.Rectangle;
   cracks: Phaser.GameObjects.Graphics;
   x: number;

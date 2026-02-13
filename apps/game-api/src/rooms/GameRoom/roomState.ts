@@ -1,18 +1,18 @@
 import { ArraySchema, MapSchema, Schema, type, view } from '@colyseus/schema';
-import type { InputPayload } from '@repo/core-game';
+import type { InputPayload, BLOCK_TYPE } from '@repo/core-game';
 
 export class Inventory extends Schema {
   @type('number') iron: number = 0;
   @type('number') gold: number = 0;
 }
 
-export class Ore extends Schema {
-  id: string;
+export class Block extends Schema {
+  @type('string') id: string;
   @type('number') x: number;
   @type('number') y: number;
   @type('number') hp: number;
   @type('number') maxHp: number;
-  @type('string') type: 'iron' | 'gold' | 'destroyed';
+  @type('string') type: BLOCK_TYPE;
 }
 
 export class Player extends Schema {
@@ -25,7 +25,7 @@ export class Player extends Schema {
   @type('boolean') isAttacking: boolean = false;
   attackCount: number = 0;
   lastAttackTime: number = 0;
-  oresHit: Array<string> = [];
+  blocksHit: Array<string> = [];
   @type('number') killCount: number = 0;
   @type(Inventory) inventory: Inventory = new Inventory();
   inputQueue: Array<InputPayload> = [];
@@ -41,5 +41,5 @@ export class Player extends Schema {
 
 export class GameRoomState extends Schema {
   @type({ map: Player }) players = new MapSchema<Player>();
-  @view() @type({ array: Ore }) ores = new ArraySchema<Ore>();
+  @view() @type({ array: Block }) blocks = new ArraySchema<Block>();
 }

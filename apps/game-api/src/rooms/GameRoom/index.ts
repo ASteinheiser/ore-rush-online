@@ -7,6 +7,7 @@ import {
   calculateMovement,
   FIXED_TIME_STEP,
   PLAYER_SIZE,
+  PLAYER_VIEW_RADIUS,
   MAP_SIZE,
   ATTACK_SIZE,
   ATTACK_OFFSET_X,
@@ -15,6 +16,7 @@ import {
   ATTACK_DAMAGE__DELAY,
   ATTACK_DAMAGE__FRAME_TIME,
   BLOCK_SIZE,
+  BLOCK_TYPES,
   WS_EVENT,
   WS_CODE,
   INACTIVITY_TIMEOUT,
@@ -27,8 +29,7 @@ import type { PrismaClient, Profile } from '../../repo/prisma-client/client';
 import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
-import { Ore } from './roomState';
-import { GameRoomState, Player } from './roomState';
+import { GameRoomState, Player, Block } from './roomState';
 
 const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
@@ -63,7 +64,6 @@ export class GameRoom extends Room {
 
   state = new GameRoomState();
   elapsedTime = 0;
-  lastEnemySpawnTime = 0;
 
   prisma: PrismaClient;
 
@@ -72,10 +72,8 @@ export class GameRoom extends Room {
   expectingReconnections = new Set<string>();
   forcedDisconnects = new Set<string>();
 
-  oreQuadtree: Quadtree<Rectangle>;
-  oreRectangles = new Map<string, Rectangle>();
-  clientVisibleOres = new Map<string, Set<string>>();
-  VIEW_RADIUS = 300;
+  blockQuadtree: Quadtree<Rectangle>;
+  clientVisibleBlocks = new Map<string, Set<string>>();
 
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
     logger.info({
@@ -83,13 +81,13 @@ export class GameRoom extends Room {
       data: { roomId: this.roomId },
     });
 
-    this.oreQuadtree = new Quadtree({
+    this.blockQuadtree = new Quadtree({
       width: MAP_SIZE.width,
       height: MAP_SIZE.height,
       maxObjects: 4,
       maxLevels: 6,
     });
-    this.generateOreMap();
+    this.generateBlockMap();
 
     this.prisma = prisma;
 
@@ -157,7 +155,7 @@ export class GameRoom extends Room {
     });
   }
 
-  generateOreMap() {
+  generateBlockMap() {
     const cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
     const rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
     const totalBlocks = cols * rows;
@@ -166,25 +164,35 @@ export class GameRoom extends Room {
       const col = i % cols;
       const row = Math.floor(i / cols);
 
-      const ore = new Ore();
-      ore.id = nanoid();
-      ore.x = col * BLOCK_SIZE.width + BLOCK_SIZE.width / 2;
-      ore.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
-      ore.type = Math.random() < 0.5 ? 'iron' : 'gold';
-      ore.maxHp = ore.type === 'iron' ? 2 : 4;
-      ore.hp = ore.maxHp;
+      const block = new Block();
+      block.id = nanoid();
+      block.x = col * BLOCK_SIZE.width + BLOCK_SIZE.width / 2;
+      block.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
 
-      this.state.ores.push(ore);
+      const randomBlockTypeSeed = Math.random();
+      if (randomBlockTypeSeed < 0.5) {
+        block.type = BLOCK_TYPES.DIRT;
+        block.maxHp = 1;
+      } else if (randomBlockTypeSeed < 0.8) {
+        block.type = BLOCK_TYPES.GOLD;
+        block.maxHp = 4;
+      } else {
+        block.type = BLOCK_TYPES.IRON;
+        block.maxHp = 2;
+      }
+      block.hp = block.maxHp;
 
-      const rect = new Rectangle({
-        x: ore.x - BLOCK_SIZE.width / 2,
-        y: ore.y - BLOCK_SIZE.height / 2,
-        width: BLOCK_SIZE.width,
-        height: BLOCK_SIZE.height,
-        data: ore as unknown as void,
-      });
-      this.oreQuadtree.insert(rect);
-      this.oreRectangles.set(ore.id, rect);
+      this.state.blocks.push(block);
+
+      this.blockQuadtree.insert(
+        new Rectangle({
+          x: block.x - BLOCK_SIZE.width / 2,
+          y: block.y - BLOCK_SIZE.height / 2,
+          width: BLOCK_SIZE.width,
+          height: BLOCK_SIZE.height,
+          data: block as unknown as void,
+        })
+      );
     }
   }
 
@@ -192,35 +200,35 @@ export class GameRoom extends Room {
     this.state.players.forEach((player, sessionId) => {
       const client = this.clients.find((c) => c.sessionId === sessionId);
       if (client?.view) {
-        const currentlyVisibleOres = this.clientVisibleOres.get(sessionId);
+        const currentlyVisibleBlocks = this.clientVisibleBlocks.get(sessionId);
         const nowVisible = new Set<string>();
 
         const searchArea = new Rectangle({
-          x: player.x - this.VIEW_RADIUS,
-          y: player.y - this.VIEW_RADIUS,
-          width: this.VIEW_RADIUS * 2,
-          height: this.VIEW_RADIUS * 2,
+          x: player.x - PLAYER_VIEW_RADIUS,
+          y: player.y - PLAYER_VIEW_RADIUS,
+          width: PLAYER_VIEW_RADIUS * 2,
+          height: PLAYER_VIEW_RADIUS * 2,
         });
 
-        const nearbyOres = this.oreQuadtree.retrieve(searchArea);
+        const nearbyBlocks = this.blockQuadtree.retrieve(searchArea);
 
-        for (const nearbyOre of nearbyOres) {
-          const ore = nearbyOre.data;
-          nowVisible.add((ore as unknown as Ore).id);
+        for (const nearbyBlock of nearbyBlocks) {
+          const block = nearbyBlock.data;
+          nowVisible.add((block as unknown as Block).id);
 
-          if (!currentlyVisibleOres.has((ore as unknown as Ore).id)) {
-            client.view.add(ore as unknown as Ref);
+          if (!currentlyVisibleBlocks.has((block as unknown as Block).id)) {
+            client.view.add(block as unknown as Ref);
           }
         }
 
-        for (const oreId of currentlyVisibleOres) {
-          if (!nowVisible.has(oreId)) {
-            const ore = this.state.ores.find((ore) => ore.id === oreId);
-            client.view.remove(ore);
+        for (const blockId of currentlyVisibleBlocks) {
+          if (!nowVisible.has(blockId)) {
+            const block = this.state.blocks.find((block) => block.id === blockId);
+            client.view.remove(block);
           }
         }
 
-        this.clientVisibleOres.set(sessionId, nowVisible);
+        this.clientVisibleBlocks.set(sessionId, nowVisible);
       }
 
       try {
@@ -253,30 +261,33 @@ export class GameRoom extends Room {
               : player.x - ATTACK_OFFSET_X;
             player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
 
-            // check if the attack hit an ore
-            for (const ore of this.state.ores) {
+            // check if the attack hit a block
+            for (const block of this.state.blocks) {
               if (
-                ore.type !== 'destroyed' &&
-                !player.oresHit.includes(ore.id) &&
-                ore.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
-                ore.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
-                ore.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
-                ore.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
+                block.type !== 'empty' &&
+                !player.blocksHit.includes(block.id) &&
+                block.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
+                block.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
+                block.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
+                block.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
               ) {
-                player.oresHit.push(ore.id);
+                player.blocksHit.push(block.id);
 
-                ore.hp--;
-                if (ore.hp <= 0) {
-                  player.inventory[ore.type]++;
-                  ore.type = 'destroyed';
-                  ore.maxHp = 0;
+                block.hp--;
+                if (block.hp <= 0) {
+                  if (block.type === 'iron' || block.type === 'gold') {
+                    player.inventory[block.type]++;
+                  }
+                  block.hp = 0;
+                  block.maxHp = 0;
+                  block.type = 'empty';
                 }
               }
             }
           } else {
             player.attackDamageFrameX = undefined;
             player.attackDamageFrameY = undefined;
-            player.oresHit = [];
+            player.blocksHit = [];
           }
 
           // if the player is mid-attack, don't process any more inputs
@@ -408,7 +419,7 @@ export class GameRoom extends Room {
     }
 
     client.view = new StateView();
-    this.clientVisibleOres.set(client.sessionId, new Set());
+    this.clientVisibleBlocks.set(client.sessionId, new Set());
     this.state.players.set(client.sessionId, player);
 
     if (!RESULTS[this.roomId]) RESULTS[this.roomId] = {};

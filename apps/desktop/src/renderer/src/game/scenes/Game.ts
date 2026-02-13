@@ -17,9 +17,10 @@ import type { Desktop_GetGameResultsQuery, Desktop_GetGameResultsQueryVariables 
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { Player } from '../objects/Player';
 import { PunchBox } from '../objects/PunchBox';
-import { Ore } from '../objects/Ore';
+import { Block } from '../objects/Block';
 import { CustomText } from '../objects/CustomText';
 import { PingDisplay } from '../objects/PingDisplay';
+import { FogOverlay } from '../objects/FogOverlay';
 import { ASSET, SCENE } from '../constants';
 
 const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL;
@@ -28,9 +29,6 @@ if (!WEBSOCKET_URL) throw new Error('VITE_WEBSOCKET_URL is not set');
 const RECONNECTION_STORAGE_KEY = 'game_reconnection_token';
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_BACKOFF_MS = 1000;
-
-/** Size of the visible hole in the fog overlay, centered on the player (pixels) */
-const FOG_HOLE_SIZE = 600;
 
 export class Game extends Scene {
   client: Client;
@@ -43,7 +41,9 @@ export class Game extends Scene {
   currentPlayer?: Player;
   /** This is used to track the player according to the server */
   currentPlayerServer?: Phaser.GameObjects.Rectangle;
-  oreEntities: Record<string, Ore> = {};
+  blocks: Record<string, Block> = {};
+  fogOverlay?: FogOverlay;
+
   ironCountText?: CustomText;
   goldCountText?: CustomText;
 
@@ -52,9 +52,6 @@ export class Game extends Scene {
   pendingInputs: Array<InputPayload> = [];
   inputSeq = 0;
   serverAckSeq = 0;
-
-  /** Inverted box overlay (hollow center, filled edges) - follows player in world space */
-  fogOverlay?: Phaser.GameObjects.Graphics;
 
   constructor() {
     super(SCENE.GAME);
@@ -65,34 +62,6 @@ export class Game extends Scene {
   preload() {
     this.escapeKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     this.cursorKeys = this.input.keyboard?.createCursorKeys();
-  }
-
-  /**
-   * Updates the fog overlay: filled edges covering the map, hollow center following the player.
-   * Uses four rectangles. Good for fog of war. In world space, scrolls with camera.
-   */
-  private updateFogOverlay(): void {
-    if (!this.currentPlayer) return;
-
-    const graphics = this.fogOverlay ?? this.add.graphics().setDepth(100).setScrollFactor(1);
-    this.fogOverlay = graphics;
-
-    const { x, y } = this.currentPlayer.entity;
-    const halfHole = FOG_HOLE_SIZE / 2;
-    const innerX = x - halfHole;
-    const innerY = y - halfHole;
-
-    graphics.clear();
-    graphics.fillStyle(0x000000, 1);
-
-    // Top
-    graphics.fillRect(0, 0, MAP_SIZE.width, innerY);
-    // Bottom
-    graphics.fillRect(0, innerY + FOG_HOLE_SIZE, MAP_SIZE.width, MAP_SIZE.height - innerY - FOG_HOLE_SIZE);
-    // Left
-    graphics.fillRect(0, innerY, innerX, FOG_HOLE_SIZE);
-    // Right
-    graphics.fillRect(innerX + FOG_HOLE_SIZE, innerY, MAP_SIZE.width - innerX - FOG_HOLE_SIZE, FOG_HOLE_SIZE);
   }
 
   async refreshToken({ token }: AuthPayload) {
@@ -190,6 +159,7 @@ export class Game extends Scene {
     this.reconnectionAttempt = 0;
     this.room.reconnection.maxRetries = 8;
 
+    this.fogOverlay = new FogOverlay(this);
     this.pingDisplay = new PingDisplay(this);
     this.pingDisplay.start(this.room);
 
@@ -343,21 +313,20 @@ export class Game extends Scene {
       }
     });
 
-    $(this.room.state).ores.onAdd((ore) => {
-      const entity = new Ore(this, ore.x, ore.y, ore.type, ore.hp, ore.maxHp);
-      this.oreEntities[ore.id] = entity;
+    $(this.room.state).blocks.onAdd((block) => {
+      const entity = new Block(this, block.x, block.y, block.type, block.hp, block.maxHp);
+      this.blocks[block.id] = entity;
 
-      $(ore).onChange(() => {
-        entity.update(ore.hp, ore.maxHp, ore.type);
+      $(block).onChange(() => {
+        entity.update(block.hp, block.maxHp, block.type);
       });
     });
 
-    $(this.room.state).ores.onRemove((ore) => {
-      const foundOre = this.oreEntities[ore.id];
-      if (foundOre) {
-        // this.currentPlayer?.hit();
-        foundOre.destroy();
-        delete this.oreEntities[ore.id];
+    $(this.room.state).blocks.onRemove((block) => {
+      const foundBlock = this.blocks[block.id];
+      if (foundBlock) {
+        foundBlock.destroy();
+        delete this.blocks[block.id];
       }
     });
   }
@@ -366,7 +335,7 @@ export class Game extends Scene {
     // skip if not yet connected
     if (!this.currentPlayer) return;
 
-    this.updateFogOverlay();
+    this.fogOverlay?.update(this.currentPlayer);
 
     this.elapsedTime += delta;
     while (this.elapsedTime >= FIXED_TIME_STEP) {
@@ -442,8 +411,8 @@ export class Game extends Scene {
     Object.values(this.playerEntities).forEach((player) => player.destroy());
     this.playerEntities = {};
 
-    Object.values(this.oreEntities).forEach((enemy) => enemy.destroy());
-    this.oreEntities = {};
+    Object.values(this.blocks).forEach((block) => block.destroy());
+    this.blocks = {};
 
     this.fogOverlay?.destroy();
     delete this.fogOverlay;
