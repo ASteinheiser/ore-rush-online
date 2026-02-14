@@ -41,7 +41,7 @@ export class Game extends Scene {
   currentPlayer?: Player;
   /** This is used to track the player according to the server */
   currentPlayerServer?: Phaser.GameObjects.Rectangle;
-  blocks: Record<string, Block> = {};
+  blocks: Array<Block> = [];
   fogOverlay?: FogOverlay;
 
   ironCountText?: CustomText;
@@ -411,8 +411,8 @@ export class Game extends Scene {
     Object.values(this.playerEntities).forEach((player) => player.destroy());
     this.playerEntities = {};
 
-    Object.values(this.blocks).forEach((block) => block.destroy());
-    this.blocks = {};
+    this.blocks.forEach((block) => block.destroy());
+    this.blocks = [];
 
     this.fogOverlay?.destroy();
     delete this.fogOverlay;

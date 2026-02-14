@@ -33,7 +33,7 @@ export class Player extends Schema {
   lastActivityTime: number = Date.now();
   lastAttackTime: number = 0;
   attackCount: number = 0;
-  blocksHit: Array<string> = [];
+  blocksHit: Array<number> = [];
   /** Debug fields */
   @view(PLAYER_VIEW_LEVELS.DEBUG) @type('number') attackDamageFrameX: number;
   @view(PLAYER_VIEW_LEVELS.DEBUG) @type('number') attackDamageFrameY: number;

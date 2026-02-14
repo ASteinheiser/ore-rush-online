@@ -1,13 +1,10 @@
 import { Room, ServerError, type AuthContext, type Client } from '@colyseus/core';
-import { StateView, type Ref } from '@colyseus/schema';
+import { StateView } from '@colyseus/schema';
 import { CloseCode } from 'colyseus';
-import { Quadtree, Rectangle } from '@timohausmann/quadtree-ts';
-import { nanoid } from 'nanoid';
 import {
   calculateMovement,
   FIXED_TIME_STEP,
   PLAYER_SIZE,
-  PLAYER_VIEW_RADIUS,
   MAP_SIZE,
   ATTACK_SIZE,
   ATTACK_OFFSET_X,
@@ -16,7 +13,6 @@ import {
   ATTACK_DAMAGE__DELAY,
   ATTACK_DAMAGE__FRAME_TIME,
   BLOCK_SIZE,
-  BLOCK_TYPES,
   WS_EVENT,
   WS_CODE,
   INACTIVITY_TIMEOUT,
@@ -30,8 +26,8 @@ import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
 import { GameRoomState } from './schemas';
-import { Block } from './schemas/Block';
 import { Player, PLAYER_VIEW_LEVELS } from './schemas/Player';
+import { BlockMap } from './systems/BlockMap';
 
 const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
@@ -61,35 +57,24 @@ interface GameRoomArgs {
 }
 
 export class GameRoom extends Room {
+  prisma: PrismaClient;
   maxClients = MAX_PLAYERS_PER_ROOM;
   patchRate = SERVER_PATCH_RATE;
 
   state = new GameRoomState();
+  blockMap = new BlockMap(this);
   elapsedTime = 0;
-
-  prisma: PrismaClient;
 
   connectionCheckTimeout: NodeJS.Timeout;
   reconnectionTimeout = RECONNECTION_TIMEOUT;
   expectingReconnections = new Set<string>();
   forcedDisconnects = new Set<string>();
 
-  blockQuadtree: Quadtree<Rectangle>;
-  clientVisibleBlocks = new Map<string, Set<string>>();
-
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
     logger.info({
       message: `New room created!`,
       data: { roomId: this.roomId },
     });
-
-    this.blockQuadtree = new Quadtree({
-      width: MAP_SIZE.width,
-      height: MAP_SIZE.height,
-      maxObjects: 4,
-      maxLevels: 6,
-    });
-    this.generateBlockMap();
 
     this.prisma = prisma;
 
@@ -157,80 +142,11 @@ export class GameRoom extends Room {
     });
   }
 
-  generateBlockMap() {
-    const cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
-    const rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
-    const totalBlocks = cols * rows;
-
-    for (let i = 0; i < totalBlocks; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-
-      const block = new Block();
-      block.id = nanoid();
-      block.x = col * BLOCK_SIZE.width + BLOCK_SIZE.width / 2;
-      block.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
-
-      const randomBlockTypeSeed = Math.random();
-      if (randomBlockTypeSeed < 0.5) {
-        block.type = BLOCK_TYPES.DIRT;
-        block.maxHp = 1;
-      } else if (randomBlockTypeSeed < 0.8) {
-        block.type = BLOCK_TYPES.GOLD;
-        block.maxHp = 4;
-      } else {
-        block.type = BLOCK_TYPES.IRON;
-        block.maxHp = 2;
-      }
-      block.hp = block.maxHp;
-
-      this.state.blocks.push(block);
-
-      this.blockQuadtree.insert(
-        new Rectangle({
-          x: block.x - BLOCK_SIZE.width / 2,
-          y: block.y - BLOCK_SIZE.height / 2,
-          width: BLOCK_SIZE.width,
-          height: BLOCK_SIZE.height,
-          data: block as unknown as void,
-        })
-      );
-    }
-  }
-
   fixedTick() {
     this.state.players.forEach((player, sessionId) => {
       const client = this.clients.find((c) => c.sessionId === sessionId);
       if (client?.view) {
-        const currentlyVisibleBlocks = this.clientVisibleBlocks.get(sessionId);
-        const nowVisible = new Set<string>();
-
-        const searchArea = new Rectangle({
-          x: player.x - PLAYER_VIEW_RADIUS,
-          y: player.y - PLAYER_VIEW_RADIUS,
-          width: PLAYER_VIEW_RADIUS * 2,
-          height: PLAYER_VIEW_RADIUS * 2,
-        });
-
-        const nearbyBlocks = this.blockQuadtree.retrieve(searchArea);
-
-        for (const nearbyBlock of nearbyBlocks) {
-          const block = nearbyBlock.data;
-          nowVisible.add((block as unknown as Block).id);
-
-          if (!currentlyVisibleBlocks.has((block as unknown as Block).id)) {
-            client.view.add(block as unknown as Ref);
-          }
-        }
-
-        for (const blockId of currentlyVisibleBlocks) {
-          if (!nowVisible.has(blockId)) {
-            const block = this.state.blocks.find((block) => block.id === blockId);
-            client.view.remove(block);
-          }
-        }
-
-        this.clientVisibleBlocks.set(sessionId, nowVisible);
+        this.blockMap.updateClientVisibleBlocks(client, player);
       }
 
       try {
@@ -421,7 +337,7 @@ export class GameRoom extends Room {
     }
 
     this.state.players.set(client.sessionId, player);
-    this.clientVisibleBlocks.set(client.sessionId, new Set());
+    this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
 
     client.view = new StateView();
     client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
@@ -504,6 +420,7 @@ export class GameRoom extends Room {
     this.expectingReconnections.delete(sessionId);
     this.forcedDisconnects.delete(sessionId);
     this.state.players.delete(sessionId);
+    this.blockMap.clientVisibleBlocks.delete(sessionId);
   }
 
   onDispose() {
