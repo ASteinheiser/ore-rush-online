@@ -29,7 +29,9 @@ import type { PrismaClient, Profile } from '../../repo/prisma-client/client';
 import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
-import { GameRoomState, Player, Block } from './roomState';
+import { GameRoomState } from './schemas';
+import { Block } from './schemas/Block';
+import { Player, PLAYER_VIEW_LEVELS } from './schemas/Player';
 
 const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
@@ -418,9 +420,13 @@ export class GameRoom extends Room {
       player.y = Math.random() * MAP_SIZE.height;
     }
 
-    client.view = new StateView();
-    this.clientVisibleBlocks.set(client.sessionId, new Set());
     this.state.players.set(client.sessionId, player);
+    this.clientVisibleBlocks.set(client.sessionId, new Set());
+
+    client.view = new StateView();
+    client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
+    client.view.add(player, PLAYER_VIEW_LEVELS.PRIVATE);
+    client.view.add(player, PLAYER_VIEW_LEVELS.DEBUG);
 
     if (!RESULTS[this.roomId]) RESULTS[this.roomId] = {};
     RESULTS[this.roomId][player.userId] = {
