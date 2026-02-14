@@ -1,9 +1,9 @@
 import { ArraySchema, MapSchema, Schema, type, view } from '@colyseus/schema';
-import type { InputPayload, BLOCK_TYPE } from '@repo/core-game';
+import { type InputPayload, type BLOCK_TYPE, BLOCK_TYPES } from '@repo/core-game';
 
 export class Inventory extends Schema {
-  @type('number') iron: number = 0;
-  @type('number') gold: number = 0;
+  @type('number') [BLOCK_TYPES.IRON]: number = 0;
+  @type('number') [BLOCK_TYPES.GOLD]: number = 0;
 }
 
 export class Block extends Schema {
