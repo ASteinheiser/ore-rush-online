@@ -291,16 +291,27 @@ export class Game extends Scene {
       } else {
         // update the other players positions from the server
         $(player).onChange(() => {
-          entity.setData('serverUsername', player.username);
-          entity.setData('serverX', player.x);
-          entity.setData('serverY', player.y);
-          entity.setData('serverAttack', player.isAttacking);
+          const inView = player.x !== undefined && player.y !== undefined;
 
-          // #region FOR DEBUGGING PURPOSES
-          if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
-            new PunchBox(this, player.attackDamageFrameX, player.attackDamageFrameY, 0xff0000);
+          if (inView) {
+            entity.setData('serverUsername', player.username);
+            entity.setData('serverX', player.x);
+            entity.setData('serverY', player.y);
+            entity.setData('serverAttack', player.isAttacking);
+
+            if (!entity.visible || !nameText.visible) {
+              newPlayer.forceMove({ x: player.x, y: player.y });
+            }
+
+            // #region FOR DEBUGGING PURPOSES
+            if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
+              new PunchBox(this, player.attackDamageFrameX, player.attackDamageFrameY, 0xff0000);
+            }
+            // #endregion FOR DEBUGGING PURPOSES
           }
-          // #endregion FOR DEBUGGING PURPOSES
+
+          entity.setVisible(inView);
+          nameText.setVisible(inView);
         });
       }
     });

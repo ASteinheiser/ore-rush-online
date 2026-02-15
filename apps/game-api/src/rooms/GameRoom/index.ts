@@ -28,6 +28,7 @@ import { ROOM_ERROR } from '../error';
 import { GameRoomState } from './schemas';
 import { Player, PLAYER_VIEW_LEVELS } from './schemas/Player';
 import { BlockMap } from './systems/BlockMap';
+import { PlayerVision } from './systems/PlayerVision';
 
 const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
@@ -63,6 +64,7 @@ export class GameRoom extends Room {
 
   state = new GameRoomState();
   blockMap = new BlockMap(this);
+  playerVision = new PlayerVision(this);
   elapsedTime = 0;
 
   connectionCheckTimeout: NodeJS.Timeout;
@@ -147,6 +149,7 @@ export class GameRoom extends Room {
       const client = this.clients.find((c) => c.sessionId === sessionId);
       if (client?.view) {
         this.blockMap.updateClientVisibleBlocks(client, player);
+        this.playerVision.updateClientVisiblePlayers(client, player);
       }
 
       try {
@@ -343,6 +346,15 @@ export class GameRoom extends Room {
     client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
     client.view.add(player, PLAYER_VIEW_LEVELS.PRIVATE);
     client.view.add(player, PLAYER_VIEW_LEVELS.DEBUG);
+
+    this.state.players.forEach((player, sessionId) => {
+      if (sessionId === client.sessionId) return; // skip self
+      // let other players know that this player exists (name only)
+      const otherClient = this.clients.find((c) => c.sessionId === sessionId);
+      if (otherClient) {
+        otherClient.view.add(player);
+      }
+    });
 
     if (!RESULTS[this.roomId]) RESULTS[this.roomId] = {};
     RESULTS[this.roomId][player.userId] = {

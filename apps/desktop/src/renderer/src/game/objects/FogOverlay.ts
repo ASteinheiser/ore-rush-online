@@ -5,7 +5,7 @@ export class FogOverlay {
   fogOverlay?: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene) {
-    this.fogOverlay = scene.add.graphics().setDepth(100).setScrollFactor(1);
+    this.fogOverlay = scene.add.graphics().setDepth(102).setScrollFactor(1);
   }
 
   public update(playerToFollow?: Player): void {
