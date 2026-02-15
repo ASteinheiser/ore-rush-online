@@ -290,20 +290,6 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
   });
 
   describe('basic game logic', () => {
-    it('should spawn an enemy in the room', async () => {
-      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
-      const room = getRoom(client.roomId);
-
-      await room.waitForNextSimulationTick();
-      // get a snapshot of the enemy state
-      const { enemies } = room.state.toJSON();
-
-      assert.strictEqual(Object.keys(enemies).length, 1);
-      assert.strictEqual(typeof enemies[0].id, 'string');
-      assert.strictEqual(typeof enemies[0].x, 'number');
-      assert.strictEqual(typeof enemies[0].y, 'number');
-    });
-
     it('should allow a player to move in the room', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);

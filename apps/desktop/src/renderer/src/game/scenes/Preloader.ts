@@ -1,9 +1,7 @@
 import { Loader, Scene, Scenes } from 'phaser';
-import { PLAYER_FRAME_RATE, PLAYER_SIZE, ENEMY_SIZE } from '@repo/core-game';
-import enemy from '../../assets/evil-dude.png';
+import { PLAYER_FRAME_RATE, PLAYER_SIZE } from '@repo/core-game';
 import player from '../../assets/muscle-duck-sprite.png';
 import punch from '../../assets/punch.mp3';
-import enemyHit from '../../assets/wilhelm-scream.mp3';
 import { PLAYER_ANIM } from '../objects/Player';
 import { ASSET, SCENE, SOUND } from '../constants';
 
@@ -45,16 +43,11 @@ export class Preloader extends Scene {
   }
 
   preload() {
-    this.load.spritesheet(ASSET.ENEMY, enemy, {
-      frameWidth: ENEMY_SIZE.width,
-      frameHeight: ENEMY_SIZE.height,
-    });
     this.load.spritesheet(ASSET.PLAYER, player, {
       frameWidth: PLAYER_SIZE.width,
       frameHeight: PLAYER_SIZE.height,
     });
     this.load.audio(SOUND.PUNCH, punch);
-    this.load.audio(SOUND.ENEMY_HIT, enemyHit);
   }
 
   create() {

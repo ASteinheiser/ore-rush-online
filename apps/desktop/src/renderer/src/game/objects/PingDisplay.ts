@@ -19,6 +19,8 @@ export class PingDisplay {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
 
+    this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(102);
+
     this.pingText = new CustomText(this.scene, 0, 0, '--', {
       fontFamily: 'Montserrat',
       fontSize: 14,
@@ -26,8 +28,6 @@ export class PingDisplay {
     })
       .setOrigin(1, 0)
       .setScrollFactor(0);
-
-    this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(99);
 
     const layout = () => {
       const { width } = this.scene.scale;

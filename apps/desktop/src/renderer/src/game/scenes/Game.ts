@@ -17,9 +17,10 @@ import type { Desktop_GetGameResultsQuery, Desktop_GetGameResultsQueryVariables 
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { Player } from '../objects/Player';
 import { PunchBox } from '../objects/PunchBox';
-import { Enemy } from '../objects/Enemy';
+import { Block } from '../objects/Block';
 import { CustomText } from '../objects/CustomText';
 import { PingDisplay } from '../objects/PingDisplay';
+import { FogOverlay } from '../objects/FogOverlay';
 import { ASSET, SCENE } from '../constants';
 
 const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL;
@@ -40,7 +41,11 @@ export class Game extends Scene {
   currentPlayer?: Player;
   /** This is used to track the player according to the server */
   currentPlayerServer?: Phaser.GameObjects.Rectangle;
-  enemyEntities: Record<string, Enemy> = {};
+  blocks: Array<Block> = [];
+  fogOverlay?: FogOverlay;
+
+  ironCountText?: CustomText;
+  goldCountText?: CustomText;
 
   escapeKey?: Phaser.Input.Keyboard.Key;
   cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -78,7 +83,7 @@ export class Game extends Scene {
     this.add
       .rectangle(0, 0, MAP_SIZE.width, MAP_SIZE.height)
       .setOrigin(0, 0)
-      .setDepth(99)
+      .setDepth(100)
       .setStrokeStyle(8, 0x990099);
 
     // set the background image to cover the entire map area
@@ -94,9 +99,21 @@ export class Game extends Scene {
       fontSize: 20,
     }).setScrollFactor(0);
 
+    this.ironCountText = new CustomText(this, 0, 0, 'Iron: 0', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+    }).setScrollFactor(0);
+
+    this.goldCountText = new CustomText(this, 0, 0, 'Gold: 0', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+    }).setScrollFactor(0);
+
     const layout = () => {
       const { width } = this.scale;
       leaveText.setPosition((width - leaveText.width) / 2, 20);
+      this.ironCountText?.setPosition(20, 20);
+      this.goldCountText?.setPosition(20, 40);
     };
 
     layout();
@@ -142,6 +159,7 @@ export class Game extends Scene {
     this.reconnectionAttempt = 0;
     this.room.reconnection.maxRetries = 8;
 
+    this.fogOverlay = new FogOverlay(this);
     this.pingDisplay = new PingDisplay(this);
     this.pingDisplay.start(this.room);
 
@@ -189,12 +207,14 @@ export class Game extends Scene {
     const $ = getStateCallbacks(this.room);
 
     $(this.room.state).players.onAdd((player, sessionId) => {
-      const entity = this.physics.add.sprite(player.x, player.y, ASSET.PLAYER).setDepth(100);
+      const entity = this.physics.add.sprite(player.x, player.y, ASSET.PLAYER).setDepth(101);
 
       const nameText = new CustomText(this, player.x, player.y, player.username, {
         fontFamily: 'Tiny5',
         fontSize: 12,
-      }).setOrigin(0.5, 2.75);
+      })
+        .setOrigin(0.5, 2.75)
+        .setDepth(101);
 
       const newPlayer = new Player(this, entity, nameText);
 
@@ -207,11 +227,14 @@ export class Game extends Scene {
         this.cameras.main.startFollow(entity, true, 0.1, 0.1);
 
         // #region FOR DEBUGGING PURPOSES
-        this.currentPlayerServer = this.add.rectangle(0, 0, entity.width, entity.height).setDepth(100);
+        this.currentPlayerServer = this.add.rectangle(0, 0, entity.width, entity.height).setDepth(101);
         this.currentPlayerServer.setStrokeStyle(1, 0xff0000);
         // #endregion FOR DEBUGGING PURPOSES
 
         $(player).onChange(() => {
+          this.ironCountText?.setText(`Iron: ${player.inventory.iron}`);
+          this.goldCountText?.setText(`Gold: ${player.inventory.gold}`);
+
           // #region FOR DEBUGGING PURPOSES
           if (this.currentPlayerServer) {
             this.currentPlayerServer.x = player.x;
@@ -268,16 +291,27 @@ export class Game extends Scene {
       } else {
         // update the other players positions from the server
         $(player).onChange(() => {
-          entity.setData('serverUsername', player.username);
-          entity.setData('serverX', player.x);
-          entity.setData('serverY', player.y);
-          entity.setData('serverAttack', player.isAttacking);
+          const inView = player.x !== undefined && player.y !== undefined;
 
-          // #region FOR DEBUGGING PURPOSES
-          if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
-            new PunchBox(this, player.attackDamageFrameX, player.attackDamageFrameY, 0xff0000);
+          if (inView) {
+            entity.setData('serverUsername', player.username);
+            entity.setData('serverX', player.x);
+            entity.setData('serverY', player.y);
+            entity.setData('serverAttack', player.isAttacking);
+
+            if (!entity.visible || !nameText.visible) {
+              newPlayer.forceMove({ x: player.x, y: player.y });
+            }
+
+            // #region FOR DEBUGGING PURPOSES
+            if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
+              new PunchBox(this, player.attackDamageFrameX, player.attackDamageFrameY, 0xff0000);
+            }
+            // #endregion FOR DEBUGGING PURPOSES
           }
-          // #endregion FOR DEBUGGING PURPOSES
+
+          entity.setVisible(inView);
+          nameText.setVisible(inView);
         });
       }
     });
@@ -290,24 +324,20 @@ export class Game extends Scene {
       }
     });
 
-    $(this.room.state).enemies.onAdd((enemy) => {
-      const entity = new Enemy(this, enemy.x, enemy.y);
-      this.enemyEntities[enemy.id] = entity;
+    $(this.room.state).blocks.onAdd((block) => {
+      const entity = new Block(this, block.x, block.y, block.type, block.hp, block.maxHp);
+      this.blocks[block.id] = entity;
 
-      $(enemy).onChange(() => {
-        entity.move(
-          Phaser.Math.Linear(entity.entity.x, enemy.x, 0.2),
-          Phaser.Math.Linear(entity.entity.y, enemy.y, 0.2)
-        );
+      $(block).onChange(() => {
+        entity.update(block.hp, block.maxHp, block.type);
       });
     });
 
-    $(this.room.state).enemies.onRemove((enemy) => {
-      const foundEnemy = this.enemyEntities[enemy.id];
-      if (foundEnemy) {
-        this.currentPlayer?.hit();
-        foundEnemy.destroy();
-        delete this.enemyEntities[enemy.id];
+    $(this.room.state).blocks.onRemove((block) => {
+      const foundBlock = this.blocks[block.id];
+      if (foundBlock) {
+        foundBlock.destroy();
+        delete this.blocks[block.id];
       }
     });
   }
@@ -315,6 +345,8 @@ export class Game extends Scene {
   update(_: number, delta: number): void {
     // skip if not yet connected
     if (!this.currentPlayer) return;
+
+    this.fogOverlay?.update(this.currentPlayer);
 
     this.elapsedTime += delta;
     while (this.elapsedTime >= FIXED_TIME_STEP) {
@@ -390,8 +422,11 @@ export class Game extends Scene {
     Object.values(this.playerEntities).forEach((player) => player.destroy());
     this.playerEntities = {};
 
-    Object.values(this.enemyEntities).forEach((enemy) => enemy.destroy());
-    this.enemyEntities = {};
+    this.blocks.forEach((block) => block.destroy());
+    this.blocks = [];
+
+    this.fogOverlay?.destroy();
+    delete this.fogOverlay;
   }
 
   cleanupRoom() {

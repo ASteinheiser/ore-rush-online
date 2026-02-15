@@ -10,11 +10,9 @@ export const SCENE = {
 
 export const ASSET = {
   BACKGROUND: 'background',
-  ENEMY: 'enemy',
   PLAYER: 'player',
 } as const;
 
 export const SOUND = {
   PUNCH: 'punch',
-  ENEMY_HIT: 'enemy_hit',
 } as const;

@@ -1,6 +1,6 @@
 import { Room, ServerError, type AuthContext, type Client } from '@colyseus/core';
+import { StateView } from '@colyseus/schema';
 import { CloseCode } from 'colyseus';
-import { nanoid } from 'nanoid';
 import {
   calculateMovement,
   FIXED_TIME_STEP,
@@ -12,9 +12,7 @@ import {
   ATTACK_COOLDOWN,
   ATTACK_DAMAGE__DELAY,
   ATTACK_DAMAGE__FRAME_TIME,
-  ENEMY_SPAWN_RATE,
-  MAX_ENEMIES,
-  ENEMY_SIZE,
+  BLOCK_SIZE,
   WS_EVENT,
   WS_CODE,
   INACTIVITY_TIMEOUT,
@@ -27,7 +25,10 @@ import type { PrismaClient, Profile } from '../../repo/prisma-client/client';
 import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
-import { GameRoomState, Player, Enemy } from './roomState';
+import { GameRoomState } from './schemas';
+import { Player, PLAYER_VIEW_LEVELS } from './schemas/Player';
+import { BlockMap } from './systems/BlockMap';
+import { PlayerVision } from './systems/PlayerVision';
 
 const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
@@ -57,14 +58,14 @@ interface GameRoomArgs {
 }
 
 export class GameRoom extends Room {
+  prisma: PrismaClient;
   maxClients = MAX_PLAYERS_PER_ROOM;
   patchRate = SERVER_PATCH_RATE;
 
   state = new GameRoomState();
+  blockMap = new BlockMap(this);
+  playerVision = new PlayerVision(this);
   elapsedTime = 0;
-  lastEnemySpawnTime = 0;
-
-  prisma: PrismaClient;
 
   connectionCheckTimeout: NodeJS.Timeout;
   reconnectionTimeout = RECONNECTION_TIMEOUT;
@@ -145,6 +146,12 @@ export class GameRoom extends Room {
 
   fixedTick() {
     this.state.players.forEach((player, sessionId) => {
+      const client = this.clients.find((c) => c.sessionId === sessionId);
+      if (client?.view) {
+        this.blockMap.updateClientVisibleBlocks(client, player);
+        this.playerVision.updateClientVisiblePlayers(client, player);
+      }
+
       try {
         let input: undefined | InputPayload;
         // dequeue player inputs
@@ -175,22 +182,33 @@ export class GameRoom extends Room {
               : player.x - ATTACK_OFFSET_X;
             player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
 
-            // check if the attack hit an enemy
-            for (const enemy of this.state.enemies) {
+            // check if the attack hit a block
+            for (const block of this.state.blocks) {
               if (
-                enemy.x - ENEMY_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
-                enemy.x + ENEMY_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
-                enemy.y - ENEMY_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
-                enemy.y + ENEMY_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
+                block.type !== 'empty' &&
+                !player.blocksHit.includes(block.id) &&
+                block.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
+                block.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
+                block.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
+                block.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
               ) {
-                this.state.enemies.splice(this.state.enemies.indexOf(enemy), 1);
-                player.killCount++;
-                RESULTS[this.roomId][player.userId].killCount++;
+                player.blocksHit.push(block.id);
+
+                block.hp--;
+                if (block.hp <= 0) {
+                  if (block.type === 'iron' || block.type === 'gold') {
+                    player.inventory[block.type]++;
+                  }
+                  block.hp = 0;
+                  block.maxHp = 0;
+                  block.type = 'empty';
+                }
               }
             }
           } else {
             player.attackDamageFrameX = undefined;
             player.attackDamageFrameY = undefined;
+            player.blocksHit = [];
           }
 
           // if the player is mid-attack, don't process any more inputs
@@ -200,7 +218,7 @@ export class GameRoom extends Room {
             player.isAttacking = true;
             player.attackCount++;
             player.lastAttackTime = currentTime;
-            RESULTS[this.roomId][player.userId].attackCount++;
+            // RESULTS[this.roomId][player.userId].attackCount++;
           } else {
             player.isAttacking = false;
           }
@@ -213,30 +231,6 @@ export class GameRoom extends Room {
           this.kickClient(WS_CODE.INTERNAL_SERVER_ERROR, message, client);
         }
       }
-    });
-
-    const canSpawn = Date.now() >= this.lastEnemySpawnTime + ENEMY_SPAWN_RATE;
-
-    if (this.state.enemies.length < MAX_ENEMIES && canSpawn) {
-      this.lastEnemySpawnTime = Date.now();
-
-      const enemy = new Enemy();
-      enemy.id = nanoid();
-      enemy.x = Math.random() * MAP_SIZE.width;
-      enemy.y = Math.random() * MAP_SIZE.height;
-
-      this.state.enemies.push(enemy);
-    }
-
-    // move the enemies randomly
-    this.state.enemies.forEach((enemy) => {
-      const moveLeft = Boolean(Math.round(Math.random()) * 1);
-      const moveUp = Boolean(Math.round(Math.random()) * 1);
-      const input = { left: moveLeft, right: !moveLeft, up: moveUp, down: !moveUp };
-
-      const { x: newX, y: newY } = calculateMovement({ ...enemy, ...ENEMY_SIZE, ...input });
-      enemy.x = newX;
-      enemy.y = newY;
     });
   }
 
@@ -346,6 +340,21 @@ export class GameRoom extends Room {
     }
 
     this.state.players.set(client.sessionId, player);
+    this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
+
+    client.view = new StateView();
+    client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
+    client.view.add(player, PLAYER_VIEW_LEVELS.PRIVATE);
+    client.view.add(player, PLAYER_VIEW_LEVELS.DEBUG);
+
+    this.state.players.forEach((player, sessionId) => {
+      if (sessionId === client.sessionId) return; // skip self
+      // let other players know that this player exists (name only)
+      const otherClient = this.clients.find((c) => c.sessionId === sessionId);
+      if (otherClient) {
+        otherClient.view.add(player);
+      }
+    });
 
     if (!RESULTS[this.roomId]) RESULTS[this.roomId] = {};
     RESULTS[this.roomId][player.userId] = {
@@ -423,6 +432,7 @@ export class GameRoom extends Room {
     this.expectingReconnections.delete(sessionId);
     this.forcedDisconnects.delete(sessionId);
     this.state.players.delete(sessionId);
+    this.blockMap.clientVisibleBlocks.delete(sessionId);
   }
 
   onDispose() {
