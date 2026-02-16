@@ -34,18 +34,6 @@ const MAX_PLAYERS_PER_ROOM = 10;
  * Updates should be interpolated clientside to appear smoother */
 const SERVER_PATCH_RATE = 1000 / 20; // 20fps = 50ms
 
-/** Basic in-memory storage of results for all players in a room */
-export const RESULTS: ResultStorage = {};
-interface ResultStorage {
-  [roomId: string]: {
-    [userId: string]: {
-      username: string;
-      attackCount: number;
-      killCount: number;
-    };
-  };
-}
-
 interface AuthResult {
   user: Profile;
   tokenExpiresAt: number;
@@ -217,7 +205,6 @@ export class GameRoom extends Room {
             player.isAttacking = true;
             player.attackCount++;
             player.lastAttackTime = currentTime;
-            // RESULTS[this.roomId][player.userId].attackCount++;
           } else {
             player.isAttacking = false;
           }
@@ -341,13 +328,6 @@ export class GameRoom extends Room {
     this.state.players.set(client.sessionId, player);
     this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
     this.playerVision.setupVisionForClient(client, player);
-
-    if (!RESULTS[this.roomId]) RESULTS[this.roomId] = {};
-    RESULTS[this.roomId][player.userId] = {
-      username: user.userName,
-      attackCount: player.attackCount,
-      killCount: player.killCount,
-    };
   }
 
   /** Disconnect a client (allowing reconnection by default) */
@@ -428,9 +408,6 @@ export class GameRoom extends Room {
     });
 
     if (this.connectionCheckTimeout) clearInterval(this.connectionCheckTimeout);
-
-    // delete results after 10 seconds -- stop gap for in-memory management
-    setTimeout(() => delete RESULTS[this.roomId], 10 * 1000);
   }
 
   onUncaughtException(error: Error, methodName: string) {
