@@ -346,7 +346,7 @@ export class Game extends Scene {
     // skip if not yet connected
     if (!this.room || !this.currentPlayer) return;
 
-    this.fogOverlay?.update(this.currentPlayer);
+    this.fogOverlay?.update(this.currentPlayer.entity);
 
     for (const sessionId in this.playerEntities) {
       // skip the current player since we are handling in the fixedTick and server onChange

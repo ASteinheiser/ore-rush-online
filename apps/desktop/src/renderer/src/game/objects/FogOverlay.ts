@@ -1,5 +1,4 @@
-import { MAP_SIZE, PLAYER_VIEW_RADIUS } from '@repo/core-game';
-import type { Player } from './Player';
+import { type EntityPosition, MAP_SIZE, PLAYER_VIEW_RADIUS } from '@repo/core-game';
 
 export class FogOverlay {
   fogOverlay?: Phaser.GameObjects.Graphics;
@@ -8,10 +7,9 @@ export class FogOverlay {
     this.fogOverlay = scene.add.graphics().setDepth(102).setScrollFactor(1);
   }
 
-  public update(playerToFollow?: Player): void {
-    if (!playerToFollow || !this.fogOverlay) return;
+  public update({ x, y }: EntityPosition): void {
+    if (!this.fogOverlay) return;
 
-    const { x, y } = playerToFollow.entity;
     const innerX = x - PLAYER_VIEW_RADIUS;
     const innerY = y - PLAYER_VIEW_RADIUS;
     const holeSize = PLAYER_VIEW_RADIUS * 2;
