@@ -6,19 +6,19 @@ import { WS_EVENT } from '@repo/core-game';
 const MARGIN = 16;
 const PADDING = 6;
 const CORNER_RADIUS = 8;
+const FPS_OFFSET = 38;
 
 export class PingDisplay {
-  scene: Phaser.Scene;
-  room?: Room;
   pingStartTime = 0;
   currentPingMs = 0;
   timerEvent?: Phaser.Time.TimerEvent;
   background: Phaser.GameObjects.Graphics;
   pingText: CustomText;
 
-  constructor(scene: Phaser.Scene) {
-    this.scene = scene;
-
+  constructor(
+    private scene: Phaser.Scene,
+    private room: Room
+  ) {
     this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(102);
 
     this.pingText = new CustomText(this.scene, 0, 0, '--', {
@@ -31,7 +31,7 @@ export class PingDisplay {
 
     const layout = () => {
       const { width } = this.scene.scale;
-      this.pingText.setPosition(width - MARGIN, MARGIN);
+      this.pingText.setPosition(width - MARGIN, MARGIN + FPS_OFFSET);
       this.updateBackgroundSize();
     };
 
@@ -40,11 +40,11 @@ export class PingDisplay {
     this.scene.events.once(Scenes.Events.SHUTDOWN, () => {
       this.scene.scale.off(Phaser.Scale.Events.RESIZE, layout);
     });
+
+    this.start();
   }
 
-  start(room: Room) {
-    this.room = room;
-
+  start() {
     this.room.onMessage(WS_EVENT.PONG, () => {
       this.currentPingMs = Date.now() - this.pingStartTime;
       this.updateDisplay();

@@ -20,6 +20,7 @@ import { PunchBox } from '../objects/PunchBox';
 import { Block } from '../objects/Block';
 import { CustomText } from '../objects/CustomText';
 import { PingDisplay } from '../objects/PingDisplay';
+import { FpsDisplay } from '../objects/FpsDisplay';
 import { FogOverlay } from '../objects/FogOverlay';
 import { ASSET, SCENE } from '../constants';
 
@@ -33,6 +34,7 @@ const RECONNECT_BACKOFF_MS = 1000;
 export class Game extends Scene {
   client: Client;
   room?: Room;
+  fpsDisplay?: FpsDisplay;
   pingDisplay?: PingDisplay;
   elapsedTime = 0;
   reconnectionAttempt = 0;
@@ -160,8 +162,8 @@ export class Game extends Scene {
     this.room.reconnection.maxRetries = 8;
 
     this.fogOverlay = new FogOverlay(this);
-    this.pingDisplay = new PingDisplay(this);
-    this.pingDisplay.start(this.room);
+    this.fpsDisplay = new FpsDisplay(this);
+    this.pingDisplay = new PingDisplay(this, this.room);
 
     this.room.onError((code, message) => {
       let errorMessage = 'Unexpected error with room connection';
@@ -346,6 +348,7 @@ export class Game extends Scene {
     // skip if not yet connected
     if (!this.room || !this.currentPlayer) return;
 
+    this.fpsDisplay?.update(delta);
     this.fogOverlay?.update(this.currentPlayer.entity);
 
     for (const sessionId in this.playerEntities) {
@@ -416,6 +419,8 @@ export class Game extends Scene {
   }
 
   cleanup() {
+    this.fpsDisplay?.destroy();
+    delete this.fpsDisplay;
     this.pingDisplay?.destroy();
     delete this.pingDisplay;
 
