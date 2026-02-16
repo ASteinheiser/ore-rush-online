@@ -12,7 +12,7 @@ import {
   type InputPayload,
 } from '@repo/core-game';
 import type { GameRoom } from '../../src/rooms/GameRoom';
-import { Player } from '../../src/rooms/GameRoom/roomState';
+import { Player } from '../../src/rooms/GameRoom/schemas/Player';
 import { makeApp } from '../../src/app.config';
 import { ROOM_ERROR } from '../../src/rooms/error';
 import { prisma } from '../../src/repo/client';
