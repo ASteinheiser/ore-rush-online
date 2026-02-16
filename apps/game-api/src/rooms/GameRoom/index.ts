@@ -1,4 +1,4 @@
-import { Room, ServerError, type AuthContext, type Client } from '@colyseus/core';
+import { Room, type AuthContext, type Client } from '@colyseus/core';
 import { CloseCode } from 'colyseus';
 import {
   calculateMovement,
@@ -20,12 +20,13 @@ import {
   type AuthPayload,
   type InputPayload,
 } from '@repo/core-game';
-import type { PrismaClient, Profile } from '../../repo/prisma-client/client';
+import type { PrismaClient } from '../../repo/prisma-client/client';
 import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
 import { GameRoomState } from './schemas';
 import { Player } from './schemas/Player';
+import { Auth, type AuthResult } from './systems/Auth';
 import { BlockMap } from './systems/BlockMap';
 import { PlayerVision } from './systems/PlayerVision';
 
@@ -34,20 +35,17 @@ const MAX_PLAYERS_PER_ROOM = 10;
  * Updates should be interpolated clientside to appear smoother */
 const SERVER_PATCH_RATE = 1000 / 20; // 20fps = 50ms
 
-interface AuthResult {
-  user: Profile;
-  tokenExpiresAt: number;
-}
-
 interface GameRoomArgs {
   prisma: PrismaClient;
   connectionCheckInterval: number;
 }
 
 export class GameRoom extends Room {
-  prisma: PrismaClient;
-  maxClients = MAX_PLAYERS_PER_ROOM;
   patchRate = SERVER_PATCH_RATE;
+  maxClients = MAX_PLAYERS_PER_ROOM;
+
+  prisma: PrismaClient;
+  auth = new Auth(this);
 
   state = new GameRoomState();
   blockMap = new BlockMap(this);
@@ -58,6 +56,10 @@ export class GameRoom extends Room {
   reconnectionTimeout = RECONNECTION_TIMEOUT;
   expectingReconnections = new Set<string>();
   forcedDisconnects = new Set<string>();
+
+  async onAuth(_: Client, __: unknown, context: AuthContext): Promise<AuthResult> {
+    return this.auth.onAuth(context);
+  }
 
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
     logger.info({
@@ -259,17 +261,6 @@ export class GameRoom extends Room {
         this.kickClient(WS_CODE.TIMEOUT, reason, client);
       }
     });
-  }
-
-  /** errors in onAuth will not allow reconnection */
-  async onAuth(_: Client, __: unknown, context: AuthContext): Promise<AuthResult> {
-    const authUser = validateJwt(context.token);
-    if (!authUser) throw new ServerError(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN);
-
-    const dbUser = await this.prisma.profile.findUnique({ where: { userId: authUser.id } });
-    if (!dbUser) throw new ServerError(WS_CODE.NOT_FOUND, ROOM_ERROR.PROFILE_NOT_FOUND);
-
-    return { user: dbUser, tokenExpiresAt: authUser.expiresAt };
   }
 
   onJoin(client: Client, _: unknown, { user, tokenExpiresAt }: AuthResult) {
