@@ -1,4 +1,5 @@
 import type { Client } from 'colyseus';
+import { StateView } from '@colyseus/schema';
 import { PLAYER_VIEW_RADIUS } from '@repo/core-game';
 import { PLAYER_VIEW_LEVELS, type Player } from '../schemas/Player';
 import type { GameRoom } from '../index';
@@ -7,6 +8,25 @@ export class PlayerVision {
   clientVisiblePlayers = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {}
+
+  setupVisionForClient(client: Client, player: Player) {
+    // initialize StateView
+    client.view = new StateView();
+    // allow player to see self and private fields
+    client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
+    client.view.add(player, PLAYER_VIEW_LEVELS.PRIVATE);
+    client.view.add(player, PLAYER_VIEW_LEVELS.DEBUG);
+
+    // allow other players to see player's public fields (name only)
+    this.room.state.players.forEach((player, sessionId) => {
+      if (sessionId === client.sessionId) return; // skip self
+
+      const otherClient = this.room.clients.getById(sessionId);
+      if (otherClient) {
+        otherClient.view.add(player);
+      }
+    });
+  }
 
   updateClientVisiblePlayers(client: Client, player: Player) {
     const visibleToClient = this.clientVisiblePlayers.get(client.sessionId) ?? new Set();

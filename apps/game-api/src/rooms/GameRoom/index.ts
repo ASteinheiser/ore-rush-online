@@ -1,5 +1,4 @@
 import { Room, ServerError, type AuthContext, type Client } from '@colyseus/core';
-import { StateView } from '@colyseus/schema';
 import { CloseCode } from 'colyseus';
 import {
   calculateMovement,
@@ -26,7 +25,7 @@ import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
 import { GameRoomState } from './schemas';
-import { Player, PLAYER_VIEW_LEVELS } from './schemas/Player';
+import { Player } from './schemas/Player';
 import { BlockMap } from './systems/BlockMap';
 import { PlayerVision } from './systems/PlayerVision';
 
@@ -341,20 +340,7 @@ export class GameRoom extends Room {
 
     this.state.players.set(client.sessionId, player);
     this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
-
-    client.view = new StateView();
-    client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
-    client.view.add(player, PLAYER_VIEW_LEVELS.PRIVATE);
-    client.view.add(player, PLAYER_VIEW_LEVELS.DEBUG);
-
-    this.state.players.forEach((player, sessionId) => {
-      if (sessionId === client.sessionId) return; // skip self
-      // let other players know that this player exists (name only)
-      const otherClient = this.clients.getById(sessionId);
-      if (otherClient) {
-        otherClient.view.add(player);
-      }
-    });
+    this.playerVision.setupVisionForClient(client, player);
 
     if (!RESULTS[this.roomId]) RESULTS[this.roomId] = {};
     RESULTS[this.roomId][player.userId] = {
