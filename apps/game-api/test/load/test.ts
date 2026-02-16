@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { Client } from '@colyseus/sdk';
 import { cli, type Options } from '@colyseus/loadtest';
 import { WS_ROOM, WS_EVENT, type InputPayload } from '@repo/core-game';
-import type { GameRoomState } from '../../src/rooms/GameRoom/roomState';
+import type { GameRoomState } from '../../src/rooms/GameRoom/schemas';
 import { prisma } from '../../src/repo/client';
 import { generateTestJWT, setupTestDb, cleanupTestDb, TEST_USERS } from '../integration/utils';
 
@@ -13,7 +13,7 @@ const TEST_USER_EXPIRES_IN_MS = 3 * 60 * 1000; // 3 minutes
 
 let playerCount = 0;
 // keep track of which player is tracking which enemy
-const enemiesTracked: Record<string, string> = {};
+// const enemiesTracked: Record<string, string> = {};
 
 export async function main(options: Options) {
   console.log('joining room...', options);
@@ -43,32 +43,32 @@ export async function main(options: Options) {
       console.log(`${player.username} hit an enemy!`);
     }
 
-    let closestDistanceSquared = Infinity;
+    // let closestDistanceSquared = Infinity;
 
-    state.enemies.forEach((enemy) => {
-      // only allow one player to track one enemy (simple way to prevent AI grouping)
-      if (Object.values(enemiesTracked).includes(enemy.id)) return;
+    // state.enemies.forEach((enemy) => {
+    //   // only allow one player to track one enemy (simple way to prevent AI grouping)
+    //   if (Object.values(enemiesTracked).includes(enemy.id)) return;
 
-      const distanceSquared = (player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2;
-      if (distanceSquared < closestDistanceSquared) {
-        closestDistanceSquared = distanceSquared;
-        enemiesTracked[player.userId] = enemy.id;
-      }
-    });
+    //   const distanceSquared = (player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2;
+    //   if (distanceSquared < closestDistanceSquared) {
+    //     closestDistanceSquared = distanceSquared;
+    //     enemiesTracked[player.userId] = enemy.id;
+    //   }
+    // });
 
-    const closestEnemy = state.enemies.find((enemy) => enemiesTracked[player.userId] === enemy.id);
-    if (closestEnemy) {
-      const input: InputPayload = {
-        seq: 0,
-        left: closestEnemy.x < player.x,
-        right: closestEnemy.x > player.x,
-        up: closestEnemy.y < player.y,
-        down: closestEnemy.y > player.y,
-        attack: true,
-      };
+    // const closestEnemy = state.enemies.find((enemy) => enemiesTracked[player.userId] === enemy.id);
+    // if (closestEnemy) {
+    // TODO: fix this
+    const input: InputPayload = {
+      seq: 0,
+      left: false,
+      right: false,
+      up: false,
+      down: false,
+      attack: true,
+    };
 
-      room.send(WS_EVENT.PLAYER_INPUT, input);
-    }
+    room.send(WS_EVENT.PLAYER_INPUT, input);
   });
 
   room.onLeave(async (code) => {
