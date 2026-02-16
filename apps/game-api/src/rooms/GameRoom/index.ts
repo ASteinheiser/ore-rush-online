@@ -224,7 +224,7 @@ export class GameRoom extends Room {
           }
         }
       } catch (error) {
-        const client = this.clients.find((c) => c.sessionId === sessionId);
+        const client = this.clients.getById(sessionId);
         if (client) {
           const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;
           // allow reconnection as player inputs will be cleared, potentially solving issues
@@ -238,7 +238,7 @@ export class GameRoom extends Room {
     const clientsToRemove: Array<{ client: Client; reason: string }> = [];
 
     this.state.players.forEach((player, sessionId) => {
-      const client = this.clients.find((c) => c.sessionId === sessionId);
+      const client = this.clients.getById(sessionId);
       if (!client) {
         // Skip removal if we're still waiting for this client to reconnect
         if (this.expectingReconnections.has(sessionId)) return;
@@ -308,7 +308,7 @@ export class GameRoom extends Room {
         },
       });
 
-      const existingClient = this.clients.find((c) => c.sessionId === existingSessionId);
+      const existingClient = this.clients.getById(existingSessionId);
       if (existingClient) {
         // do not allow reconnection, this client/player should be forcefully removed
         this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.NEW_CONNECTION_FOUND, existingClient, false);
@@ -350,7 +350,7 @@ export class GameRoom extends Room {
     this.state.players.forEach((player, sessionId) => {
       if (sessionId === client.sessionId) return; // skip self
       // let other players know that this player exists (name only)
-      const otherClient = this.clients.find((c) => c.sessionId === sessionId);
+      const otherClient = this.clients.getById(sessionId);
       if (otherClient) {
         otherClient.view.add(player);
       }
