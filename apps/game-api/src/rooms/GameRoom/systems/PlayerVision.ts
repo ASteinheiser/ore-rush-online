@@ -22,10 +22,12 @@ export class PlayerVision {
         nowVisible.add(otherSessionId);
         if (!visibleToClient.has(otherSessionId)) {
           client.view.add(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
+          client.view.add(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
         }
       } else {
         if (visibleToClient.has(otherSessionId)) {
           client.view.remove(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
+          client.view.remove(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
         }
       }
     }
