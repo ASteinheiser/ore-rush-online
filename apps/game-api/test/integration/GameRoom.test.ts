@@ -2,7 +2,6 @@ import assert from 'assert';
 import type { ServerError } from '@colyseus/core';
 import { type ColyseusTestServer, boot } from '@colyseus/testing';
 import type { GoTrueAdminApi } from '@supabase/supabase-js';
-import type { ToJSON } from '@colyseus/schema';
 import {
   WS_CODE,
   WS_EVENT,
@@ -157,8 +156,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const room = getRoom(client.roomId);
       room.state.players.get(client.sessionId).attackCount = 100;
       room.state.players.get(client.sessionId).killCount = 50;
-      // get a snapshot of the player state
-      const oldPlayer = room.state.toJSON().players[client.sessionId];
+
+      const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
       assert.strictEqual(oldPlayer.attackCount, 100);
       assert.strictEqual(oldPlayer.killCount, 50);
@@ -219,8 +218,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       room.state.players.get(client.sessionId).attackCount = 100;
       room.state.players.get(client.sessionId).killCount = 50;
-      // get a snapshot of the player state
-      const oldPlayer = room.state.toJSON().players[client.sessionId];
+
+      const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
       assert.strictEqual(oldPlayer.attackCount, 100);
       assert.strictEqual(oldPlayer.killCount, 50);
@@ -250,8 +249,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       orphanedPlayer.attackCount = 100;
       orphanedPlayer.killCount = 50;
       room.state.players.set(badSessionId, orphanedPlayer);
-      // get a snapshot of the player state
-      const playerSnapshot = room.state.toJSON().players[badSessionId];
+
+      const playerSnapshot = getPlayerSnapshot(room, badSessionId);
 
       assert.strictEqual(playerSnapshot.attackCount, 100);
       assert.strictEqual(playerSnapshot.killCount, 50);
@@ -296,8 +295,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       room.state.players.get(client.sessionId).attackCount = 100;
       room.state.players.get(client.sessionId).killCount = 50;
-      // get a snapshot of the player state
-      const oldPlayer = room.state.toJSON().players[client.sessionId];
+
+      const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
       assert.strictEqual(oldPlayer.userId, TEST_USERS[0].id);
@@ -335,10 +334,9 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      // get a snapshot of the player state
-      const oldPlayer = room.state.toJSON().players[client.sessionId];
+      const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
-      await client.send(WS_EVENT.PLAYER_INPUT, {
+      client.send(WS_EVENT.PLAYER_INPUT, {
         somePayload: { someKey: NaN },
       });
       await room.waitForNextSimulationTick();
@@ -586,10 +584,33 @@ const assertExtraPlayerState = ({ room, clientIds, extraPlayerIds }: AssertExtra
   });
 };
 
+interface PlayerSnapshot {
+  userId: string;
+  username: string;
+  x: number;
+  y: number;
+  attackCount: number;
+  killCount: number;
+  lastActivityTime: number;
+}
+/** Snapshot of player fields for assertion (use live object, not toJSON which omits non-@type fields) */
+const getPlayerSnapshot = (room: GameRoom, playerId: string): PlayerSnapshot => {
+  const p = room.state.players.get(playerId);
+  return {
+    userId: p.userId,
+    username: p.username,
+    x: p.x,
+    y: p.y,
+    attackCount: p.attackCount,
+    killCount: p.killCount,
+    lastActivityTime: p.lastActivityTime,
+  };
+};
+
 interface AssertPlayerFieldsStateArgs {
   room: GameRoom;
   playerId: string;
-  expectedPlayer: ToJSON<Player>;
+  expectedPlayer: PlayerSnapshot;
 }
 /** Asserts that the player has the correct fields */
 const assertPlayerFieldsState = ({ room, playerId, expectedPlayer }: AssertPlayerFieldsStateArgs) => {
