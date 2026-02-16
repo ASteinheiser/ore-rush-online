@@ -358,8 +358,10 @@ export class Game extends Scene {
       const serverPlayer = this.playerEntities[sessionId];
       if (!serverPlayer.entity.visible) continue; // skip player if not visible
 
-      const { serverX, serverY, serverAttack } = serverPlayer.entity.data.values;
+      const { serverX, serverY, serverAttack, serverUsername } = serverPlayer.entity.data.values;
       if (serverX === undefined || serverY === undefined) continue;
+
+      serverPlayer.nameText.setText(serverUsername);
 
       if (serverAttack) {
         serverPlayer.punch();
