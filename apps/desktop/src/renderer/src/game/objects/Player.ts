@@ -1,4 +1,4 @@
-import { ATTACK_DAMAGE__DELAY } from '@repo/core-game';
+import { ATTACK_DAMAGE__DELAY, type EntityPosition } from '@repo/core-game';
 import { SOUND } from '../constants';
 
 /** Used to handle slight differences in player position due to interpolation of server values */
@@ -27,14 +27,14 @@ export class Player {
   }
 
   /** Force the player to move to a specific position, skips animations, interpolation, etc. */
-  forceMove({ x, y }: { x: number; y: number }) {
+  forceMove({ x, y }: EntityPosition) {
     this.entity.x = x;
     this.entity.y = y;
     this.nameText.x = x;
     this.nameText.y = y;
   }
 
-  move({ x, y }: { x: number; y: number }) {
+  move({ x, y }: EntityPosition) {
     const isMovingX = Math.abs(this.entity.x - x) > MOVEMENT_THRESHOLD;
     const isMovingY = Math.abs(this.entity.y - y) > MOVEMENT_THRESHOLD;
     const isMoving = isMovingX || isMovingY;
