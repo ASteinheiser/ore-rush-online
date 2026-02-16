@@ -344,9 +344,33 @@ export class Game extends Scene {
 
   update(_: number, delta: number): void {
     // skip if not yet connected
-    if (!this.currentPlayer) return;
+    if (!this.room || !this.currentPlayer) return;
 
     this.fogOverlay?.update(this.currentPlayer);
+
+    for (const sessionId in this.playerEntities) {
+      // skip the current player since we are handling in the fixedTick and server onChange
+      if (sessionId === this.room.sessionId) continue;
+      // interpolate all other player entities from the server
+      const serverPlayer = this.playerEntities[sessionId];
+      if (!serverPlayer.entity.visible) continue; // skip player if not visible
+
+      const { serverX, serverY, serverAttack } = serverPlayer.entity.data.values;
+      if (serverX === undefined || serverY === undefined) continue;
+
+      if (serverAttack) {
+        serverPlayer.punch();
+      } else {
+        serverPlayer.stopPunch();
+      }
+
+      const LERP_SPEED = 15;
+      const factor = Math.min(1, (LERP_SPEED * delta) / 1000);
+      serverPlayer.move({
+        x: Phaser.Math.Linear(serverPlayer.entity.x, serverX, factor),
+        y: Phaser.Math.Linear(serverPlayer.entity.y, serverY, factor),
+      });
+    }
 
     this.elapsedTime += delta;
     while (this.elapsedTime >= FIXED_TIME_STEP) {
@@ -389,24 +413,6 @@ export class Game extends Scene {
     const { x, y } = this.currentPlayer.entity;
     const newPosition = calculateMovement({ x, y, ...PLAYER_SIZE, left, right, up, down });
     this.currentPlayer.move(newPosition);
-
-    for (const sessionId in this.playerEntities) {
-      // skip the current player since we are handling on the client
-      if (sessionId === this.room.sessionId) continue;
-      // interpolate all other player entities from the server
-      const serverPlayer = this.playerEntities[sessionId];
-      const { serverX, serverY, serverAttack } = serverPlayer.entity.data.values;
-
-      if (serverAttack) {
-        serverPlayer.punch();
-      } else {
-        serverPlayer.stopPunch();
-      }
-      serverPlayer.move({
-        x: Phaser.Math.Linear(serverPlayer.entity.x, serverX, 0.2),
-        y: Phaser.Math.Linear(serverPlayer.entity.y, serverY, 0.2),
-      });
-    }
   }
 
   cleanup() {
