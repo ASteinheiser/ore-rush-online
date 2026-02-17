@@ -47,6 +47,52 @@ export class GameRoom extends Room {
   playerVision = new PlayerVision(this);
   playerMovement = new PlayerMovement(this);
 
+  onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
+    logger.info({
+      message: `New room created!`,
+      data: { roomId: this.roomId },
+    });
+
+    this.prisma = prisma;
+
+    this.auth.setupRefreshTokenHandler();
+    this.auth.startConnectionCheck(connectionCheckInterval);
+
+    // Ping/Pong for client RTT measurement
+    this.onMessage(WS_EVENT.PING, (client) => {
+      client.send(WS_EVENT.PONG);
+    });
+
+    this.onMessage(WS_EVENT.LEAVE_ROOM, (client) => {
+      // we explicitly do not want to allow reconnection here
+      this.auth.kickClient(WS_CODE.SUCCESS, 'Intentional leave', client, false);
+    });
+
+    this.onMessage(WS_EVENT.PLAYER_INPUT, (client, payload: InputPayload) => {
+      const player = this.state.players.get(client.sessionId);
+      if (!player) {
+        // do not allow reconnection, client will need to re-join to get a player
+        return this.auth.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+      }
+
+      if (!InputSchema.safeParse(payload).success) {
+        return this.auth.kickClient(WS_CODE.BAD_REQUEST, ROOM_ERROR.INVALID_PAYLOAD, client);
+      }
+
+      player.lastActivityTime = Date.now();
+      player.inputQueue.push(payload);
+    });
+
+    this.setSimulationInterval((deltaTime) => {
+      this.elapsedTime += deltaTime;
+
+      while (this.elapsedTime >= FIXED_TIME_STEP) {
+        this.elapsedTime -= FIXED_TIME_STEP;
+        this.fixedTick();
+      }
+    });
+  }
+
   onAuth(_: Client, __: unknown, context: AuthContext) {
     return this.auth.onAuth(context);
   }
@@ -94,52 +140,6 @@ export class GameRoom extends Room {
 
     // possibly handle saving game state
     // possibly handle disconnecting all clients if needed
-  }
-
-  onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
-    logger.info({
-      message: `New room created!`,
-      data: { roomId: this.roomId },
-    });
-
-    this.prisma = prisma;
-
-    this.auth.setupRefreshTokenHandler();
-    this.auth.startConnectionCheck(connectionCheckInterval);
-
-    // Ping/Pong for client RTT measurement
-    this.onMessage(WS_EVENT.PING, (client) => {
-      client.send(WS_EVENT.PONG);
-    });
-
-    this.onMessage(WS_EVENT.LEAVE_ROOM, (client) => {
-      // we explicitly do not want to allow reconnection here
-      this.auth.kickClient(WS_CODE.SUCCESS, 'Intentional leave', client, false);
-    });
-
-    this.onMessage(WS_EVENT.PLAYER_INPUT, (client, payload: InputPayload) => {
-      const player = this.state.players.get(client.sessionId);
-      if (!player) {
-        // do not allow reconnection, client will need to re-join to get a player
-        return this.auth.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
-      }
-
-      if (!InputSchema.safeParse(payload).success) {
-        return this.auth.kickClient(WS_CODE.BAD_REQUEST, ROOM_ERROR.INVALID_PAYLOAD, client);
-      }
-
-      player.lastActivityTime = Date.now();
-      player.inputQueue.push(payload);
-    });
-
-    this.setSimulationInterval((deltaTime) => {
-      this.elapsedTime += deltaTime;
-
-      while (this.elapsedTime >= FIXED_TIME_STEP) {
-        this.elapsedTime -= FIXED_TIME_STEP;
-        this.fixedTick();
-      }
-    });
   }
 
   fixedTick() {
