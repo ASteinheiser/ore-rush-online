@@ -13,11 +13,9 @@ import {
   WS_EVENT,
   WS_CODE,
   InputSchema,
-  type AuthPayload,
   type InputPayload,
 } from '@repo/core-game';
 import type { PrismaClient } from '../../repo/prisma-client/client';
-import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
 import { GameRoomState } from './schemas';
@@ -106,6 +104,9 @@ export class GameRoom extends Room {
 
     this.prisma = prisma;
 
+    this.auth.setupRefreshTokenHandler();
+    this.auth.startConnectionCheck(connectionCheckInterval);
+
     // Ping/Pong for client RTT measurement
     this.onMessage(WS_EVENT.PING, (client) => {
       client.send(WS_EVENT.PONG);
@@ -115,8 +116,6 @@ export class GameRoom extends Room {
       // we explicitly do not want to allow reconnection here
       this.auth.kickClient(WS_CODE.SUCCESS, 'Intentional leave', client, false);
     });
-
-    this.auth.startConnectionCheck(connectionCheckInterval);
 
     this.onMessage(WS_EVENT.PLAYER_INPUT, (client, payload: InputPayload) => {
       const player = this.state.players.get(client.sessionId);
@@ -131,33 +130,6 @@ export class GameRoom extends Room {
 
       player.lastActivityTime = Date.now();
       player.inputQueue.push(payload);
-    });
-
-    // errors in refreshToken event should not allow reconnection
-    // clients will need to re-authenticate when re-joining
-    this.onMessage(WS_EVENT.REFRESH_TOKEN, (client, payload: AuthPayload) => {
-      const authUser = validateJwt(payload.token);
-      if (!authUser) {
-        return this.auth.kickClient(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN, client, false);
-      }
-
-      const player = this.state.players.get(client.sessionId);
-      if (!player) {
-        return this.auth.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
-      }
-
-      const hasUserIdChanged = player.userId !== authUser.id;
-      if (hasUserIdChanged) {
-        return this.auth.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.USER_ID_CHANGED, client, false);
-      }
-
-      player.lastActivityTime = Date.now();
-      player.tokenExpiresAt = authUser.expiresAt;
-
-      logger.info({
-        message: `Token refreshed`,
-        data: { roomId: this.roomId, clientId: client.sessionId, userName: player.username },
-      });
     });
 
     this.setSimulationInterval((deltaTime) => {

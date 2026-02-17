@@ -1,5 +1,11 @@
 import { ServerError, CloseCode, type AuthContext, type Client } from '@colyseus/core';
-import { WS_CODE, INACTIVITY_TIMEOUT, RECONNECTION_TIMEOUT } from '@repo/core-game';
+import {
+  WS_CODE,
+  INACTIVITY_TIMEOUT,
+  RECONNECTION_TIMEOUT,
+  WS_EVENT,
+  type AuthPayload,
+} from '@repo/core-game';
 import { logger } from '../../../logger';
 import type { Profile } from '../../../repo/prisma-client/client';
 import { validateJwt } from '../../../auth/jwt';
@@ -149,6 +155,34 @@ export class Auth {
 
       this.room.cleanupPlayer(sessionId);
     }
+  }
+
+  /** errors in refreshToken event should not allow reconnection, clients will need to re-authenticate when re-joining */
+  public setupRefreshTokenHandler() {
+    this.room.onMessage(WS_EVENT.REFRESH_TOKEN, (client, payload: AuthPayload) => {
+      const authUser = validateJwt(payload.token);
+      if (!authUser) {
+        return this.kickClient(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN, client, false);
+      }
+
+      const player = this.room.state.players.get(client.sessionId);
+      if (!player) {
+        return this.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+      }
+
+      const hasUserIdChanged = player.userId !== authUser.id;
+      if (hasUserIdChanged) {
+        return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.USER_ID_CHANGED, client, false);
+      }
+
+      player.lastActivityTime = Date.now();
+      player.tokenExpiresAt = authUser.expiresAt;
+
+      logger.info({
+        message: `Token refreshed`,
+        data: { roomId: this.room.roomId, clientId: client.sessionId, userName: player.username },
+      });
+    });
   }
 
   public startConnectionCheck(connectionCheckInterval: number) {
