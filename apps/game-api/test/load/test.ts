@@ -3,6 +3,7 @@ import { Client } from '@colyseus/sdk';
 import { cli, type Options } from '@colyseus/loadtest';
 import { WS_ROOM, WS_EVENT, type InputPayload } from '@repo/core-game';
 import type { GameRoomState } from '../../src/rooms/GameRoom/schemas';
+import type { Block } from '../../src/rooms/GameRoom/schemas/Block';
 import { prisma } from '../../src/repo/client';
 import { generateTestJWT, setupTestDb, cleanupTestDb, TEST_USERS } from '../integration/utils';
 
@@ -12,8 +13,6 @@ const JOIN_DELAY_MS = 500;
 const TEST_USER_EXPIRES_IN_MS = 3 * 60 * 1000; // 3 minutes
 
 let playerCount = 0;
-// keep track of which player is tracking which enemy
-// const enemiesTracked: Record<string, string> = {};
 
 export async function main(options: Options) {
   console.log('joining room...', options);
@@ -34,41 +33,35 @@ export async function main(options: Options) {
   // add this listener otherwise colyseus will show a warning
   room.onMessage(WS_EVENT.PLAYGROUND_MESSAGE_TYPES, () => {});
 
-  let killCount = 0;
   room.onStateChange((state) => {
     const player = state.players.get(room.sessionId);
 
-    if (player.killCount > killCount) {
-      killCount = player.killCount;
-      console.log(`${player.username} hit an enemy!`);
+    let closestDistanceSquared = Infinity;
+    let closestBlock: Block | undefined;
+
+    state.blocks.forEach((block) => {
+      // treat empty blocks as if they don't exist
+      if (block.type === 'empty') return;
+
+      const distanceSquared = (player.x - block.x) ** 2 + (player.y - block.y) ** 2;
+      if (distanceSquared < closestDistanceSquared) {
+        closestDistanceSquared = distanceSquared;
+        closestBlock = block;
+      }
+    });
+
+    if (closestBlock) {
+      const input: InputPayload = {
+        seq: player.lastProcessedInputSeq + 1,
+        left: player.x > closestBlock.x,
+        right: player.x < closestBlock.x,
+        up: player.y > closestBlock.y,
+        down: player.y < closestBlock.y,
+        attack: true,
+      };
+
+      room.send(WS_EVENT.PLAYER_INPUT, input);
     }
-
-    // let closestDistanceSquared = Infinity;
-
-    // state.enemies.forEach((enemy) => {
-    //   // only allow one player to track one enemy (simple way to prevent AI grouping)
-    //   if (Object.values(enemiesTracked).includes(enemy.id)) return;
-
-    //   const distanceSquared = (player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2;
-    //   if (distanceSquared < closestDistanceSquared) {
-    //     closestDistanceSquared = distanceSquared;
-    //     enemiesTracked[player.userId] = enemy.id;
-    //   }
-    // });
-
-    // const closestEnemy = state.enemies.find((enemy) => enemiesTracked[player.userId] === enemy.id);
-    // if (closestEnemy) {
-    // TODO: fix this
-    const input: InputPayload = {
-      seq: 0,
-      left: false,
-      right: false,
-      up: false,
-      down: false,
-      attack: true,
-    };
-
-    room.send(WS_EVENT.PLAYER_INPUT, input);
   });
 
   room.onLeave(async (code) => {
