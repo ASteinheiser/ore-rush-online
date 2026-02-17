@@ -9,7 +9,7 @@ export class PlayerVision {
 
   constructor(private room: GameRoom) {}
 
-  setupVisionForClient(client: Client, player: Player) {
+  public setupVisionForClient(client: Client, player: Player) {
     // initialize StateView
     client.view = new StateView();
     // allow player to see self and private fields
@@ -28,7 +28,7 @@ export class PlayerVision {
     });
   }
 
-  updateClientVisiblePlayers(client: Client, player: Player) {
+  public updateClientVisiblePlayers(client: Client, player: Player) {
     const visibleToClient = this.clientVisiblePlayers.get(client.sessionId) ?? new Set();
     const nowVisible = new Set<string>();
 

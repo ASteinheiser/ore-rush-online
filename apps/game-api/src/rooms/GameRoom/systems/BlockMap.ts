@@ -51,7 +51,7 @@ export class BlockMap {
     this.clientVisibleBlocks.set(client.sessionId, nowVisible);
   }
 
-  public generateBlockMap() {
+  private generateBlockMap() {
     const cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
     const rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
     const totalBlocks = cols * rows;
