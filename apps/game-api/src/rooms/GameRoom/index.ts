@@ -1,8 +1,6 @@
 import { Room, type AuthContext, type Client } from '@colyseus/core';
 import {
-  calculateMovement,
   FIXED_TIME_STEP,
-  PLAYER_SIZE,
   ATTACK_SIZE,
   ATTACK_OFFSET_X,
   ATTACK_OFFSET_Y,
@@ -140,12 +138,7 @@ export class GameRoom extends Room {
         let input: InputPayload | undefined;
         // dequeue player inputs
         while ((input = this.playerInput.processPlayerInput(player))) {
-          if (input.left) player.isFacingRight = false;
-          else if (input.right) player.isFacingRight = true;
-
-          const { x: newX, y: newY } = calculateMovement({ ...player, ...PLAYER_SIZE, ...input });
-          player.x = newX;
-          player.y = newY;
+          this.playerMovement.movePlayer(player, input);
 
           // Check if enough time has passed since last attack
           const currentTime = Date.now();

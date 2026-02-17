@@ -1,4 +1,4 @@
-import { MAP_SIZE } from '@repo/core-game';
+import { MAP_SIZE, PLAYER_SIZE, calculateMovement, type InputPayload } from '@repo/core-game';
 import { logger } from '../../../logger';
 import type { GameRoom } from '../index';
 import type { Player } from '../schemas/Player';
@@ -22,5 +22,20 @@ export class PlayerMovement {
     }
 
     this.room.state.players.set(clientId, player);
+  }
+
+  public movePlayer(player: Player, input: InputPayload) {
+    if (input.left) player.isFacingRight = false;
+    else if (input.right) player.isFacingRight = true;
+
+    const newPosition = calculateMovement({
+      x: player.x,
+      y: player.y,
+      ...PLAYER_SIZE,
+      ...input,
+    });
+
+    player.x = newPosition.x;
+    player.y = newPosition.y;
   }
 }
