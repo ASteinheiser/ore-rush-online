@@ -7,6 +7,7 @@ import {
   ATTACK_DAMAGE__FRAME_TIME,
   BLOCK_SIZE,
   type InputPayload,
+  checkAABBCollision,
 } from '@repo/core-game';
 import type { GameRoom } from '../index';
 import type { Player } from '../schemas/Player';
@@ -66,10 +67,18 @@ export class PlayerMining {
       if (
         block.type !== 'empty' &&
         !player.blocksHit.includes(block.id) &&
-        block.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
-        block.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
-        block.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
-        block.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
+        checkAABBCollision(
+          {
+            x: block.x,
+            y: block.y,
+            ...BLOCK_SIZE,
+          },
+          {
+            x: player.attackDamageFrameX,
+            y: player.attackDamageFrameY,
+            ...ATTACK_SIZE,
+          }
+        )
       ) {
         player.blocksHit.push(block.id);
 
