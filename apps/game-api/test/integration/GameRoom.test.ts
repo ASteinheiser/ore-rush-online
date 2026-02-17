@@ -126,7 +126,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         client.onMessage(WS_EVENT.PONG, () => resolve(true));
       });
 
-      await client.send(WS_EVENT.PING);
+      client.send(WS_EVENT.PING);
       const pong = await pongPromise;
 
       assert.strictEqual(pong, true);
@@ -142,7 +142,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      await client.send(WS_EVENT.LEAVE_ROOM);
+      client.send(WS_EVENT.LEAVE_ROOM);
       await room.waitForNextSimulationTick();
 
       assertBasicPlayerState({ room, clientIds: [] });
@@ -307,7 +307,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       assert.strictEqual(oldPlayer.attackCount, 100);
       assert.strictEqual(oldPlayer.killCount, 50);
 
-      await client.send(WS_EVENT.PLAYER_INPUT, {
+      client.send(WS_EVENT.PLAYER_INPUT, {
         seq: 0,
         left: false,
         right: true,
@@ -380,7 +380,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       room.state.players.delete(client.sessionId);
-      await client.send(WS_EVENT.PLAYER_INPUT, {
+      client.send(WS_EVENT.PLAYER_INPUT, {
         left: true,
         right: false,
         up: false,
@@ -402,7 +402,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       room.state.players.get(client.sessionId).tokenExpiresAt = Date.now();
-      await client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({}) });
+      client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({}) });
       await waitForConnectionCheck();
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
@@ -414,7 +414,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      await client.send(WS_EVENT.REFRESH_TOKEN, { token: 'invalid-token' });
+      client.send(WS_EVENT.REFRESH_TOKEN, { token: 'invalid-token' });
       await room.waitForNextSimulationTick();
 
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
@@ -427,7 +427,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      await client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({ expiresInMs: 0 }) });
+      client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({ expiresInMs: 0 }) });
       await room.waitForNextSimulationTick();
 
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
@@ -440,7 +440,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      await client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({ user: TEST_USERS[1] }) });
+      client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({ user: TEST_USERS[1] }) });
       await room.waitForNextSimulationTick();
 
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
@@ -454,7 +454,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       room.state.players.delete(client.sessionId);
-      await client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({}) });
+      client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({}) });
       await room.waitForNextSimulationTick();
 
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
