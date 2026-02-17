@@ -246,6 +246,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const badSessionId = 'bad-client-session-id';
       const orphanedPlayer = new Player();
       orphanedPlayer.userId = TEST_USERS[1].id;
+      orphanedPlayer.username = TEST_USERS[1].userName;
       orphanedPlayer.attackCount = 100;
       orphanedPlayer.killCount = 50;
       room.state.players.set(badSessionId, orphanedPlayer);

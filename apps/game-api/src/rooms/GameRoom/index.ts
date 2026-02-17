@@ -4,7 +4,6 @@ import {
   calculateMovement,
   FIXED_TIME_STEP,
   PLAYER_SIZE,
-  MAP_SIZE,
   ATTACK_SIZE,
   ATTACK_OFFSET_X,
   ATTACK_OFFSET_Y,
@@ -25,10 +24,10 @@ import { validateJwt } from '../../auth/jwt';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
 import { GameRoomState } from './schemas';
-import { Player } from './schemas/Player';
 import { Auth, type AuthResult } from './systems/Auth';
 import { BlockMap } from './systems/BlockMap';
 import { PlayerVision } from './systems/PlayerVision';
+import { PlayerMovement } from './systems/PlayerMovement';
 
 const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
@@ -47,18 +46,27 @@ export class GameRoom extends Room {
   prisma: PrismaClient;
   auth = new Auth(this);
 
+  elapsedTime = 0;
   state = new GameRoomState();
   blockMap = new BlockMap(this);
   playerVision = new PlayerVision(this);
-  elapsedTime = 0;
+  playerMovement = new PlayerMovement(this);
 
   connectionCheckTimeout: NodeJS.Timeout;
   reconnectionTimeout = RECONNECTION_TIMEOUT;
   expectingReconnections = new Set<string>();
   forcedDisconnects = new Set<string>();
 
-  async onAuth(_: Client, __: unknown, context: AuthContext): Promise<AuthResult> {
+  onAuth(_: Client, __: unknown, context: AuthContext) {
     return this.auth.onAuth(context);
+  }
+
+  onJoin(client: Client, _: unknown, authResult: AuthResult) {
+    const { player, isExistingPlayer } = this.auth.onJoin(client, authResult);
+
+    this.playerMovement.spawnPlayer(client.sessionId, player, isExistingPlayer);
+    this.playerVision.setupVisionForClient(client, player);
+    this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
   }
 
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
@@ -135,10 +143,10 @@ export class GameRoom extends Room {
 
   fixedTick() {
     this.state.players.forEach((player, sessionId) => {
-      const client = this.clients.find((c) => c.sessionId === sessionId);
+      const client = this.clients.getById(sessionId);
       if (client?.view) {
-        this.blockMap.updateClientVisibleBlocks(client, player);
         this.playerVision.updateClientVisiblePlayers(client, player);
+        this.blockMap.updateClientVisibleBlocks(client, player);
       }
 
       try {
@@ -263,64 +271,6 @@ export class GameRoom extends Room {
     });
   }
 
-  onJoin(client: Client, _: unknown, { user, tokenExpiresAt }: AuthResult) {
-    let existingSessionId: string | undefined;
-    let existingPlayer: Player | undefined;
-
-    this.state.players.forEach((player, sessionId) => {
-      if (player.userId === user.userId) {
-        existingSessionId = sessionId;
-        existingPlayer = player;
-      }
-    });
-
-    if (existingSessionId) {
-      logger.info({
-        message: `Replacing existing connection`,
-        data: {
-          roomId: this.roomId,
-          existingClientId: existingSessionId,
-          newClientId: client.sessionId,
-          userName: user.userName,
-        },
-      });
-
-      const existingClient = this.clients.getById(existingSessionId);
-      if (existingClient) {
-        // do not allow reconnection, this client/player should be forcefully removed
-        this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.NEW_CONNECTION_FOUND, existingClient, false);
-      } else {
-        this.cleanupPlayer(existingSessionId);
-      }
-    }
-
-    logger.info({
-      message: `New player joined!`,
-      data: { roomId: this.roomId, clientId: client.sessionId, userName: user.userName },
-    });
-
-    let player: Player;
-    if (existingPlayer) {
-      player = existingPlayer;
-      player.tokenExpiresAt = tokenExpiresAt;
-      player.lastActivityTime = Date.now();
-      // players should have inputs cleared on reconnection
-      player.inputQueue = [];
-    } else {
-      player = new Player();
-      player.tokenExpiresAt = tokenExpiresAt;
-      player.lastActivityTime = Date.now();
-      player.userId = user.userId;
-      player.username = user.userName;
-      player.x = Math.random() * MAP_SIZE.width;
-      player.y = Math.random() * MAP_SIZE.height;
-    }
-
-    this.state.players.set(client.sessionId, player);
-    this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
-    this.playerVision.setupVisionForClient(client, player);
-  }
-
   /** Disconnect a client (allowing reconnection by default) */
   kickClient(code: number, message: string, client: Client, allowReconnection = true) {
     logger.info({
@@ -390,6 +340,7 @@ export class GameRoom extends Room {
     this.forcedDisconnects.delete(sessionId);
     this.state.players.delete(sessionId);
     this.blockMap.clientVisibleBlocks.delete(sessionId);
+    this.playerVision.clientVisiblePlayers.delete(sessionId);
   }
 
   onDispose() {
