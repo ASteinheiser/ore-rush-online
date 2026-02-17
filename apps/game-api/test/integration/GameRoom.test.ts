@@ -8,10 +8,11 @@ import {
   WS_ROOM,
   INACTIVITY_TIMEOUT,
   PLAYER_MOVE_SPEED,
+  PLAYER_VIEW_RADIUS,
   type InputPayload,
 } from '@repo/core-game';
 import type { GameRoom } from '../../src/rooms/GameRoom';
-import { Player } from '../../src/rooms/GameRoom/schemas/Player';
+import { Player, PLAYER_VIEW_LEVELS } from '../../src/rooms/GameRoom/schemas/Player';
 import { makeApp } from '../../src/app.config';
 import { ROOM_ERROR } from '../../src/rooms/error';
 import { prisma } from '../../src/repo/client';
@@ -391,6 +392,44 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
+    });
+
+    it('should show player position only when in vision (username always visible, x/y when in range)', async () => {
+      const observer = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[0] }) });
+      const observed = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[1] }) });
+      const room = getRoom(observer.roomId);
+
+      assertBasicPlayerState({ room, clientIds: [observer.sessionId, observed.sessionId] });
+
+      const observerPlayer = room.state.players.get(observer.sessionId);
+      const observedPlayer = room.state.players.get(observed.sessionId);
+      const observerClient = room.clients.getById(observer.sessionId);
+
+      // Start out of vision: observer at (0,0), observed far away
+      observerPlayer.x = 0;
+      observerPlayer.y = 0;
+      observedPlayer.x = PLAYER_VIEW_RADIUS + 100;
+      observedPlayer.y = PLAYER_VIEW_RADIUS + 100;
+
+      await room.waitForNextSimulationTick();
+      assert.strictEqual(observerClient.view.has(observedPlayer), true);
+      assert.strictEqual(observerClient.view.hasTag(observedPlayer, PLAYER_VIEW_LEVELS.VIEW), false);
+
+      // Move observed into vision
+      observedPlayer.x = PLAYER_VIEW_RADIUS - 50;
+      observedPlayer.y = PLAYER_VIEW_RADIUS - 50;
+
+      await room.waitForNextSimulationTick();
+      assert.strictEqual(observerClient.view.has(observedPlayer), true);
+      assert.strictEqual(observerClient.view.hasTag(observedPlayer, PLAYER_VIEW_LEVELS.VIEW), true);
+
+      // Move observed back out of vision
+      observedPlayer.x = PLAYER_VIEW_RADIUS + 100;
+      observedPlayer.y = PLAYER_VIEW_RADIUS + 100;
+
+      await room.waitForNextSimulationTick();
+      assert.strictEqual(observerClient.view.has(observedPlayer), true);
+      assert.strictEqual(observerClient.view.hasTag(observedPlayer, PLAYER_VIEW_LEVELS.VIEW), false);
     });
   });
 
