@@ -23,12 +23,14 @@ export class PlayerInput {
     });
   }
 
-  public processPlayerInput(player: Player) {
-    const input = player.inputQueue.shift();
-    if (input) {
+  public processPlayerInput(player: Player, processFunction: (input: InputPayload) => void) {
+    let input: InputPayload | undefined;
+    // dequeue player inputs
+    while ((input = player.inputQueue.shift())) {
       // acknowledge the input to the client (updates will be batched, so we can call this first)
       player.lastProcessedInputSeq = input.seq;
+      // allow the input to be processed by whatever systems
+      processFunction(input);
     }
-    return input;
   }
 }

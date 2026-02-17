@@ -10,7 +10,6 @@ import {
   BLOCK_SIZE,
   WS_EVENT,
   WS_CODE,
-  type InputPayload,
 } from '@repo/core-game';
 import type { PrismaClient } from '../../repo/prisma-client/client';
 import { logger } from '../../logger';
@@ -135,9 +134,7 @@ export class GameRoom extends Room {
       if (!client?.view) return;
 
       try {
-        let input: InputPayload | undefined;
-        // dequeue player inputs
-        while ((input = this.playerInput.processPlayerInput(player))) {
+        this.playerInput.processPlayerInput(player, (input) => {
           this.playerMovement.movePlayer(player, input);
 
           // Check if enough time has passed since last attack
@@ -187,7 +184,7 @@ export class GameRoom extends Room {
 
           // if the player is mid-attack, don't process any more inputs
           if (!canAttack) {
-            continue;
+            return;
           } else if (input.attack) {
             player.isAttacking = true;
             player.attackCount++;
@@ -195,7 +192,7 @@ export class GameRoom extends Room {
           } else {
             player.isAttacking = false;
           }
-        }
+        });
 
         this.playerVision.updateClientVisiblePlayers(client, player);
         this.blockMap.updateClientVisibleBlocks(client, player);
