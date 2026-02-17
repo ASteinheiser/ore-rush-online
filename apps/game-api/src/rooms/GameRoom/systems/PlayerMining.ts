@@ -14,54 +14,22 @@ import type { Player } from '../schemas/Player';
 export class PlayerMining {
   constructor(private room: GameRoom) {}
 
-  public handleInput(player: Player, input: InputPayload) {
-    // Check if enough time has passed since last attack
+  public handleInput(player: Player, input: InputPayload, sessionId: string) {
     const currentTime = Date.now();
     const timeSinceLastAttack = currentTime - player.lastAttackTime;
-    const canAttack = timeSinceLastAttack >= ATTACK_COOLDOWN;
 
-    // find the damage frames in the attack animation
-    if (
-      timeSinceLastAttack >= ATTACK_DAMAGE__DELAY &&
-      timeSinceLastAttack < ATTACK_DAMAGE__FRAME_TIME + ATTACK_DAMAGE__DELAY
-    ) {
-      // calculate the damage frame
-      player.attackDamageFrameX = player.isFacingRight
-        ? player.x + ATTACK_OFFSET_X
-        : player.x - ATTACK_OFFSET_X;
-      player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
-
-      // check if the attack hit a block
-      for (const block of this.room.state.blocks) {
-        if (
-          block.type !== 'empty' &&
-          !player.blocksHit.includes(block.id) &&
-          block.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
-          block.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
-          block.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
-          block.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
-        ) {
-          player.blocksHit.push(block.id);
-
-          block.hp--;
-          if (block.hp <= 0) {
-            if (block.type === 'iron' || block.type === 'gold') {
-              player.inventory[block.type]++;
-            }
-            block.hp = 0;
-            block.maxHp = 0;
-            block.type = 'empty';
-          }
-        }
-      }
+    if (this.isInDamageFrame(timeSinceLastAttack)) {
+      this.setDamageFrame(player);
+      this.checkForBlockHits(player, sessionId);
     } else {
       player.attackDamageFrameX = undefined;
       player.attackDamageFrameY = undefined;
       player.blocksHit = [];
     }
 
+    const isInAttackFrame = timeSinceLastAttack < ATTACK_COOLDOWN;
     // if the player is mid-attack, don't process any more inputs
-    if (!canAttack) {
+    if (isInAttackFrame) {
       return;
     } else if (input.attack) {
       player.isAttacking = true;
@@ -69,6 +37,52 @@ export class PlayerMining {
       player.lastAttackTime = currentTime;
     } else {
       player.isAttacking = false;
+    }
+  }
+
+  /** Check if the player is in the damage frame of the attack animation */
+  private isInDamageFrame(timeSinceLastAttack: number) {
+    return (
+      timeSinceLastAttack >= ATTACK_DAMAGE__DELAY &&
+      timeSinceLastAttack < ATTACK_DAMAGE__DELAY + ATTACK_DAMAGE__FRAME_TIME
+    );
+  }
+
+  /** Calculate and set the damage frame */
+  private setDamageFrame(player: Player) {
+    player.attackDamageFrameX = player.isFacingRight
+      ? player.x + ATTACK_OFFSET_X
+      : player.x - ATTACK_OFFSET_X;
+    player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
+  }
+
+  /** Check if the damage frame hit a block and, if needed, update the state for blocks and player inventory */
+  private checkForBlockHits(player: Player, sessionId: string) {
+    const visibleBlocks = this.room.blockMap.clientVisibleBlocks.get(sessionId);
+    if (!visibleBlocks) return;
+
+    for (const blockId of visibleBlocks) {
+      const block = this.room.state.blocks[blockId];
+      if (
+        block.type !== 'empty' &&
+        !player.blocksHit.includes(block.id) &&
+        block.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
+        block.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
+        block.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
+        block.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
+      ) {
+        player.blocksHit.push(block.id);
+
+        block.hp--;
+        if (block.hp <= 0) {
+          if (block.type === 'iron' || block.type === 'gold') {
+            player.inventory[block.type]++;
+          }
+          block.hp = 0;
+          block.maxHp = 0;
+          block.type = 'empty';
+        }
+      }
     }
   }
 }
