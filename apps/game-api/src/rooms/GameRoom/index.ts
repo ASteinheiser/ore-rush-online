@@ -13,8 +13,6 @@ import {
   BLOCK_SIZE,
   WS_EVENT,
   WS_CODE,
-  INACTIVITY_TIMEOUT,
-  RECONNECTION_TIMEOUT,
   InputSchema,
   type AuthPayload,
   type InputPayload,
@@ -52,11 +50,6 @@ export class GameRoom extends Room {
   playerVision = new PlayerVision(this);
   playerMovement = new PlayerMovement(this);
 
-  connectionCheckTimeout: NodeJS.Timeout;
-  reconnectionTimeout = RECONNECTION_TIMEOUT;
-  expectingReconnections = new Set<string>();
-  forcedDisconnects = new Set<string>();
-
   onAuth(_: Client, __: unknown, context: AuthContext) {
     return this.auth.onAuth(context);
   }
@@ -77,22 +70,27 @@ export class GameRoom extends Room {
 
     this.prisma = prisma;
 
-    this.connectionCheckTimeout = setInterval(() => this.checkPlayerConnection(), connectionCheckInterval);
-
     // Ping/Pong for client RTT measurement
     this.onMessage(WS_EVENT.PING, (client) => {
       client.send(WS_EVENT.PONG);
     });
 
+    this.onMessage(WS_EVENT.LEAVE_ROOM, (client) => {
+      // we explicitly do not want to allow reconnection here
+      this.auth.kickClient(WS_CODE.SUCCESS, 'Intentional leave', client, false);
+    });
+
+    this.auth.startConnectionCheck(connectionCheckInterval);
+
     this.onMessage(WS_EVENT.PLAYER_INPUT, (client, payload: InputPayload) => {
       const player = this.state.players.get(client.sessionId);
       if (!player) {
         // do not allow reconnection, client will need to re-join to get a player
-        return this.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+        return this.auth.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
       }
 
       if (!InputSchema.safeParse(payload).success) {
-        return this.kickClient(WS_CODE.BAD_REQUEST, ROOM_ERROR.INVALID_PAYLOAD, client);
+        return this.auth.kickClient(WS_CODE.BAD_REQUEST, ROOM_ERROR.INVALID_PAYLOAD, client);
       }
 
       player.lastActivityTime = Date.now();
@@ -104,17 +102,17 @@ export class GameRoom extends Room {
     this.onMessage(WS_EVENT.REFRESH_TOKEN, (client, payload: AuthPayload) => {
       const authUser = validateJwt(payload.token);
       if (!authUser) {
-        return this.kickClient(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN, client, false);
+        return this.auth.kickClient(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN, client, false);
       }
 
       const player = this.state.players.get(client.sessionId);
       if (!player) {
-        return this.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+        return this.auth.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
       }
 
       const hasUserIdChanged = player.userId !== authUser.id;
       if (hasUserIdChanged) {
-        return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.USER_ID_CHANGED, client, false);
+        return this.auth.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.USER_ID_CHANGED, client, false);
       }
 
       player.lastActivityTime = Date.now();
@@ -124,11 +122,6 @@ export class GameRoom extends Room {
         message: `Token refreshed`,
         data: { roomId: this.roomId, clientId: client.sessionId, userName: player.username },
       });
-    });
-
-    this.onMessage(WS_EVENT.LEAVE_ROOM, (client) => {
-      // we explicitly do not want to allow reconnection here
-      this.kickClient(WS_CODE.SUCCESS, 'Intentional leave', client, false);
     });
 
     this.setSimulationInterval((deltaTime) => {
@@ -144,10 +137,11 @@ export class GameRoom extends Room {
   fixedTick() {
     this.state.players.forEach((player, sessionId) => {
       const client = this.clients.getById(sessionId);
-      if (client?.view) {
-        this.playerVision.updateClientVisiblePlayers(client, player);
-        this.blockMap.updateClientVisibleBlocks(client, player);
-      }
+      // only process players that are still connected (and properly set up)
+      if (!client?.view) return;
+
+      this.playerVision.updateClientVisiblePlayers(client, player);
+      this.blockMap.updateClientVisibleBlocks(client, player);
 
       try {
         let input: undefined | InputPayload;
@@ -224,64 +218,10 @@ export class GameRoom extends Room {
         if (client) {
           const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;
           // allow reconnection as player inputs will be cleared, potentially solving issues
-          this.kickClient(WS_CODE.INTERNAL_SERVER_ERROR, message, client);
+          this.auth.kickClient(WS_CODE.INTERNAL_SERVER_ERROR, message, client);
         }
       }
     });
-  }
-
-  checkPlayerConnection() {
-    const clientsToRemove: Array<{ client: Client; reason: string }> = [];
-
-    this.state.players.forEach((player, sessionId) => {
-      const client = this.clients.getById(sessionId);
-      if (!client) {
-        // Skip removal if we're still waiting for this client to reconnect
-        if (this.expectingReconnections.has(sessionId)) return;
-
-        this.cleanupPlayer(sessionId);
-        return;
-      }
-
-      const tokenExpiresIn = player.tokenExpiresAt - Date.now();
-      if (tokenExpiresIn <= 0) {
-        clientsToRemove.push({ client, reason: ROOM_ERROR.TOKEN_EXPIRED });
-        return;
-      }
-
-      const timeSinceLastActivity = Date.now() - player.lastActivityTime;
-      if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
-        clientsToRemove.push({ client, reason: ROOM_ERROR.PLAYER_INACTIVITY });
-        return;
-      }
-    });
-
-    clientsToRemove.forEach(({ client, reason }) => {
-      logger.info({
-        message: `Removing client...`,
-        data: { roomId: this.roomId, clientId: client.sessionId, reason },
-      });
-
-      if (reason === ROOM_ERROR.TOKEN_EXPIRED) {
-        // do not allow reconnection, client will need to re-authenticate
-        this.kickClient(WS_CODE.UNAUTHORIZED, reason, client, false);
-      } else {
-        this.kickClient(WS_CODE.TIMEOUT, reason, client);
-      }
-    });
-  }
-
-  /** Disconnect a client (allowing reconnection by default) */
-  kickClient(code: number, message: string, client: Client, allowReconnection = true) {
-    logger.info({
-      message: `Disconnecting client...`,
-      data: { roomId: this.roomId, clientId: client.sessionId, allowReconnection, code, message },
-    });
-
-    if (!allowReconnection) {
-      this.forcedDisconnects.add(client.sessionId);
-    }
-    client.leave(code, message);
   }
 
   async onLeave(client: Client, code: number) {
@@ -293,7 +233,7 @@ export class GameRoom extends Room {
       data: { roomId: this.roomId, clientId: sessionId, consented },
     });
 
-    if (consented || this.forcedDisconnects.has(sessionId)) {
+    if (consented || this.auth.forcedDisconnects.has(sessionId)) {
       return this.cleanupPlayer(sessionId);
     }
 
@@ -303,14 +243,14 @@ export class GameRoom extends Room {
         data: { roomId: this.roomId, clientId: sessionId },
       });
 
-      this.expectingReconnections.add(sessionId);
-      await this.allowReconnection(client, this.reconnectionTimeout);
-      this.expectingReconnections.delete(sessionId);
+      this.auth.expectingReconnections.add(sessionId);
+      await this.allowReconnection(client, this.auth.reconnectionTimeout);
+      this.auth.expectingReconnections.delete(sessionId);
 
       const player = this.state.players.get(sessionId);
       if (!player) {
         // do not allow reconnection, client will need to re-join
-        return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+        return this.auth.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
       }
       // players should have inputs cleared on reconnection
       player.inputQueue = [];
@@ -336,8 +276,8 @@ export class GameRoom extends Room {
       data: { roomId: this.roomId, clientId: sessionId },
     });
 
-    this.expectingReconnections.delete(sessionId);
-    this.forcedDisconnects.delete(sessionId);
+    this.auth.expectingReconnections.delete(sessionId);
+    this.auth.forcedDisconnects.delete(sessionId);
     this.state.players.delete(sessionId);
     this.blockMap.clientVisibleBlocks.delete(sessionId);
     this.playerVision.clientVisiblePlayers.delete(sessionId);
@@ -349,7 +289,7 @@ export class GameRoom extends Room {
       data: { roomId: this.roomId },
     });
 
-    if (this.connectionCheckTimeout) clearInterval(this.connectionCheckTimeout);
+    this.auth.stopConnectionCheck();
   }
 
   onUncaughtException(error: Error, methodName: string) {
