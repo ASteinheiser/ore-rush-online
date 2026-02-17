@@ -13,18 +13,21 @@ export class PlayerVision {
     // initialize StateView
     client.view = new StateView();
     // allow player to see self and private fields
+    client.view.add(player);
     client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
     client.view.add(player, PLAYER_VIEW_LEVELS.PRIVATE);
     client.view.add(player, PLAYER_VIEW_LEVELS.DEBUG);
 
-    // allow other players to see player's public fields (name only)
-    this.room.state.players.forEach((player, sessionId) => {
-      if (sessionId === client.sessionId) return; // skip self
+    // allow otherPlayers to see player's public fields (username only)
+    this.room.clients.forEach((otherClient) => {
+      if (otherClient.sessionId === client.sessionId) return;
+      otherClient.view.add(player);
+    });
 
-      const otherClient = this.room.clients.getById(sessionId);
-      if (otherClient) {
-        otherClient.view.add(player);
-      }
+    // add all otherPlayers to current client's view (username only)
+    this.room.state.players.forEach((otherPlayer, sessionId) => {
+      if (sessionId === client.sessionId) return;
+      client.view.add(otherPlayer);
     });
   }
 
@@ -48,6 +51,8 @@ export class PlayerVision {
         if (visibleToClient.has(otherSessionId)) {
           client.view.remove(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
           client.view.remove(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
+          // ensure we still see basic player info (username)
+          client.view.add(otherPlayer);
         }
       }
     }
