@@ -1,5 +1,4 @@
 import { Room, type AuthContext, type Client } from '@colyseus/core';
-import { CloseCode } from 'colyseus';
 import {
   calculateMovement,
   FIXED_TIME_STEP,
@@ -60,6 +59,43 @@ export class GameRoom extends Room {
     this.playerMovement.spawnPlayer(client.sessionId, player, isExistingPlayer);
     this.playerVision.setupVisionForClient(client, player);
     this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
+  }
+
+  onLeave(client: Client, code: number) {
+    return this.auth.onLeave(client, code);
+  }
+
+  cleanupPlayer(sessionId: string) {
+    logger.info({
+      message: `Cleaning up player...`,
+      data: { roomId: this.roomId, clientId: sessionId },
+    });
+
+    this.auth.expectingReconnections.delete(sessionId);
+    this.auth.forcedDisconnects.delete(sessionId);
+    this.state.players.delete(sessionId);
+    this.blockMap.clientVisibleBlocks.delete(sessionId);
+    this.playerVision.clientVisiblePlayers.delete(sessionId);
+  }
+
+  onDispose() {
+    logger.info({
+      message: `Room disposing...`,
+      data: { roomId: this.roomId },
+    });
+
+    this.auth.stopConnectionCheck();
+  }
+
+  onUncaughtException(error: Error, methodName: string) {
+    // log any uncaught errors for debugging purposes
+    logger.error({
+      message: `Uncaught exception`,
+      data: { roomId: this.roomId, methodName, error: error.message },
+    });
+
+    // possibly handle saving game state
+    // possibly handle disconnecting all clients if needed
   }
 
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
@@ -222,84 +258,5 @@ export class GameRoom extends Room {
         }
       }
     });
-  }
-
-  async onLeave(client: Client, code: number) {
-    const { sessionId } = client;
-    const consented = code === CloseCode.CONSENTED;
-
-    logger.info({
-      message: `Client left...`,
-      data: { roomId: this.roomId, clientId: sessionId, consented },
-    });
-
-    if (consented || this.auth.forcedDisconnects.has(sessionId)) {
-      return this.cleanupPlayer(sessionId);
-    }
-
-    try {
-      logger.info({
-        message: `Attempting to reconnect client`,
-        data: { roomId: this.roomId, clientId: sessionId },
-      });
-
-      this.auth.expectingReconnections.add(sessionId);
-      await this.allowReconnection(client, this.auth.reconnectionTimeout);
-      this.auth.expectingReconnections.delete(sessionId);
-
-      const player = this.state.players.get(sessionId);
-      if (!player) {
-        // do not allow reconnection, client will need to re-join
-        return this.auth.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
-      }
-      // players should have inputs cleared on reconnection
-      player.inputQueue = [];
-      player.lastActivityTime = Date.now();
-
-      logger.info({
-        message: `Client reconnected`,
-        data: { roomId: this.roomId, clientId: sessionId },
-      });
-    } catch {
-      logger.info({
-        message: `Client failed to reconnect in time`,
-        data: { roomId: this.roomId, clientId: sessionId },
-      });
-
-      this.cleanupPlayer(sessionId);
-    }
-  }
-
-  cleanupPlayer(sessionId: string) {
-    logger.info({
-      message: `Cleaning up player...`,
-      data: { roomId: this.roomId, clientId: sessionId },
-    });
-
-    this.auth.expectingReconnections.delete(sessionId);
-    this.auth.forcedDisconnects.delete(sessionId);
-    this.state.players.delete(sessionId);
-    this.blockMap.clientVisibleBlocks.delete(sessionId);
-    this.playerVision.clientVisiblePlayers.delete(sessionId);
-  }
-
-  onDispose() {
-    logger.info({
-      message: `Room disposing...`,
-      data: { roomId: this.roomId },
-    });
-
-    this.auth.stopConnectionCheck();
-  }
-
-  onUncaughtException(error: Error, methodName: string) {
-    // log any uncaught errors for debugging purposes
-    logger.error({
-      message: `Uncaught exception`,
-      data: { roomId: this.roomId, methodName, error: error.message },
-    });
-
-    // possibly handle saving game state
-    // possibly handle disconnecting all clients if needed
   }
 }

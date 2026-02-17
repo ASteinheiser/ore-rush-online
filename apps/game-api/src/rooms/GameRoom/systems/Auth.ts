@@ -1,4 +1,4 @@
-import { ServerError, type AuthContext, type Client } from '@colyseus/core';
+import { ServerError, CloseCode, type AuthContext, type Client } from '@colyseus/core';
 import { WS_CODE, INACTIVITY_TIMEOUT, RECONNECTION_TIMEOUT } from '@repo/core-game';
 import { logger } from '../../../logger';
 import type { Profile } from '../../../repo/prisma-client/client';
@@ -102,6 +102,53 @@ export class Auth {
       this.forcedDisconnects.add(client.sessionId);
     }
     client.leave(code, message);
+  }
+
+  /** Handles all clients leaving the room (including reconnection) */
+  public async onLeave(client: Client, code: number) {
+    const { sessionId } = client;
+    const consented = code === CloseCode.CONSENTED;
+
+    logger.info({
+      message: `Client left...`,
+      data: { roomId: this.room.roomId, clientId: sessionId, consented },
+    });
+
+    if (consented || this.forcedDisconnects.has(sessionId)) {
+      return this.room.cleanupPlayer(sessionId);
+    }
+
+    try {
+      logger.info({
+        message: `Attempting to reconnect client`,
+        data: { roomId: this.room.roomId, clientId: sessionId },
+      });
+
+      this.expectingReconnections.add(sessionId);
+      await this.room.allowReconnection(client, this.reconnectionTimeout);
+      this.expectingReconnections.delete(sessionId);
+
+      const player = this.room.state.players.get(sessionId);
+      if (!player) {
+        // do not allow reconnection, client will need to re-join
+        return this.kickClient(WS_CODE.FORBIDDEN, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+      }
+      // players should have inputs cleared on reconnection
+      player.inputQueue = [];
+      player.lastActivityTime = Date.now();
+
+      logger.info({
+        message: `Client reconnected`,
+        data: { roomId: this.room.roomId, clientId: sessionId },
+      });
+    } catch {
+      logger.info({
+        message: `Client failed to reconnect in time`,
+        data: { roomId: this.room.roomId, clientId: sessionId },
+      });
+
+      this.room.cleanupPlayer(sessionId);
+    }
   }
 
   public startConnectionCheck(connectionCheckInterval: number) {
