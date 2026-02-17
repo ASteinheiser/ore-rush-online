@@ -12,7 +12,6 @@ import {
   BLOCK_SIZE,
   WS_EVENT,
   WS_CODE,
-  InputSchema,
   type InputPayload,
 } from '@repo/core-game';
 import type { PrismaClient } from '../../repo/prisma-client/client';
@@ -21,6 +20,7 @@ import { ROOM_ERROR } from '../error';
 import { GameRoomState } from './schemas';
 import { Auth, type AuthResult } from './systems/Auth';
 import { BlockMap } from './systems/BlockMap';
+import { PlayerInput } from './systems/PlayerInput';
 import { PlayerVision } from './systems/PlayerVision';
 import { PlayerMovement } from './systems/PlayerMovement';
 
@@ -44,6 +44,7 @@ export class GameRoom extends Room {
   elapsedTime = 0;
   state = new GameRoomState();
   blockMap = new BlockMap(this);
+  playerInput = new PlayerInput(this);
   playerVision = new PlayerVision(this);
   playerMovement = new PlayerMovement(this);
 
@@ -68,20 +69,7 @@ export class GameRoom extends Room {
       this.auth.kickClient(WS_CODE.SUCCESS, 'Intentional leave', client, false);
     });
 
-    this.onMessage(WS_EVENT.PLAYER_INPUT, (client, payload: InputPayload) => {
-      const player = this.state.players.get(client.sessionId);
-      if (!player) {
-        // do not allow reconnection, client will need to re-join to get a player
-        return this.auth.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
-      }
-
-      if (!InputSchema.safeParse(payload).success) {
-        return this.auth.kickClient(WS_CODE.BAD_REQUEST, ROOM_ERROR.INVALID_PAYLOAD, client);
-      }
-
-      player.lastActivityTime = Date.now();
-      player.inputQueue.push(payload);
-    });
+    this.playerInput.setupPlayerInputHandler();
 
     this.setSimulationInterval((deltaTime) => {
       this.elapsedTime += deltaTime;

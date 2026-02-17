@@ -1,0 +1,24 @@
+import { WS_EVENT, WS_CODE, InputSchema, type InputPayload } from '@repo/core-game';
+import { ROOM_ERROR } from '../../error';
+import type { GameRoom } from '../index';
+
+export class PlayerInput {
+  constructor(private room: GameRoom) {}
+
+  public setupPlayerInputHandler() {
+    this.room.onMessage(WS_EVENT.PLAYER_INPUT, (client, payload: InputPayload) => {
+      const player = this.room.state.players.get(client.sessionId);
+      if (!player) {
+        // do not allow reconnection, client will need to re-join to get a player
+        return this.room.auth.kickClient(WS_CODE.NOT_FOUND, ROOM_ERROR.CONNECTION_NOT_FOUND, client, false);
+      }
+
+      if (!InputSchema.safeParse(payload).success) {
+        return this.room.auth.kickClient(WS_CODE.BAD_REQUEST, ROOM_ERROR.INVALID_PAYLOAD, client);
+      }
+
+      player.lastActivityTime = Date.now();
+      player.inputQueue.push(payload);
+    });
+  }
+}
