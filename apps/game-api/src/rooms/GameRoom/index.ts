@@ -136,9 +136,6 @@ export class GameRoom extends Room {
       // only process players that are still connected (and properly set up)
       if (!client?.view) return;
 
-      this.playerVision.updateClientVisiblePlayers(client, player);
-      this.blockMap.updateClientVisibleBlocks(client, player);
-
       try {
         let input: InputPayload | undefined;
         // dequeue player inputs
@@ -197,7 +194,7 @@ export class GameRoom extends Room {
 
           // if the player is mid-attack, don't process any more inputs
           if (!canAttack) {
-            return;
+            continue;
           } else if (input.attack) {
             player.isAttacking = true;
             player.attackCount++;
@@ -206,13 +203,13 @@ export class GameRoom extends Room {
             player.isAttacking = false;
           }
         }
+
+        this.playerVision.updateClientVisiblePlayers(client, player);
+        this.blockMap.updateClientVisibleBlocks(client, player);
       } catch (error) {
-        const client = this.clients.getById(sessionId);
-        if (client) {
-          const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;
-          // allow reconnection as player inputs will be cleared, potentially solving issues
-          this.auth.kickClient(WS_CODE.INTERNAL_SERVER_ERROR, message, client);
-        }
+        const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;
+        // allow reconnection as player inputs will be cleared, potentially solving issues
+        this.auth.kickClient(WS_CODE.INTERNAL_SERVER_ERROR, message, client);
       }
     });
   }
