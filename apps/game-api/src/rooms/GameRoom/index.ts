@@ -140,12 +140,9 @@ export class GameRoom extends Room {
       this.blockMap.updateClientVisibleBlocks(client, player);
 
       try {
-        let input: undefined | InputPayload;
+        let input: InputPayload | undefined;
         // dequeue player inputs
-        while ((input = player.inputQueue.shift())) {
-          // acknowledge the input to the client (updates will be batched, so we can call this first)
-          player.lastProcessedInputSeq = input.seq;
-
+        while ((input = this.playerInput.processPlayerInput(player))) {
           if (input.left) player.isFacingRight = false;
           else if (input.right) player.isFacingRight = true;
 

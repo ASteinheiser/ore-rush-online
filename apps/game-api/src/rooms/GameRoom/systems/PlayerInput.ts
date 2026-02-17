@@ -1,6 +1,7 @@
 import { WS_EVENT, WS_CODE, InputSchema, type InputPayload } from '@repo/core-game';
 import { ROOM_ERROR } from '../../error';
 import type { GameRoom } from '../index';
+import type { Player } from '../schemas/Player';
 
 export class PlayerInput {
   constructor(private room: GameRoom) {}
@@ -20,5 +21,14 @@ export class PlayerInput {
       player.lastActivityTime = Date.now();
       player.inputQueue.push(payload);
     });
+  }
+
+  public processPlayerInput(player: Player) {
+    const input = player.inputQueue.shift();
+    if (input) {
+      // acknowledge the input to the client (updates will be batched, so we can call this first)
+      player.lastProcessedInputSeq = input.seq;
+    }
+    return input;
   }
 }
