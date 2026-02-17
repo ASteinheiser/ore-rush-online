@@ -20,8 +20,8 @@ export class BlockMap {
     this.generateBlockMap();
   }
 
-  public updateClientVisibleBlocks(client: Client, player: Player) {
-    const currentlyVisibleBlocks = this.clientVisibleBlocks.get(client.sessionId);
+  public updateVisibleBlocks(client: Client, player: Player) {
+    const currentlyVisibleBlocks = this.clientVisibleBlocks.get(client.sessionId) ?? new Set();
     const nowVisible = new Set<number>();
 
     const searchArea = new Rectangle({

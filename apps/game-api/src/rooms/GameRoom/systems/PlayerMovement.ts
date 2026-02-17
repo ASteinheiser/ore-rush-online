@@ -24,7 +24,7 @@ export class PlayerMovement {
     this.room.state.players.set(clientId, player);
   }
 
-  public movePlayer(player: Player, input: InputPayload) {
+  public handleInput(player: Player, input: InputPayload) {
     if (input.left) player.isFacingRight = false;
     else if (input.right) player.isFacingRight = true;
 

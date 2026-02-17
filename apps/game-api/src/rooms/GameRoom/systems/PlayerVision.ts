@@ -28,7 +28,7 @@ export class PlayerVision {
     });
   }
 
-  public updateClientVisiblePlayers(client: Client, player: Player) {
+  public updateVisiblePlayers(client: Client, player: Player) {
     const visibleToClient = this.clientVisiblePlayers.get(client.sessionId) ?? new Set();
     const nowVisible = new Set<string>();
 

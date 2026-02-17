@@ -1,16 +1,5 @@
 import { Room, type AuthContext, type Client } from '@colyseus/core';
-import {
-  FIXED_TIME_STEP,
-  ATTACK_SIZE,
-  ATTACK_OFFSET_X,
-  ATTACK_OFFSET_Y,
-  ATTACK_COOLDOWN,
-  ATTACK_DAMAGE__DELAY,
-  ATTACK_DAMAGE__FRAME_TIME,
-  BLOCK_SIZE,
-  WS_EVENT,
-  WS_CODE,
-} from '@repo/core-game';
+import { FIXED_TIME_STEP, WS_EVENT, WS_CODE } from '@repo/core-game';
 import type { PrismaClient } from '../../repo/prisma-client/client';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
@@ -20,6 +9,7 @@ import { BlockMap } from './systems/BlockMap';
 import { PlayerInput } from './systems/PlayerInput';
 import { PlayerVision } from './systems/PlayerVision';
 import { PlayerMovement } from './systems/PlayerMovement';
+import { PlayerMining } from './systems/PlayerMining';
 
 const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
@@ -44,6 +34,7 @@ export class GameRoom extends Room {
   playerInput = new PlayerInput(this);
   playerVision = new PlayerVision(this);
   playerMovement = new PlayerMovement(this);
+  playerMining = new PlayerMining(this);
 
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
     logger.info({
@@ -87,7 +78,6 @@ export class GameRoom extends Room {
 
     this.playerMovement.spawnPlayer(client.sessionId, player, isExistingPlayer);
     this.playerVision.setupVisionForClient(client, player);
-    this.blockMap.clientVisibleBlocks.set(client.sessionId, new Set());
   }
 
   onLeave(client: Client, code: number) {
@@ -135,67 +125,12 @@ export class GameRoom extends Room {
 
       try {
         this.playerInput.processPlayerInput(player, (input) => {
-          this.playerMovement.movePlayer(player, input);
-
-          // Check if enough time has passed since last attack
-          const currentTime = Date.now();
-          const timeSinceLastAttack = currentTime - player.lastAttackTime;
-          const canAttack = timeSinceLastAttack >= ATTACK_COOLDOWN;
-
-          // find the damage frames in the attack animation
-          if (
-            timeSinceLastAttack >= ATTACK_DAMAGE__DELAY &&
-            timeSinceLastAttack < ATTACK_DAMAGE__FRAME_TIME + ATTACK_DAMAGE__DELAY
-          ) {
-            // calculate the damage frame
-            player.attackDamageFrameX = player.isFacingRight
-              ? player.x + ATTACK_OFFSET_X
-              : player.x - ATTACK_OFFSET_X;
-            player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
-
-            // check if the attack hit a block
-            for (const block of this.state.blocks) {
-              if (
-                block.type !== 'empty' &&
-                !player.blocksHit.includes(block.id) &&
-                block.x - BLOCK_SIZE.width / 2 < player.attackDamageFrameX + ATTACK_SIZE.width / 2 &&
-                block.x + BLOCK_SIZE.width / 2 > player.attackDamageFrameX - ATTACK_SIZE.width / 2 &&
-                block.y - BLOCK_SIZE.height / 2 < player.attackDamageFrameY + ATTACK_SIZE.height / 2 &&
-                block.y + BLOCK_SIZE.height / 2 > player.attackDamageFrameY - ATTACK_SIZE.height / 2
-              ) {
-                player.blocksHit.push(block.id);
-
-                block.hp--;
-                if (block.hp <= 0) {
-                  if (block.type === 'iron' || block.type === 'gold') {
-                    player.inventory[block.type]++;
-                  }
-                  block.hp = 0;
-                  block.maxHp = 0;
-                  block.type = 'empty';
-                }
-              }
-            }
-          } else {
-            player.attackDamageFrameX = undefined;
-            player.attackDamageFrameY = undefined;
-            player.blocksHit = [];
-          }
-
-          // if the player is mid-attack, don't process any more inputs
-          if (!canAttack) {
-            return;
-          } else if (input.attack) {
-            player.isAttacking = true;
-            player.attackCount++;
-            player.lastAttackTime = currentTime;
-          } else {
-            player.isAttacking = false;
-          }
+          this.playerMovement.handleInput(player, input);
+          this.playerMining.handleInput(player, input);
         });
-
-        this.playerVision.updateClientVisiblePlayers(client, player);
-        this.blockMap.updateClientVisibleBlocks(client, player);
+        // allow positions to be updated before vision updates
+        this.playerVision.updateVisiblePlayers(client, player);
+        this.blockMap.updateVisibleBlocks(client, player);
       } catch (error) {
         const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;
         // allow reconnection as player inputs will be cleared, potentially solving issues
