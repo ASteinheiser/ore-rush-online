@@ -9,28 +9,30 @@ const MAX_CRACKS = 12;
 const CRACK_STROKE = 1.5;
 
 export class Block {
-  hitbox: Phaser.GameObjects.Rectangle;
-  cracks: Phaser.GameObjects.Graphics;
-  x: number;
-  y: number;
+  private hitbox: Phaser.GameObjects.Rectangle;
+  private cracks: Phaser.GameObjects.Graphics;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, type: BLOCK_TYPE, hp: number, maxHp: number) {
-    this.x = x;
-    this.y = y;
-
-    this.hitbox = scene.add.rectangle(x, y, BLOCK_SIZE.width, BLOCK_SIZE.height);
+  constructor(
+    scene: Phaser.Scene,
+    private x: number,
+    private y: number,
+    type: BLOCK_TYPE,
+    hp: number,
+    maxHp: number
+  ) {
+    this.hitbox = scene.add.rectangle(this.x, this.y, BLOCK_SIZE.width, BLOCK_SIZE.height);
     this.cracks = scene.add.graphics().setDepth(99);
 
     this.setColor(type);
     this.drawCracks(hp, maxHp);
   }
 
-  destroy() {
+  public destroy() {
     this.cracks.destroy();
     this.hitbox.destroy();
   }
 
-  update(hp: number, maxHp: number, type: BLOCK_TYPE) {
+  public update(hp: number, maxHp: number, type: BLOCK_TYPE) {
     if (type === BLOCK_TYPES.EMPTY) {
       this.cracks.clear();
     } else {

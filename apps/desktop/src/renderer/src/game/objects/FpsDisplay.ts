@@ -6,10 +6,10 @@ const PADDING = 6;
 const CORNER_RADIUS = 8;
 
 export class FpsDisplay {
-  background: Phaser.GameObjects.Graphics;
-  fpsText: CustomText;
-  frameCount = 0;
-  elapsedMs = 0;
+  private elapsedMs = 0;
+  private frameCount = 0;
+  private fpsText: CustomText;
+  private background: Phaser.GameObjects.Graphics;
 
   constructor(private scene: Phaser.Scene) {
     this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(102);
@@ -35,7 +35,12 @@ export class FpsDisplay {
     });
   }
 
-  update(delta: number) {
+  public destroy() {
+    this.fpsText.destroy();
+    this.background.destroy();
+  }
+
+  public update(delta: number) {
     this.frameCount++;
     this.elapsedMs += delta;
     if (this.elapsedMs >= 500) {
@@ -48,24 +53,19 @@ export class FpsDisplay {
     }
   }
 
-  getFpsColor(fps: number): string {
+  private getFpsColor(fps: number): string {
     if (fps >= 55) return '#00ff00';
     if (fps >= 30) return '#ffff00';
     if (fps >= 15) return '#ff8800';
     return '#ff0000';
   }
 
-  updateBackgroundSize() {
+  private updateBackgroundSize() {
     const bgWidth = this.fpsText.displayWidth + PADDING * 2;
     const bgHeight = this.fpsText.displayHeight + PADDING * 2;
     const bgX = this.fpsText.x - bgWidth + PADDING;
     const bgY = this.fpsText.y - PADDING;
     this.background.clear();
     this.background.fillStyle(0x000000, 0.5).fillRoundedRect(bgX, bgY, bgWidth, bgHeight, CORNER_RADIUS);
-  }
-
-  destroy() {
-    this.fpsText.destroy();
-    this.background.destroy();
   }
 }

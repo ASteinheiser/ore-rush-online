@@ -9,11 +9,11 @@ const CORNER_RADIUS = 8;
 const FPS_OFFSET = 38;
 
 export class PingDisplay {
-  pingStartTime = 0;
-  currentPingMs = 0;
-  timerEvent?: Phaser.Time.TimerEvent;
-  background: Phaser.GameObjects.Graphics;
-  pingText: CustomText;
+  private pingStartTime = 0;
+  private currentPingMs = 0;
+  private timerEvent?: Phaser.Time.TimerEvent;
+  private background: Phaser.GameObjects.Graphics;
+  private pingText: CustomText;
 
   constructor(
     private scene: Phaser.Scene,
@@ -44,7 +44,14 @@ export class PingDisplay {
     this.start();
   }
 
-  start() {
+  public destroy() {
+    this.timerEvent?.remove();
+    delete this.timerEvent;
+    this.pingText.destroy();
+    this.background.destroy();
+  }
+
+  private start() {
     this.room.onMessage(WS_EVENT.PONG, () => {
       this.currentPingMs = Date.now() - this.pingStartTime;
       this.updateDisplay();
@@ -59,13 +66,13 @@ export class PingDisplay {
     this.sendPing();
   }
 
-  sendPing() {
-    if (!this.room || !this.room.connection.isOpen) return;
+  private sendPing() {
+    if (!this.room?.connection.isOpen) return;
     this.pingStartTime = Date.now();
     this.room.send(WS_EVENT.PING);
   }
 
-  updateDisplay() {
+  private updateDisplay() {
     const color = this.getPingColor(this.currentPingMs);
     const pingText = `${this.currentPingMs}ms`;
 
@@ -73,14 +80,14 @@ export class PingDisplay {
     this.updateBackgroundSize();
   }
 
-  getPingColor(pingMs: number): string {
+  private getPingColor(pingMs: number): string {
     if (pingMs < 50) return '#00ff00';
     if (pingMs < 100) return '#ffff00';
     if (pingMs < 200) return '#ff8800';
     return '#ff0000';
   }
 
-  updateBackgroundSize() {
+  private updateBackgroundSize() {
     const bgWidth = this.pingText.displayWidth + PADDING * 2;
     const bgHeight = this.pingText.displayHeight + PADDING * 2;
     const bgX = this.pingText.x - bgWidth + PADDING;
@@ -88,12 +95,5 @@ export class PingDisplay {
 
     this.background.clear();
     this.background.fillStyle(0x000000, 0.5).fillRoundedRect(bgX, bgY, bgWidth, bgHeight, CORNER_RADIUS);
-  }
-
-  destroy() {
-    this.timerEvent?.remove();
-    delete this.timerEvent;
-    this.pingText.destroy();
-    this.background.destroy();
   }
 }

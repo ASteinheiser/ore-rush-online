@@ -1,15 +1,17 @@
 import { type EntityPosition, MAP_SIZE, PLAYER_VIEW_RADIUS } from '@repo/core-game';
 
 export class FogOverlay {
-  fogOverlay?: Phaser.GameObjects.Graphics;
+  private fogOverlay: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene) {
     this.fogOverlay = scene.add.graphics().setDepth(102).setScrollFactor(1);
   }
 
-  public update({ x, y }: EntityPosition): void {
-    if (!this.fogOverlay) return;
+  public destroy() {
+    this.fogOverlay.destroy();
+  }
 
+  public update({ x, y }: EntityPosition): void {
     const innerX = x - PLAYER_VIEW_RADIUS;
     const innerY = y - PLAYER_VIEW_RADIUS;
     const holeSize = PLAYER_VIEW_RADIUS * 2;
@@ -25,9 +27,5 @@ export class FogOverlay {
     this.fogOverlay.fillRect(innerX + holeSize, innerY, MAP_SIZE.width - innerX - holeSize, holeSize);
     // Bottom
     this.fogOverlay.fillRect(0, innerY + holeSize, MAP_SIZE.width, MAP_SIZE.height - innerY - holeSize);
-  }
-
-  destroy() {
-    this.fogOverlay?.destroy();
   }
 }

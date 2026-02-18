@@ -4,7 +4,7 @@ import { ATTACK_SIZE } from '@repo/core-game';
 const PUNCH_BOX_LIFETIME = 2000;
 
 export class PunchBox {
-  punchBox?: Phaser.GameObjects.Rectangle;
+  private punchBox: Phaser.GameObjects.Rectangle;
 
   constructor(scene: Phaser.Scene, x: number, y: number, color: number) {
     const { width, height } = ATTACK_SIZE;
@@ -15,7 +15,7 @@ export class PunchBox {
     });
   }
 
-  destroy() {
-    this.punchBox?.destroy();
+  private destroy() {
+    this.punchBox.destroy();
   }
 }
