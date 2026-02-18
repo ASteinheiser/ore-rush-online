@@ -11,9 +11,6 @@ import {
   type AuthPayload,
   type InputPayload,
 } from '@repo/core-game';
-import { gql } from '@apollo/client';
-import { client } from '../../graphql/client';
-import type { Desktop_GetGameResultsQuery, Desktop_GetGameResultsQueryVariables } from '../../graphql';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { Player } from '../objects/Player';
 import { PunchBox } from '../objects/PunchBox';
@@ -43,7 +40,7 @@ export class Game extends Scene {
   currentPlayer?: Player;
   /** This is used to track the player according to the server */
   currentPlayerServer?: Phaser.GameObjects.Rectangle;
-  blocks: Array<Block> = [];
+  blocks: Record<number, Block> = {};
   fogOverlay?: FogOverlay;
 
   ironCountText?: CustomText;
@@ -249,12 +246,6 @@ export class Game extends Scene {
           // #endregion FOR DEBUGGING PURPOSES
 
           if (this.currentPlayer) {
-            // show a coin modal when the player kills an enemy
-            if (this.currentPlayer.killCount !== player.killCount) {
-              this.currentPlayer.killCount = player.killCount;
-              EventBus.emit(EVENT_BUS.COIN_OPEN);
-            }
-
             // Server-side reconciliation (ensure CSP is in sync with server authority)
             const nextServerAckSeq = player.lastProcessedInputSeq ?? 0;
             // Ignore out-of-order acks
@@ -435,8 +426,8 @@ export class Game extends Scene {
     Object.values(this.playerEntities).forEach((player) => player.destroy());
     this.playerEntities = {};
 
-    this.blocks.forEach((block) => block.destroy());
-    this.blocks = [];
+    Object.values(this.blocks).forEach((block) => block.destroy());
+    this.blocks = {};
 
     this.fogOverlay?.destroy();
     delete this.fogOverlay;
@@ -460,12 +451,10 @@ export class Game extends Scene {
     const roomId = this.room?.roomId;
     if (!roomId) return;
 
-    const gameResults = await getGameResults(roomId);
-
     this.cleanup();
     this.cleanupRoom();
     this.clearStoredReconnectionToken();
-    this.scene.start(SCENE.GAME_OVER, { gameResults });
+    this.scene.start(SCENE.GAME_OVER);
   }
 
   private storeReconnectionToken(token: string) {
@@ -510,21 +499,3 @@ export class Game extends Scene {
     return false;
   }
 }
-
-const getGameResults = async (roomId: string) => {
-  const { data } = await client.query<Desktop_GetGameResultsQuery, Desktop_GetGameResultsQueryVariables>({
-    variables: { roomId },
-    fetchPolicy: 'network-only',
-    query: gql`
-      query Desktop_GetGameResults($roomId: String!) {
-        gameResults(roomId: $roomId) {
-          username
-          attackCount
-          killCount
-        }
-      }
-    `,
-  });
-
-  return data?.gameResults ?? [];
-};
