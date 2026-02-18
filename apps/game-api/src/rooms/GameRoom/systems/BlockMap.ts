@@ -22,6 +22,28 @@ export class BlockMap {
     this.generateBlockMap();
   }
 
+  /** Returns blocks in the 3×3 grid around the player (blocks the player could be touching) */
+  public getNearbyBlocks(player: Player): Block[] {
+    const playerCol = Math.floor(player.x / BLOCK_SIZE.width);
+    const playerRow = Math.floor(player.y / BLOCK_SIZE.height);
+
+    const blocks: Block[] = [];
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        const row = playerRow + dr;
+        const col = playerCol + dc;
+        // skip blocks outside the map
+        if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) continue;
+
+        const blockId = this.blockGrid[row][col];
+        if (blockId === -1) continue; // ignore empty cells
+
+        blocks.push(this.room.state.blocks[blockId]);
+      }
+    }
+    return blocks;
+  }
+
   public updateVisibleBlocks(client: Client, player: Player) {
     const currentlyVisibleBlocks = this.clientVisibleBlocks.get(client.sessionId) ?? new Set();
     const nowVisible = new Set<number>();

@@ -126,7 +126,7 @@ export class GameRoom extends Room {
       try {
         this.playerInput.processPlayerInput(player, (input) => {
           this.playerMovement.handleInput(player, input);
-          this.playerMining.handleInput(player, input, sessionId);
+          this.playerMining.handleInput(player, input);
         });
         // only update vision once per tick, after positions are updated
         this.playerVision.updateVisiblePlayers(client, player);

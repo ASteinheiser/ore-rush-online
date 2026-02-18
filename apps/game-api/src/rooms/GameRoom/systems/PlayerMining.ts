@@ -15,13 +15,13 @@ import type { Player } from '../schemas/Player';
 export class PlayerMining {
   constructor(private room: GameRoom) {}
 
-  public handleInput(player: Player, input: InputPayload, sessionId: string) {
+  public handleInput(player: Player, input: InputPayload) {
     const currentTime = Date.now();
     const timeSinceLastAttack = currentTime - player.lastAttackTime;
 
     if (this.isInDamageFrame(timeSinceLastAttack)) {
       this.setDamageFrame(player);
-      this.checkForBlockHits(player, sessionId);
+      this.checkForBlockHits(player);
     } else {
       player.attackDamageFrameX = undefined;
       player.attackDamageFrameY = undefined;
@@ -58,12 +58,10 @@ export class PlayerMining {
   }
 
   /** Check if the damage frame hit a block and, if needed, update the state for blocks and player inventory */
-  private checkForBlockHits(player: Player, sessionId: string) {
-    const visibleBlocks = this.room.blockMap.clientVisibleBlocks.get(sessionId);
-    if (!visibleBlocks) return;
+  private checkForBlockHits(player: Player) {
+    const nearbyBlocks = this.room.blockMap.getNearbyBlocks(player);
 
-    for (const blockId of visibleBlocks) {
-      const block = this.room.state.blocks[blockId];
+    for (const block of nearbyBlocks) {
       if (
         block.type !== 'empty' &&
         !player.blocksHit.includes(block.id) &&
