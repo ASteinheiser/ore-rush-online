@@ -27,11 +27,8 @@ export const Game = () => {
   const { isMuted, volume } = useAudioSettings();
 
   const phaserRef = useRef<PhaserGameRef | null>(null);
-
-  const { data } = useQuery<Desktop_GetTotalPlayersQuery, Desktop_GetTotalPlayersQueryVariables>(
-    GET_TOTAL_PLAYERS
-  );
-  console.log({ totalPlayers: data?.totalPlayers ?? 0 });
+  // TODO: remove this query once we create a real query
+  useQuery<Desktop_GetTotalPlayersQuery, Desktop_GetTotalPlayersQueryVariables>(GET_TOTAL_PLAYERS);
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useSearchParamFlag(SEARCH_PARAMS.PROFILE);
   const [isNewPasswordModalOpen, setIsNewPasswordModalOpen] = useSearchParamFlag(SEARCH_PARAMS.NEW_PASSWORD);
