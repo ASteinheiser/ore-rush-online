@@ -5,7 +5,7 @@ import { PLAYER_VIEW_LEVELS, type Player } from '../schemas/Player';
 import type { GameRoom } from '../index';
 
 export class PlayerVision {
-  clientVisiblePlayers = new Map<string, Set<string>>();
+  public clientVisiblePlayers = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {}
 
