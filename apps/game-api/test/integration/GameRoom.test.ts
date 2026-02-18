@@ -6,6 +6,7 @@ import {
   WS_CODE,
   WS_EVENT,
   WS_ROOM,
+  MAP_SIZE,
   INACTIVITY_TIMEOUT,
   PLAYER_MOVE_SPEED,
   PLAYER_VIEW_RADIUS,
@@ -392,6 +393,31 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
+    });
+
+    it('should keep the correct amount of blocks in vision at different map locations', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+
+      assertBasicPlayerState({ room, clientIds: [client.sessionId] });
+
+      const player = room.state.players.get(client.sessionId);
+      const locations = [
+        { x: 0, y: 0, expectedBlocks: 36 }, // top-left corner
+        { x: 546, y: 546, expectedBlocks: 121 }, // top-left area
+        { x: 2002, y: 2002, expectedBlocks: 121 }, // near center
+        { x: 3454, y: 3454, expectedBlocks: 121 }, // bottom-right area
+        { x: MAP_SIZE.width, y: MAP_SIZE.height / 2, expectedBlocks: 66 }, // right edge middle
+      ] as const;
+
+      for (const { x, y, expectedBlocks } of locations) {
+        player.x = x;
+        player.y = y;
+        await room.waitForNextSimulationTick();
+
+        const visibleBlockCount = room.blockMap.clientVisibleBlocks.get(client.sessionId)?.size ?? 0;
+        assert.strictEqual(visibleBlockCount, expectedBlocks);
+      }
     });
 
     it('should show player position only when in vision (username always visible, x/y when in range)', async () => {
