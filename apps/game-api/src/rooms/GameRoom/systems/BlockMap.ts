@@ -1,22 +1,24 @@
 import type { Client } from 'colyseus';
-import { Quadtree, Rectangle } from '@timohausmann/quadtree-ts';
 import { MAP_SIZE, BLOCK_SIZE, BLOCK_TYPES, PLAYER_VIEW_RADIUS } from '@repo/core-game';
 import { Block } from '../schemas/Block';
 import type { Player } from '../schemas/Player';
 import type { GameRoom } from '../index';
 
 export class BlockMap {
-  blockQuadtree: Quadtree<Rectangle<Block>>;
-  clientVisibleBlocks = new Map<string, Set<number>>();
+  private cols: number;
+  private rows: number;
+  /** 2D grid initialized with each cell containing -1 (no blockId) */
+  private blockGrid: number[][];
+  /** the number of cells to search in each direction for visibility */
+  private viewRadiusCells: number;
+  public clientVisibleBlocks = new Map<string, Set<number>>();
 
   constructor(private room: GameRoom) {
-    this.blockQuadtree = new Quadtree({
-      width: MAP_SIZE.width,
-      height: MAP_SIZE.height,
-      maxObjects: 4,
-      maxLevels: 6,
-    });
+    this.cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
+    this.rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
+    this.viewRadiusCells = Math.ceil(PLAYER_VIEW_RADIUS / BLOCK_SIZE.width);
 
+    this.blockGrid = Array.from({ length: this.rows }, () => Array.from({ length: this.cols }, () => -1));
     this.generateBlockMap();
   }
 
@@ -24,21 +26,25 @@ export class BlockMap {
     const currentlyVisibleBlocks = this.clientVisibleBlocks.get(client.sessionId) ?? new Set();
     const nowVisible = new Set<number>();
 
-    const searchArea = new Rectangle({
-      x: player.x - PLAYER_VIEW_RADIUS,
-      y: player.y - PLAYER_VIEW_RADIUS,
-      width: PLAYER_VIEW_RADIUS * 2,
-      height: PLAYER_VIEW_RADIUS * 2,
-    });
+    const playerCol = Math.floor(player.x / BLOCK_SIZE.width);
+    const playerRow = Math.floor(player.y / BLOCK_SIZE.height);
 
-    const nearbyBlocks = this.blockQuadtree.retrieve(searchArea);
+    const colMin = Math.max(0, playerCol - this.viewRadiusCells);
+    const colMax = Math.min(this.cols - 1, playerCol + this.viewRadiusCells);
+    const rowMin = Math.max(0, playerRow - this.viewRadiusCells);
+    const rowMax = Math.min(this.rows - 1, playerRow + this.viewRadiusCells);
 
-    for (const nearbyBlock of nearbyBlocks) {
-      const block = nearbyBlock.data;
-      nowVisible.add(block.id);
+    for (let row = rowMin; row <= rowMax; row++) {
+      for (let col = colMin; col <= colMax; col++) {
+        const blockId = this.blockGrid[row][col];
+        if (blockId === -1) continue; // ignore empty cells
 
-      if (!currentlyVisibleBlocks.has(block.id)) {
-        client.view.add(block);
+        const block = this.room.state.blocks[blockId];
+        nowVisible.add(block.id);
+
+        if (!currentlyVisibleBlocks.has(block.id)) {
+          client.view.add(block);
+        }
       }
     }
 
@@ -52,13 +58,11 @@ export class BlockMap {
   }
 
   private generateBlockMap() {
-    const cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
-    const rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
-    const totalBlocks = cols * rows;
+    const totalBlocks = this.cols * this.rows;
 
     for (let i = 0; i < totalBlocks; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
+      const col = i % this.cols;
+      const row = Math.floor(i / this.cols);
 
       const block = new Block();
       block.id = i;
@@ -79,16 +83,7 @@ export class BlockMap {
       block.hp = block.maxHp;
 
       this.room.state.blocks.push(block);
-
-      this.blockQuadtree.insert(
-        new Rectangle({
-          x: block.x - BLOCK_SIZE.width / 2,
-          y: block.y - BLOCK_SIZE.height / 2,
-          width: BLOCK_SIZE.width,
-          height: BLOCK_SIZE.height,
-          data: block,
-        })
-      );
+      this.blockGrid[row][col] = block.id;
     }
   }
 }

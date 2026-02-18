@@ -70,7 +70,6 @@
     "@prisma/client": "catalog:",
     "@repo/core-game": "workspace:*",
     "@supabase/supabase-js": "catalog:",
-    "@timohausmann/quadtree-ts": "^2.3.0",
     "colyseus": "catalog:",
     "cors": "^2.8.5",
     "dotenv": "catalog:",
