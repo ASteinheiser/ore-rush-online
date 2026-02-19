@@ -1,372 +1,63 @@
-import { Scene, Scenes } from 'phaser';
-import { Client, getStateCallbacks, type Room } from '@colyseus/sdk';
-import {
-  calculateMovement,
-  FIXED_TIME_STEP,
-  PLAYER_SIZE,
-  MAP_SIZE,
-  WS_ROOM,
-  WS_EVENT,
-  WS_CODE,
-  type AuthPayload,
-  type InputPayload,
-} from '@repo/core-game';
+import { FIXED_TIME_STEP, type AuthPayload } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
-import { Player } from '../objects/Player';
-import { PunchBox } from '../objects/PunchBox';
-import { Block } from '../objects/Block';
-import { CustomText } from '../objects/CustomText';
-import { PingDisplay } from '../objects/PingDisplay';
-import { FpsDisplay } from '../objects/FpsDisplay';
-import { FogOverlay } from '../objects/FogOverlay';
-import { ASSET, SCENE } from '../constants';
+import { SCENE } from '../constants';
+import { RoomSystem } from '../systems/RoomSystem';
+import { InputSystem } from '../systems/InputSystem';
+import { UISystem } from '../systems/UISystem';
+import { PlayerSystem } from '../systems/PlayerSystem';
+import { BlockSystem } from '../systems/BlockSystem';
 
-const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL;
-if (!WEBSOCKET_URL) throw new Error('VITE_WEBSOCKET_URL is not set');
-
-const RECONNECTION_STORAGE_KEY = 'game_reconnection_token';
-const MAX_RECONNECT_ATTEMPTS = 3;
-const RECONNECT_BACKOFF_MS = 1000;
-
-export class Game extends Scene {
-  client: Client;
-  room?: Room;
-  fpsDisplay?: FpsDisplay;
-  pingDisplay?: PingDisplay;
-  elapsedTime = 0;
-  reconnectionAttempt = 0;
-
-  playerEntities: Record<string, Player> = {};
-  currentPlayer?: Player;
-  /** This is used to track the player according to the server */
-  currentPlayerServer?: Phaser.GameObjects.Rectangle;
-  blocks: Record<number, Block> = {};
-  fogOverlay?: FogOverlay;
-
-  ironCountText?: CustomText;
-  goldCountText?: CustomText;
-
-  escapeKey?: Phaser.Input.Keyboard.Key;
-  cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
-  pendingInputs: Array<InputPayload> = [];
-  inputSeq = 0;
-  serverAckSeq = 0;
+export class Game extends Phaser.Scene {
+  private elapsedTime = 0;
+  public uiSystem?: UISystem;
+  public roomSystem = new RoomSystem(this);
+  public inputSystem = new InputSystem(this);
+  public playerSystem = new PlayerSystem(this);
+  private blockSystem = new BlockSystem(this);
 
   constructor() {
     super(SCENE.GAME);
-
-    this.client = new Client(WEBSOCKET_URL);
   }
 
   preload() {
-    this.escapeKey = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-    this.cursorKeys = this.input.keyboard?.createCursorKeys();
-  }
-
-  async refreshToken({ token }: AuthPayload) {
-    if (token === this.client?.auth?.token) return;
-
-    try {
-      this.client.auth.token = token;
-      this.room?.send(WS_EVENT.REFRESH_TOKEN, { token });
-    } catch (error) {
-      console.error('Failed to refresh token: ', error);
-    }
+    this.inputSystem.setupInputSystem();
   }
 
   async create({ token }: AuthPayload) {
-    // set the camera bounds to the map size
-    this.cameras.main.setBackgroundColor(0x00ff00).setBounds(0, 0, MAP_SIZE.width, MAP_SIZE.height);
-
-    // draw a border around the map area
-    this.add
-      .rectangle(0, 0, MAP_SIZE.width, MAP_SIZE.height)
-      .setOrigin(0, 0)
-      .setDepth(100)
-      .setStrokeStyle(8, 0x990099);
-
-    // set the background image to cover the entire map area
-    this.add
-      .image(0, 0, ASSET.BACKGROUND)
-      .setAlpha(0.5)
-      .setOrigin(0.5)
-      .setPosition(MAP_SIZE.width / 2, MAP_SIZE.height / 2)
-      .setDisplaySize(MAP_SIZE.width, MAP_SIZE.height);
-
-    const leaveText = new CustomText(this, 0, 0, 'Press Shift to leave the game', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    }).setScrollFactor(0);
-
-    this.ironCountText = new CustomText(this, 0, 0, 'Iron: 0', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    }).setScrollFactor(0);
-
-    this.goldCountText = new CustomText(this, 0, 0, 'Gold: 0', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    }).setScrollFactor(0);
-
-    const layout = () => {
-      const { width } = this.scale;
-      leaveText.setPosition((width - leaveText.width) / 2, 20);
-      this.ironCountText?.setPosition(20, 20);
-      this.goldCountText?.setPosition(20, 40);
-    };
-
-    layout();
-    this.scale.on(Phaser.Scale.Events.RESIZE, layout);
-    this.events.once(Scenes.Events.SHUTDOWN, () => {
-      this.scale.off(Phaser.Scale.Events.RESIZE, layout);
-    });
-
-    this.client.auth.token = token;
-
-    const reconnectToken = this.getStoredReconnectionToken();
-    if (reconnectToken) {
-      try {
-        this.room = await this.client.reconnect(reconnectToken);
-        EventBus.emit(EVENT_BUS.RECONNECTION_SUCCESS);
-      } catch (reconnectError) {
-        console.warn('Reconnection failed, falling back to joinOrCreate:', reconnectError);
-      }
+    await this.roomSystem.joinRoom(token);
+    if (!this.roomSystem.room) {
+      return this.sendToMainMenu(new Error('Failed to join room'));
     }
-    try {
-      if (!this.room) {
-        this.room = await this.client.joinOrCreate(WS_ROOM.GAME_ROOM);
-      }
-    } catch (error) {
-      console.error('Failed to join room:', error);
-    }
-    if (!this.room) {
-      this.sendToMainMenu(new Error('Failed to join room'));
-      return;
-    }
-    // store the reconnection token for future reconnection
-    this.storeReconnectionToken(this.room.reconnectionToken);
 
-    this.setupRoomEventListeners();
+    this.setupStateListeners();
 
     EventBus.emit(EVENT_BUS.CURRENT_SCENE_READY, this);
   }
 
-  setupRoomEventListeners() {
-    if (!this.room) return;
-    // cleanup any old entities
-    this.cleanup();
-    this.reconnectionAttempt = 0;
-    this.room.reconnection.maxRetries = 8;
+  /** Currently public to allow roomSystem to call when reconnection succeeds */
+  public setupStateListeners() {
+    if (!this.roomSystem.room) return;
 
-    this.fogOverlay = new FogOverlay(this);
-    this.fpsDisplay = new FpsDisplay(this);
-    this.pingDisplay = new PingDisplay(this, this.room);
+    this.cleanupScene();
+    this.uiSystem = new UISystem(this);
 
-    this.room.onError((code, message) => {
-      let errorMessage = 'Unexpected error with room connection';
-      if (code || message) {
-        errorMessage = `Room error: ${code} - ${message}`;
-      }
-      EventBus.emit(EVENT_BUS.JOIN_ERROR, new Error(errorMessage));
-    });
-
-    this.room.onDrop(() => {
-      this.reconnectionAttempt++;
-      EventBus.emit(EVENT_BUS.RECONNECTION_ATTEMPT, this.reconnectionAttempt);
-    });
-
-    this.room.onReconnect(() => {
-      this.reconnectionAttempt = 0;
-      EventBus.emit(EVENT_BUS.RECONNECTION_SUCCESS);
-    });
-
-    this.room.onLeave(async (code) => {
-      switch (code) {
-        case WS_CODE.SUCCESS:
-          await this.sendToGameOver();
-          break;
-        case WS_CODE.INTERNAL_SERVER_ERROR:
-        case WS_CODE.BAD_REQUEST:
-        case WS_CODE.TIMEOUT:
-          if (!(await this.handleReconnection())) {
-            this.sendToMainMenu(new Error('Failed to reconnect'));
-          }
-          break;
-        case WS_CODE.UNAUTHORIZED:
-        case WS_CODE.FORBIDDEN:
-        case WS_CODE.NOT_FOUND:
-          this.clearStoredReconnectionToken();
-          this.sendToMainMenu(new Error('You were removed from the game'));
-          break;
-        default:
-          this.sendToMainMenu(new Error(`Oops, something went wrong. Please try to reconnect.`));
-      }
-    });
-
-    const $ = getStateCallbacks(this.room);
-
-    $(this.room.state).players.onAdd((player, sessionId) => {
-      const entity = this.physics.add.sprite(player.x, player.y, ASSET.PLAYER).setDepth(101);
-
-      const nameText = new CustomText(this, player.x, player.y, player.username, {
-        fontFamily: 'Tiny5',
-        fontSize: 12,
-      })
-        .setOrigin(0.5, 2.75)
-        .setDepth(101);
-
-      const newPlayer = new Player(this, entity, nameText);
-
-      this.playerEntities[sessionId] = newPlayer;
-
-      // keep track of the current player
-      if (sessionId === this.room?.sessionId) {
-        this.currentPlayer = newPlayer;
-        // ensure the camera is following the current player
-        this.cameras.main.startFollow(entity, true, 0.1, 0.1);
-
-        // #region FOR DEBUGGING PURPOSES
-        this.currentPlayerServer = this.add.rectangle(0, 0, entity.width, entity.height).setDepth(101);
-        this.currentPlayerServer.setStrokeStyle(1, 0xff0000);
-        // #endregion FOR DEBUGGING PURPOSES
-
-        $(player).onChange(() => {
-          this.ironCountText?.setText(`Iron: ${player.inventory.iron}`);
-          this.goldCountText?.setText(`Gold: ${player.inventory.gold}`);
-
-          // #region FOR DEBUGGING PURPOSES
-          if (this.currentPlayerServer) {
-            this.currentPlayerServer.x = player.x;
-            this.currentPlayerServer.y = player.y;
-
-            if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
-              new PunchBox(this, player.attackDamageFrameX, player.attackDamageFrameY, 0x0000ff);
-            }
-          }
-          // #endregion FOR DEBUGGING PURPOSES
-
-          if (this.currentPlayer) {
-            // Server-side reconciliation (ensure CSP is in sync with server authority)
-            const nextServerAckSeq = player.lastProcessedInputSeq ?? 0;
-            // Ignore out-of-order acks
-            if (nextServerAckSeq < this.serverAckSeq) return;
-
-            // Update ack and drop acknowledged inputs
-            this.serverAckSeq = nextServerAckSeq;
-            while (this.pendingInputs.length && this.pendingInputs[0].seq <= nextServerAckSeq) {
-              this.pendingInputs.shift();
-            }
-
-            // Determine the target position we expect given remaining inputs
-            // Start from authoritative server position
-            let targetPosition = { x: player.x, y: player.y };
-            for (const { left, right, up, down } of this.pendingInputs) {
-              targetPosition = calculateMovement({
-                x: targetPosition.x,
-                y: targetPosition.y,
-                ...PLAYER_SIZE,
-                left,
-                right,
-                up,
-                down,
-              });
-            }
-
-            // if our CSP is out of sync with the server state, sync client state with server state
-            if (
-              this.currentPlayer.entity.x !== targetPosition.x ||
-              this.currentPlayer.entity.y !== targetPosition.y
-            ) {
-              this.currentPlayer.forceMove(targetPosition);
-            }
-          }
-        });
-      } else {
-        // update the other players positions from the server
-        $(player).onChange(() => {
-          const inView = player.x !== undefined && player.y !== undefined;
-
-          if (inView) {
-            entity.setData('serverUsername', player.username);
-            entity.setData('serverX', player.x);
-            entity.setData('serverY', player.y);
-            entity.setData('serverAttack', player.isAttacking);
-
-            if (!entity.visible || !nameText.visible) {
-              newPlayer.forceMove({ x: player.x, y: player.y });
-            }
-
-            // #region FOR DEBUGGING PURPOSES
-            if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
-              new PunchBox(this, player.attackDamageFrameX, player.attackDamageFrameY, 0xff0000);
-            }
-            // #endregion FOR DEBUGGING PURPOSES
-          }
-
-          entity.setVisible(inView);
-          nameText.setVisible(inView);
-        });
-      }
-    });
-
-    $(this.room.state).players.onRemove((_, sessionId) => {
-      const foundPlayer = this.playerEntities[sessionId];
-      if (foundPlayer) {
-        foundPlayer.destroy();
-        delete this.playerEntities[sessionId];
-      }
-    });
-
-    $(this.room.state).blocks.onAdd((block) => {
-      const entity = new Block(this, block.x, block.y, block.type, block.hp, block.maxHp);
-      this.blocks[block.id] = entity;
-
-      $(block).onChange(() => {
-        entity.update(block.hp, block.maxHp, block.type);
-      });
-    });
-
-    $(this.room.state).blocks.onRemove((block) => {
-      const foundBlock = this.blocks[block.id];
-      if (foundBlock) {
-        foundBlock.destroy();
-        delete this.blocks[block.id];
-      }
+    this.roomSystem.setupRoomEventListeners({
+      onPlayerAdded: this.playerSystem.handleServerPlayerAdded,
+      onPlayerRemoved: this.playerSystem.handleServerPlayerRemoved,
+      onBlockAdded: this.blockSystem.handleBlockAdded,
+      onBlockRemoved: this.blockSystem.handleBlockRemoved,
     });
   }
 
   update(_: number, delta: number): void {
     // skip if not yet connected
-    if (!this.room || !this.currentPlayer) return;
+    if (!this.roomSystem.room || !this.playerSystem.currentPlayer) return;
 
-    this.fpsDisplay?.update(delta);
-    this.fogOverlay?.update(this.currentPlayer.entity);
+    this.uiSystem?.fpsDisplay.update(delta);
+    this.uiSystem?.fogOverlay.update(this.playerSystem.currentPlayer.entity);
 
-    for (const sessionId in this.playerEntities) {
-      // skip the current player since we are handling in the fixedTick and server onChange
-      if (sessionId === this.room.sessionId) continue;
-      // interpolate all other player entities from the server
-      const serverPlayer = this.playerEntities[sessionId];
-      if (!serverPlayer.entity.visible) continue; // skip player if not visible
-
-      const { serverX, serverY, serverAttack, serverUsername } = serverPlayer.entity.data.values;
-      if (serverX === undefined || serverY === undefined) continue;
-
-      serverPlayer.nameText.setText(serverUsername);
-
-      if (serverAttack) {
-        serverPlayer.punch();
-      } else {
-        serverPlayer.stopPunch();
-      }
-
-      const LERP_SPEED = 15;
-      const factor = Math.min(1, (LERP_SPEED * delta) / 1000);
-      serverPlayer.move({
-        x: Phaser.Math.Linear(serverPlayer.entity.x, serverX, factor),
-        y: Phaser.Math.Linear(serverPlayer.entity.y, serverY, factor),
-      });
-    }
+    // TODO: break this out into interpolateServerPlayers AND ServerReconciliationSystem
+    this.playerSystem.interpolateServerPlayers(delta);
 
     this.elapsedTime += delta;
     while (this.elapsedTime >= FIXED_TIME_STEP) {
@@ -375,127 +66,29 @@ export class Game extends Scene {
     }
   }
 
-  fixedTick() {
-    if (!this.room?.connection.isOpen || !this.currentPlayer || !this.cursorKeys || !this.escapeKey) {
-      return;
-    }
-
-    // press escape to open the settings menu
-    if (this.escapeKey.isDown) {
-      EventBus.emit(EVENT_BUS.SETTINGS_OPEN);
-    }
-
-    // press shift to leave the game
-    if (this.cursorKeys.shift.isDown) {
-      this.room.send(WS_EVENT.LEAVE_ROOM);
-      return;
-    }
-
-    const inputPayload: InputPayload = {
-      seq: this.inputSeq++,
-      left: this.cursorKeys.left.isDown,
-      right: this.cursorKeys.right.isDown,
-      up: this.cursorKeys.up.isDown,
-      down: this.cursorKeys.down.isDown,
-      attack: this.cursorKeys.space.isDown,
-    };
-    this.pendingInputs.push(inputPayload);
-    this.room.send(WS_EVENT.PLAYER_INPUT, inputPayload);
-
-    const { attack, left, right, up, down } = inputPayload;
-
-    if (attack) this.currentPlayer.punch();
-
-    const { x, y } = this.currentPlayer.entity;
-    const newPosition = calculateMovement({ x, y, ...PLAYER_SIZE, left, right, up, down });
-    this.currentPlayer.move(newPosition);
+  private fixedTick() {
+    // TODO: this should probably be broken out into a callback and player CSP handler
+    this.inputSystem.processInput();
   }
 
-  cleanup() {
-    this.fpsDisplay?.destroy();
-    delete this.fpsDisplay;
-    this.pingDisplay?.destroy();
-    delete this.pingDisplay;
-
-    this.currentPlayer?.destroy();
-    delete this.currentPlayer;
-
-    this.currentPlayerServer?.destroy();
-    delete this.currentPlayerServer;
-
-    Object.values(this.playerEntities).forEach((player) => player.destroy());
-    this.playerEntities = {};
-
-    Object.values(this.blocks).forEach((block) => block.destroy());
-    this.blocks = {};
-
-    this.fogOverlay?.destroy();
-    delete this.fogOverlay;
+  private cleanupScene() {
+    this.uiSystem?.destroy();
+    this.playerSystem.destroy();
+    this.blockSystem.destroy();
   }
 
-  cleanupRoom() {
-    this.room?.removeAllListeners();
-    delete this.room;
-  }
-
-  sendToMainMenu(error: unknown) {
+  public sendToMainMenu(error: Error) {
     console.error(error);
-    EventBus.emit(EVENT_BUS.JOIN_ERROR, error);
+    EventBus.emit(EVENT_BUS.JOIN_ERROR, error.message);
 
-    this.cleanup();
-    this.cleanupRoom();
+    this.roomSystem.cleanupRoom();
+    this.cleanupScene();
     this.scene.start(SCENE.MAIN_MENU);
   }
 
-  async sendToGameOver() {
-    const roomId = this.room?.roomId;
-    if (!roomId) return;
-
-    this.cleanup();
-    this.cleanupRoom();
-    this.clearStoredReconnectionToken();
+  public sendToGameOver() {
+    this.roomSystem.cleanupRoom();
+    this.cleanupScene();
     this.scene.start(SCENE.GAME_OVER);
-  }
-
-  private storeReconnectionToken(token: string) {
-    localStorage.setItem(RECONNECTION_STORAGE_KEY, token);
-  }
-
-  private getStoredReconnectionToken() {
-    return localStorage.getItem(RECONNECTION_STORAGE_KEY);
-  }
-
-  private clearStoredReconnectionToken() {
-    localStorage.removeItem(RECONNECTION_STORAGE_KEY);
-  }
-
-  async handleReconnection() {
-    const reconnectToken = this.getStoredReconnectionToken();
-    if (!reconnectToken) return false;
-
-    for (let attempt = 0; attempt < MAX_RECONNECT_ATTEMPTS; attempt++) {
-      const attemptDisplay = attempt + 1;
-      EventBus.emit(EVENT_BUS.RECONNECTION_ATTEMPT, attemptDisplay);
-
-      try {
-        const newRoom = await this.client.reconnect(reconnectToken);
-        // clear the old reconnection token and room listeners
-        this.clearStoredReconnectionToken();
-        this.cleanupRoom();
-        // set the new room state and listeners
-        this.room = newRoom;
-        this.setupRoomEventListeners();
-        // store the new reconnection token for future reconnection
-        this.storeReconnectionToken(newRoom.reconnectionToken);
-        EventBus.emit(EVENT_BUS.RECONNECTION_SUCCESS);
-        return true;
-      } catch (error) {
-        console.warn(`Reconnection attempt ${attemptDisplay} failed:`, error);
-        // exponential backoff => 1s, 2s, 4s...
-        const backoffMs = RECONNECT_BACKOFF_MS * Math.pow(2, attempt);
-        await new Promise((resolve) => setTimeout(resolve, backoffMs));
-      }
-    }
-    return false;
   }
 }
