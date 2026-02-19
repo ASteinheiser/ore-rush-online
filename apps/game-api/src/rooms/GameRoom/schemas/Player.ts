@@ -15,12 +15,12 @@ export class Inventory extends Schema {
 
 export class Player extends Schema {
   /** Identity fields */
-  userId: string;
-  tokenExpiresAt: number;
-  @type('string') username: string;
+  userId!: string;
+  tokenExpiresAt!: number;
+  @type('string') username!: string;
   /** Position and animation fields */
-  @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') x: number;
-  @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') y: number;
+  @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') x!: number;
+  @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') y!: number;
   @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isFacingRight: boolean = true;
   @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isAttacking: boolean = false;
   /** Private player information for active player */
@@ -35,6 +35,6 @@ export class Player extends Schema {
   attackCount: number = 0;
   blocksHit: Array<number> = [];
   /** Debug fields */
-  @view(PLAYER_VIEW_LEVELS.DEBUG) @type('number') attackDamageFrameX: number;
-  @view(PLAYER_VIEW_LEVELS.DEBUG) @type('number') attackDamageFrameY: number;
+  @view(PLAYER_VIEW_LEVELS.DEBUG) @type('number') attackDamageFrameX?: number;
+  @view(PLAYER_VIEW_LEVELS.DEBUG) @type('number') attackDamageFrameY?: number;
 }

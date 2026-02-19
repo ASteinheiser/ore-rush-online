@@ -13,6 +13,8 @@
     "composite": true,
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
   }
 }

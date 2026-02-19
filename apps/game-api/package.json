@@ -5,6 +5,9 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "private": false,
   "type": "module",
+  "exports": {
+    "./types": "./src/rooms/GameRoom/schemas/index.d.ts"
+  },
   "scripts": {
     "postinstall": "npm run generate:db-types",
     "lint": "eslint",
