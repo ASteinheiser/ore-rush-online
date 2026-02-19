@@ -67,8 +67,8 @@ export class Game extends Phaser.Scene {
   }
 
   private fixedTick() {
-    // TODO: this should probably be broken out into a callback and player CSP handler
-    this.inputSystem.processInput();
+    const input = this.inputSystem.processInput();
+    this.playerSystem.clientSidePrediction(input);
   }
 
   private cleanupScene() {

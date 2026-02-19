@@ -1,4 +1,4 @@
-import { calculateMovement, PLAYER_SIZE } from '@repo/core-game';
+import { calculateMovement, PLAYER_SIZE, type InputPayload } from '@repo/core-game';
 import { ASSET } from '../constants';
 import { CustomText } from '../objects/CustomText';
 import { Player } from '../objects/Player';
@@ -8,10 +8,13 @@ import type { RoomEventCallbacks } from './RoomSystem';
 
 export class PlayerSystem {
   public currentPlayer?: Player;
-  private serverAckSeq = 0;
   private playerEntities: Record<string, Player> = {};
   /** This is used to track the player according to the server */
   private currentPlayerServer?: Phaser.GameObjects.Rectangle;
+  /** This is used to track the inputs acknowledged by the server */
+  private serverAckSeq = 0;
+  /** This is used to track the inputs being predicted by the client */
+  private pendingInputs: Array<InputPayload> = [];
 
   constructor(private scene: Game) {}
 
@@ -72,18 +75,16 @@ export class PlayerSystem {
           // Ignore out-of-order acks
           if (nextServerAckSeq < this.serverAckSeq) return;
 
-          const pendingInputs = this.scene.inputSystem.pendingInputs;
-
           // Update ack and drop acknowledged inputs
           this.serverAckSeq = nextServerAckSeq;
-          while (pendingInputs.length && pendingInputs[0].seq <= nextServerAckSeq) {
-            pendingInputs.shift();
+          while (this.pendingInputs.length && this.pendingInputs[0].seq <= nextServerAckSeq) {
+            this.pendingInputs.shift();
           }
 
           // Determine the target position we expect given remaining inputs
           // Start from authoritative server position
           let targetPosition = { x: player.x, y: player.y };
-          for (const { left, right, up, down } of pendingInputs) {
+          for (const { left, right, up, down } of this.pendingInputs) {
             targetPosition = calculateMovement({
               x: targetPosition.x,
               y: targetPosition.y,
@@ -140,16 +141,33 @@ export class PlayerSystem {
     }
   };
 
+  public clientSidePrediction(inputPayload?: InputPayload) {
+    // skip if no input payload or current player
+    if (!inputPayload || !this.currentPlayer?.entity) return;
+
+    // store inputs to be processed by the server reconciliation
+    this.pendingInputs.push(inputPayload);
+
+    const { attack, left, right, up, down } = inputPayload;
+
+    if (attack) this.currentPlayer.punch();
+
+    const { x, y } = this.currentPlayer.entity;
+    const newPosition = calculateMovement({ x, y, ...PLAYER_SIZE, left, right, up, down });
+    this.currentPlayer.move(newPosition);
+  }
+
   public interpolateServerPlayers(delta: number) {
     for (const sessionId in this.playerEntities) {
-      // skip the current player since we are handling in the fixedTick and server onChange
+      // skip the current player since we are handling via CSP and Server Reconciliation
       if (sessionId === this.scene.roomSystem.room?.sessionId) continue;
+
       // interpolate all other player entities from the server
       const serverPlayer = this.playerEntities[sessionId];
-      if (!serverPlayer.entity.visible) continue; // skip player if not visible
-
       const { serverX, serverY, serverAttack, serverUsername } = serverPlayer.entity.data.values;
-      if (serverX === undefined || serverY === undefined) continue;
+      if (!serverPlayer.entity.visible || serverX === undefined || serverY === undefined) {
+        continue; // skip player if not visible
+      }
 
       serverPlayer.nameText.setText(serverUsername);
 

@@ -1,10 +1,9 @@
-import { WS_EVENT, PLAYER_SIZE, calculateMovement, type InputPayload } from '@repo/core-game';
+import { WS_EVENT, type InputPayload } from '@repo/core-game';
 import type { Game } from '../scenes/Game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 
 export class InputSystem {
   private inputSeq = 0;
-  public pendingInputs: Array<InputPayload> = [];
   private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
   private escapeKey?: Phaser.Input.Keyboard.Key;
 
@@ -44,15 +43,9 @@ export class InputSystem {
       down: this.cursorKeys.down.isDown,
       attack: this.cursorKeys.space.isDown,
     };
-    this.pendingInputs.push(inputPayload);
+    // send the input to the server
     this.scene.roomSystem.room?.send(WS_EVENT.PLAYER_INPUT, inputPayload);
 
-    const { attack, left, right, up, down } = inputPayload;
-
-    if (attack) this.scene.playerSystem.currentPlayer.punch();
-
-    const { x, y } = this.scene.playerSystem.currentPlayer.entity;
-    const newPosition = calculateMovement({ x, y, ...PLAYER_SIZE, left, right, up, down });
-    this.scene.playerSystem.currentPlayer.move(newPosition);
+    return inputPayload;
   }
 }
