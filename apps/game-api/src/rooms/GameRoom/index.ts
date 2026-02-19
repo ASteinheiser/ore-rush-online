@@ -66,7 +66,7 @@ export class GameRoom extends Room {
         this.elapsedTime -= FIXED_TIME_STEP;
         this.fixedTick();
       }
-    });
+    }, this.patchRate);
   }
 
   onAuth(_: Client, __: unknown, context: AuthContext) {
