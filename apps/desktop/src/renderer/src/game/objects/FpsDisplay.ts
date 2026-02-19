@@ -1,4 +1,3 @@
-import { Scenes } from 'phaser';
 import { CustomText } from './CustomText';
 
 const MARGIN = 16;
@@ -30,7 +29,7 @@ export class FpsDisplay {
 
     layout();
     this.scene.scale.on(Phaser.Scale.Events.RESIZE, layout);
-    this.scene.events.once(Scenes.Events.SHUTDOWN, () => {
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.scale.off(Phaser.Scale.Events.RESIZE, layout);
     });
   }

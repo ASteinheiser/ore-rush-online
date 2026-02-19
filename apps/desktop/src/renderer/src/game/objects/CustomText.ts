@@ -1,6 +1,5 @@
-import { GameObjects } from 'phaser';
-
-export class CustomText extends GameObjects.Text {
+/** Applies a default style to the text. Can also add animations and interactions. */
+export class CustomText extends Phaser.GameObjects.Text {
   private color: string | CanvasGradient | CanvasPattern;
   private bounceTween?: Phaser.Tweens.Tween;
 
