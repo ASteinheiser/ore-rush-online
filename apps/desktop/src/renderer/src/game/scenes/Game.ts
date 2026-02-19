@@ -5,6 +5,7 @@ import { RoomSystem } from '../systems/RoomSystem';
 import { InputSystem } from '../systems/InputSystem';
 import { UISystem } from '../systems/UISystem';
 import { PlayerSystem } from '../systems/PlayerSystem';
+import { RemotePlayerSystem } from '../systems/RemotePlayerSystem';
 import { BlockSystem } from '../systems/BlockSystem';
 
 export class Game extends Phaser.Scene {
@@ -13,6 +14,7 @@ export class Game extends Phaser.Scene {
   public roomSystem = new RoomSystem(this);
   public inputSystem = new InputSystem(this);
   public playerSystem = new PlayerSystem(this);
+  public remotePlayerSystem = new RemotePlayerSystem(this);
   private blockSystem = new BlockSystem(this);
 
   constructor() {
@@ -42,13 +44,17 @@ export class Game extends Phaser.Scene {
     this.uiSystem = new UISystem(this);
 
     this.roomSystem.setupRoomEventListeners({
-      onPlayerAdded: this.playerSystem.handleServerPlayerAdded,
-      onPlayerRemoved: this.playerSystem.handleServerPlayerRemoved,
+      onPlayerAdded: (player, sessionId, $) => {
+        this.playerSystem.handleCurrentPlayerAdded(player, sessionId, $);
+        this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId, $);
+      },
+      onPlayerRemoved: this.remotePlayerSystem.handleRemotePlayerRemoved,
       onBlockAdded: this.blockSystem.handleBlockAdded,
       onBlockRemoved: this.blockSystem.handleBlockRemoved,
     });
   }
 
+  // this is called by Phaser per frame (could be 30fps/60fps/120fps/etc)
   update(_: number, delta: number): void {
     // skip if not yet connected
     if (!this.roomSystem.room || !this.playerSystem.currentPlayer) return;
@@ -56,8 +62,7 @@ export class Game extends Phaser.Scene {
     this.uiSystem?.fpsDisplay.update(delta);
     this.uiSystem?.fogOverlay.update(this.playerSystem.currentPlayer.entity);
 
-    // TODO: break this out into interpolateServerPlayers AND ServerReconciliationSystem
-    this.playerSystem.interpolateServerPlayers(delta);
+    this.remotePlayerSystem.interpolateRemotePlayers(delta);
 
     this.elapsedTime += delta;
     while (this.elapsedTime >= FIXED_TIME_STEP) {
@@ -74,6 +79,7 @@ export class Game extends Phaser.Scene {
   private cleanupScene() {
     this.uiSystem?.destroy();
     this.playerSystem.destroy();
+    this.remotePlayerSystem.destroy();
     this.blockSystem.destroy();
   }
 

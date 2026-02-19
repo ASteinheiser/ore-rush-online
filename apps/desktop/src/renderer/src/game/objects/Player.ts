@@ -1,5 +1,6 @@
 import { ATTACK_DAMAGE__DELAY, type EntityPosition } from '@repo/core-game';
-import { SOUND } from '../constants';
+import { ASSET, SOUND } from '../constants';
+import { CustomText } from './CustomText';
 
 /** Used to handle slight differences in player position due to interpolation of server values */
 const MOVEMENT_THRESHOLD = 0.1;
@@ -11,20 +12,41 @@ export const PLAYER_ANIM = {
 };
 
 export class Player {
+  public entity: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  public nameText: CustomText;
+  public debugBox?: Phaser.GameObjects.Rectangle;
   private punchSfx: Phaser.Sound.BaseSound;
 
   constructor(
-    scene: Phaser.Scene,
-    public entity: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody,
-    public nameText: Phaser.GameObjects.Text
+    private scene: Phaser.Scene,
+    username: string,
+    x: number,
+    y: number
   ) {
+    this.entity = scene.physics.add.sprite(x, y, ASSET.PLAYER).setDepth(101);
+
+    this.nameText = new CustomText(scene, x, y, username, {
+      fontFamily: 'Tiny5',
+      fontSize: 12,
+    })
+      .setOrigin(0.5, 2.75)
+      .setDepth(101);
+
     this.punchSfx = scene.sound.add(SOUND.PUNCH);
+  }
+
+  public createDebugBox() {
+    this.debugBox = this.scene.add
+      .rectangle(this.entity.x, this.entity.y, this.entity.width, this.entity.height)
+      .setDepth(101)
+      .setStrokeStyle(1, 0xff0000);
   }
 
   public destroy() {
     this.entity.destroy();
     this.nameText.destroy();
     this.punchSfx.destroy();
+    this.debugBox?.destroy();
   }
 
   /** Force the player to move to a specific position, skips animations, interpolation, etc. */
