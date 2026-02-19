@@ -7,19 +7,29 @@ import type { GameRoom } from '../index';
 export class BlockMap {
   private cols: number;
   private rows: number;
-  /** 2D grid initialized with each cell containing -1 (no blockId) */
-  private blockGrid: number[][];
+  /** 2D grid initialized with each cell containing empty string (no blockId) */
+  private blockGrid: string[][];
   /** the number of cells to search in each direction for visibility */
   private viewRadiusCells: number;
-  public clientVisibleBlocks = new Map<string, Set<number>>();
+  public clientVisibleBlocks = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {
     this.cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
     this.rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
     this.viewRadiusCells = Math.ceil(PLAYER_VIEW_RADIUS / BLOCK_SIZE.width);
 
-    this.blockGrid = Array.from({ length: this.rows }, () => Array.from({ length: this.cols }, () => -1));
+    this.blockGrid = Array.from({ length: this.rows }, () => Array.from({ length: this.cols }, () => ''));
     this.generateBlockMap();
+  }
+
+  public deleteBlock(blockId: string) {
+    const block = this.room.state.blocks.get(blockId);
+    if (!block) return;
+
+    const col = Math.floor(block.x / BLOCK_SIZE.width);
+    const row = Math.floor(block.y / BLOCK_SIZE.height);
+    this.blockGrid[row][col] = '';
+    this.room.state.blocks.delete(blockId);
   }
 
   /** Returns blocks in the 3×3 grid around the player (blocks the player could be touching) */
@@ -36,9 +46,9 @@ export class BlockMap {
         if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) continue;
 
         const blockId = this.blockGrid[row][col];
-        if (blockId === -1) continue; // ignore empty cells
+        if (blockId === '') continue; // ignore empty cells
 
-        blocks.push(this.room.state.blocks[blockId]);
+        blocks.push(this.room.state.blocks.get(blockId));
       }
     }
     return blocks;
@@ -46,7 +56,7 @@ export class BlockMap {
 
   public updateVisibleBlocks(client: Client, player: Player) {
     const currentlyVisibleBlocks = this.clientVisibleBlocks.get(client.sessionId) ?? new Set();
-    const nowVisible = new Set<number>();
+    const nowVisible = new Set<string>();
 
     const playerCol = Math.floor(player.x / BLOCK_SIZE.width);
     const playerRow = Math.floor(player.y / BLOCK_SIZE.height);
@@ -59,9 +69,9 @@ export class BlockMap {
     for (let row = rowMin; row <= rowMax; row++) {
       for (let col = colMin; col <= colMax; col++) {
         const blockId = this.blockGrid[row][col];
-        if (blockId === -1) continue; // ignore empty cells
+        if (blockId === '') continue; // ignore empty cells
 
-        const block = this.room.state.blocks[blockId];
+        const block = this.room.state.blocks.get(blockId);
         nowVisible.add(block.id);
 
         if (!currentlyVisibleBlocks.has(block.id)) {
@@ -72,7 +82,8 @@ export class BlockMap {
 
     for (const blockId of currentlyVisibleBlocks) {
       if (!nowVisible.has(blockId)) {
-        client.view.remove(this.room.state.blocks[blockId]);
+        const block = this.room.state.blocks.get(blockId);
+        if (block) client.view.remove(block);
       }
     }
 
@@ -87,7 +98,7 @@ export class BlockMap {
       const row = Math.floor(i / this.cols);
 
       const block = new Block();
-      block.id = i;
+      block.id = `${i}`;
       block.x = col * BLOCK_SIZE.width + BLOCK_SIZE.width / 2;
       block.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
 
@@ -104,8 +115,8 @@ export class BlockMap {
       }
       block.hp = block.maxHp;
 
-      this.room.state.blocks.push(block);
       this.blockGrid[row][col] = block.id;
+      this.room.state.blocks.set(block.id, block);
     }
   }
 }

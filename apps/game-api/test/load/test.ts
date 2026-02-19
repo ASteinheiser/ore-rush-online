@@ -40,9 +40,6 @@ export async function main(options: Options) {
     let closestBlock: Block | undefined;
 
     state.blocks.forEach((block) => {
-      // treat empty blocks as if they don't exist
-      if (block.type === 'empty') return;
-
       const distanceSquared = (player.x - block.x) ** 2 + (player.y - block.y) ** 2;
       if (distanceSquared < closestDistanceSquared) {
         closestDistanceSquared = distanceSquared;

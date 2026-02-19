@@ -33,12 +33,8 @@ export class Block {
   }
 
   public update(hp: number, maxHp: number, type: BLOCK_TYPE) {
-    if (type === BLOCK_TYPES.EMPTY) {
-      this.cracks.clear();
-    } else {
-      this.drawCracks(hp, maxHp);
-    }
     this.setColor(type);
+    this.drawCracks(hp, maxHp);
   }
 
   private setColor(type: BLOCK_TYPE) {
@@ -55,11 +51,7 @@ export class Block {
         this.hitbox.setStrokeStyle(1, GOLD_COLOR);
         this.hitbox.setFillStyle(GOLD_COLOR);
         break;
-      case BLOCK_TYPES.EMPTY:
       default:
-        this.hitbox.setStrokeStyle(1, 0x000000, 0);
-        this.hitbox.setFillStyle(0x000000, 0);
-        break;
     }
   }
 

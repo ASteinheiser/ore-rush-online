@@ -3,7 +3,7 @@ import type { Game } from '../scenes/Game';
 import type { RoomEventCallbacks } from './RoomSystem';
 
 export class BlockSystem {
-  private blocks: Record<number, Block> = {};
+  private blocks: Record<string, Block> = {};
 
   constructor(private scene: Game) {}
 

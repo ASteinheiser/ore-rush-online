@@ -5,7 +5,6 @@ export const BLOCK_SIZE = {
 };
 /** List of blocks available (value map) */
 export const BLOCK_TYPES = {
-  EMPTY: 'empty',
   DIRT: 'dirt',
   IRON: 'iron',
   GOLD: 'gold',

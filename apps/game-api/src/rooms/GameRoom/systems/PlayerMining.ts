@@ -63,7 +63,6 @@ export class PlayerMining {
 
     for (const block of nearbyBlocks) {
       if (
-        block.type !== 'empty' &&
         !player.blocksHit.includes(block.id) &&
         checkAABBCollision(
           {
@@ -85,9 +84,7 @@ export class PlayerMining {
           if (block.type === 'iron' || block.type === 'gold') {
             player.inventory[block.type]++;
           }
-          block.hp = 0;
-          block.maxHp = 0;
-          block.type = 'empty';
+          this.room.blockMap.deleteBlock(block.id);
         }
       }
     }
