@@ -74,7 +74,7 @@ export class MainMenu extends Scene {
     EventBus.emit(EVENT_BUS.CURRENT_SCENE_READY, this);
   }
 
-  startGame({ token }: AuthPayload) {
+  public startGame({ token }: AuthPayload) {
     this.scene.start(SCENE.GAME, { token });
   }
 }

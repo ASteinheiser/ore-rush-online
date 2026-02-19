@@ -4,7 +4,7 @@ import { CustomText } from '../objects/CustomText';
 import { ASSET, SCENE } from '../constants';
 
 export class GameOver extends Scene {
-  cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
+  private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
 
   constructor() {
     super(SCENE.GAME_OVER);
@@ -56,7 +56,7 @@ export class GameOver extends Scene {
     }
   }
 
-  changeScene() {
+  public changeScene() {
     this.scene.start(SCENE.MAIN_MENU);
   }
 }
