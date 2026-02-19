@@ -1,7 +1,6 @@
-import type { Room } from '@colyseus/sdk';
-import { Scenes } from 'phaser';
-import { CustomText } from './CustomText';
 import { WS_EVENT } from '@repo/core-game';
+import type { Game } from '../scenes/Game';
+import { CustomText } from './CustomText';
 
 const MARGIN = 16;
 const PADDING = 6;
@@ -15,10 +14,7 @@ export class PingDisplay {
   private background: Phaser.GameObjects.Graphics;
   private pingText: CustomText;
 
-  constructor(
-    private scene: Phaser.Scene,
-    private room: Room
-  ) {
+  constructor(private scene: Game) {
     this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(102);
 
     this.pingText = new CustomText(this.scene, 0, 0, '--', {
@@ -37,11 +33,11 @@ export class PingDisplay {
 
     layout();
     this.scene.scale.on(Phaser.Scale.Events.RESIZE, layout);
-    this.scene.events.once(Scenes.Events.SHUTDOWN, () => {
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.scale.off(Phaser.Scale.Events.RESIZE, layout);
     });
 
-    this.start();
+    this.setup();
   }
 
   public destroy() {
@@ -51,8 +47,10 @@ export class PingDisplay {
     this.background.destroy();
   }
 
-  private start() {
-    this.room.onMessage(WS_EVENT.PONG, () => {
+  private setup() {
+    if (!this.scene.roomSystem.room) return;
+
+    this.scene.roomSystem.room.onMessage(WS_EVENT.PONG, () => {
       this.currentPingMs = Date.now() - this.pingStartTime;
       this.updateDisplay();
     });
@@ -67,9 +65,9 @@ export class PingDisplay {
   }
 
   private sendPing() {
-    if (!this.room?.connection.isOpen) return;
+    if (!this.scene.roomSystem.room?.connection.isOpen) return;
     this.pingStartTime = Date.now();
-    this.room.send(WS_EVENT.PING);
+    this.scene.roomSystem.room.send(WS_EVENT.PING);
   }
 
   private updateDisplay() {
