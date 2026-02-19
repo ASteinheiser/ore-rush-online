@@ -65,7 +65,7 @@ export const Game = () => {
     if (!session?.access_token) return;
 
     const scene = phaserRef?.current?.scene as GameScene;
-    scene?.refreshToken?.({ token: session.access_token });
+    scene?.roomSystem?.refreshToken?.({ token: session.access_token });
   }, [session]);
 
   useEffect(() => {
