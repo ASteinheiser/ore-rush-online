@@ -1,10 +1,9 @@
-import { Scene, Scenes } from 'phaser';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { CustomText } from '../objects/CustomText';
 import { ASSET, SCENE } from '../constants';
 
-export class GameOver extends Scene {
-  cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
+export class GameOver extends Phaser.Scene {
+  private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
 
   constructor() {
     super(SCENE.GAME_OVER);
@@ -14,11 +13,7 @@ export class GameOver extends Scene {
     this.cursorKeys = this.input.keyboard?.createCursorKeys();
   }
 
-  create({
-    gameResults,
-  }: {
-    gameResults: Array<{ username: string; attackCount: number; killCount: number }>;
-  }) {
+  create() {
     this.cameras.main.setBackgroundColor(0xff0000);
 
     const bg = this.add.image(0, 0, ASSET.BACKGROUND).setAlpha(0.5).setOrigin(0.5);
@@ -36,20 +31,6 @@ export class GameOver extends Scene {
       fontSize: 20,
     }).fadeIn(1500);
 
-    const resultTexts: CustomText[] = [];
-    gameResults.forEach((result, index) => {
-      const accuracy = ((result.killCount / result.attackCount || 0) * 100).toFixed(2);
-      const killCountText = `${result.killCount} kill${result.killCount === 1 ? '' : 's'}`;
-
-      const resultText = `${result.username} - ${killCountText} (${accuracy}% accuracy)`;
-
-      const text = new CustomText(this, 0, 0, resultText, { fontFamily: 'Iceberg' })
-        .setOrigin(0.5)
-        .fadeIn(500, 300 * (index + 1));
-
-      resultTexts.push(text);
-    });
-
     const layout = () => {
       const { width, height } = this.scale;
       bg.setPosition(width / 2, height / 2).setDisplaySize(width, height);
@@ -57,15 +38,11 @@ export class GameOver extends Scene {
       continueText.setPosition((width - continueText.width) / 2, 20);
 
       titleText.setPosition(width / 2, height / 2 - 100);
-
-      resultTexts.forEach((text, idx) => {
-        text.setPosition(width / 2, height / 2 + idx * 40);
-      });
     };
 
     layout();
     this.scale.on(Phaser.Scale.Events.RESIZE, layout);
-    this.events.once(Scenes.Events.SHUTDOWN, () => {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, layout);
     });
 
@@ -78,7 +55,7 @@ export class GameOver extends Scene {
     }
   }
 
-  changeScene() {
+  public changeScene() {
     this.scene.start(SCENE.MAIN_MENU);
   }
 }

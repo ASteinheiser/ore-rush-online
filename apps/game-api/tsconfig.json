@@ -4,7 +4,6 @@
   "include": ["src", "test", "codegen.ts"],
   "compilerOptions": {
     "experimentalDecorators": true,
-    "strictNullChecks": false,
     "useDefineForClassFields": false
   }
 }

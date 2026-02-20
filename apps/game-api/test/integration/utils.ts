@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import type { ColyseusTestServer } from '@colyseus/testing';
 import type { GraphQLResponse } from '@apollo/server';
 import { WS_ROOM, WS_EVENT } from '@repo/core-game';
-import type { GameRoomState } from '../../src/rooms/GameRoom/roomState';
+import type { GameRoomState } from '../../src/rooms/GameRoom/schemas';
 import type { PrismaClient } from '../../src/repo/prisma-client/client';
 import type { DecodedToken, User } from '../../src/auth/jwt';
 
