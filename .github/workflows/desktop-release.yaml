@@ -72,6 +72,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Start test DB
+        run: |
+          docker compose -f ./apps/game-api/docker-compose-test.yaml up -d
+          pnpm db:test:sync
+
       - name: Import macOS signing cert
         if: matrix.os == 'macos-latest'
         run: |
