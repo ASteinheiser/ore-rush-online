@@ -2,8 +2,12 @@ import { ATTACK_DAMAGE__DELAY, type EntityPosition } from '@repo/core-game';
 import { ASSET, SOUND } from '../constants';
 import { CustomText } from './CustomText';
 
-/** Used to handle slight differences in player position due to interpolation of server values */
-const MOVEMENT_THRESHOLD = 0.1;
+interface MoveIntent {
+  delta: number;
+  isMoving: boolean;
+  isMovingX: boolean;
+  isMovingY: boolean;
+}
 
 export const PLAYER_ANIM = {
   IDLE: 'playerIdle',
@@ -16,6 +20,10 @@ export class Player {
   public nameText: CustomText;
   public debugBox?: Phaser.GameObjects.Rectangle;
   private punchSfx: Phaser.Sound.BaseSound;
+  /** Handles delaying the idle animation to prevent flickering on high FPS */
+  private idleAccumulator = 0;
+  private displayedMoving = false;
+  private static readonly IDLE_BUFFER_MS = 50;
 
   constructor(
     private scene: Phaser.Scene,
@@ -57,10 +65,18 @@ export class Player {
     this.nameText.y = y;
   }
 
-  public move({ x, y }: EntityPosition) {
-    const isMovingX = Math.abs(this.entity.x - x) > MOVEMENT_THRESHOLD;
-    const isMovingY = Math.abs(this.entity.y - y) > MOVEMENT_THRESHOLD;
-    const isMoving = isMovingX || isMovingY;
+  public move({ x, y }: EntityPosition, { delta, isMoving, isMovingX }: MoveIntent) {
+    // Asymmetric buffer: switch to WALK immediately, delay switching to IDLE
+    if (isMoving) {
+      this.idleAccumulator = 0;
+      this.displayedMoving = true;
+    } else {
+      this.idleAccumulator += delta;
+      if (this.idleAccumulator >= Player.IDLE_BUFFER_MS) {
+        this.idleAccumulator = 0;
+        this.displayedMoving = false;
+      }
+    }
 
     if (isMovingX) {
       this.entity.setFlipX(this.entity.x > x);
@@ -71,10 +87,10 @@ export class Player {
     this.nameText.x = x;
     this.nameText.y = y;
 
-    if (!isMoving && !this.isPunching()) {
+    if (!this.displayedMoving && !this.isPunching()) {
       this.entity.play(PLAYER_ANIM.IDLE);
     }
-    if (isMoving && !(this.isPunching() || this.isWalking())) {
+    if (this.displayedMoving && !(this.isPunching() || this.isWalking())) {
       this.entity.play(PLAYER_ANIM.WALK);
     }
   }

@@ -52,6 +52,10 @@ export class PlayerSystem {
   public interpolateLocalPlayer(delta: number, elapsedTime: number) {
     if (!this.currentPlayer?.entity) return;
 
+    const isMovingX = this.previousPosition.x !== this.currentPosition.x;
+    const isMovingY = this.previousPosition.y !== this.currentPosition.y;
+    const isMoving = isMovingX || isMovingY;
+
     /** This indicates when we are processing more than 1 tick per frame.
      * When this happens, set alpha to 1 to skip interpolation.
      * This is fine because the low frame rate will cause "stepping" regardless.
@@ -61,10 +65,13 @@ export class PlayerSystem {
      * representing the percentage of the current tick that has elapsed. */
     const alpha = interpolationDeltaThreshold ? 1 : Math.min(1, elapsedTime / FIXED_TIME_STEP);
 
-    this.currentPlayer.move({
-      x: Phaser.Math.Linear(this.previousPosition.x, this.currentPosition.x, alpha),
-      y: Phaser.Math.Linear(this.previousPosition.y, this.currentPosition.y, alpha),
-    });
+    this.currentPlayer.move(
+      {
+        x: Phaser.Math.Linear(this.previousPosition.x, this.currentPosition.x, alpha),
+        y: Phaser.Math.Linear(this.previousPosition.y, this.currentPosition.y, alpha),
+      },
+      { delta, isMoving, isMovingX, isMovingY }
+    );
   }
 
   public handleCurrentPlayerAdded: RoomEventCallbacks['onPlayerAdded'] = (

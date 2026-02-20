@@ -4,6 +4,11 @@ import { PunchBox } from '../objects/PunchBox';
 import type { Game } from '../scenes/Game';
 import type { RoomEventCallbacks } from './RoomSystem';
 
+/** Used to handle slight differences in player position due to interpolation of server values */
+const MOVEMENT_THRESHOLD = 0.1;
+/** The speed of the player in pixels per tick (independent of frame rate) */
+const LERP_SPEED = 15;
+
 interface RemotePlayer extends Player {
   serverX?: number;
   serverY?: number;
@@ -87,12 +92,18 @@ export class RemotePlayerSystem {
         remotePlayer.stopPunch();
       }
 
-      const LERP_SPEED = 15;
+      const isMovingX = Math.abs(remotePlayer.entity.x - serverX) > MOVEMENT_THRESHOLD;
+      const isMovingY = Math.abs(remotePlayer.entity.y - serverY) > MOVEMENT_THRESHOLD;
+      const isMoving = isMovingX || isMovingY;
+
       const factor = Math.min(1, (LERP_SPEED * delta) / 1000);
-      remotePlayer.move({
-        x: Phaser.Math.Linear(remotePlayer.entity.x, serverX, factor),
-        y: Phaser.Math.Linear(remotePlayer.entity.y, serverY, factor),
-      });
+      remotePlayer.move(
+        {
+          x: Phaser.Math.Linear(remotePlayer.entity.x, serverX, factor),
+          y: Phaser.Math.Linear(remotePlayer.entity.y, serverY, factor),
+        },
+        { delta, isMoving, isMovingX, isMovingY }
+      );
     }
   }
 }
