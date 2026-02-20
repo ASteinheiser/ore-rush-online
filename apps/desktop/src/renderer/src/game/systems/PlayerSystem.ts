@@ -62,7 +62,12 @@ export class PlayerSystem {
     });
   }
 
-  public handleCurrentPlayerAdded: RoomEventCallbacks['onPlayerAdded'] = (player, sessionId, $) => {
+  public handleCurrentPlayerAdded: RoomEventCallbacks['onPlayerAdded'] = (
+    player,
+    sessionId,
+    $,
+    updateInventory
+  ) => {
     // skip remote players, only handle the current player here
     if (sessionId !== this.scene.roomSystem.room?.sessionId) return;
 
@@ -74,16 +79,11 @@ export class PlayerSystem {
     this.currentPlayer.createDebugBox();
 
     $(player).onChange(() => {
-      this.handleInventoryUpdated(player);
+      updateInventory?.(player.inventory);
       this.handleDebugFieldsUpdated(player);
       this.handleServerReconciliation(player);
     });
   };
-
-  private handleInventoryUpdated(player: ServerPlayer) {
-    this.scene.uiSystem?.ironCountText.setText(`Iron: ${player.inventory.iron}`);
-    this.scene.uiSystem?.goldCountText.setText(`Gold: ${player.inventory.gold}`);
-  }
 
   private handleDebugFieldsUpdated(player: ServerPlayer) {
     if (!this.currentPlayer?.debugBox) return;

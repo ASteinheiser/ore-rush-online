@@ -1,3 +1,4 @@
+import type { Inventory } from 'game-api/types';
 import { MAP_SIZE } from '@repo/core-game';
 import { CustomText } from '../objects/CustomText';
 import { FogOverlay } from '../objects/FogOverlay';
@@ -7,12 +8,12 @@ import { ASSET } from '../constants';
 import type { Game } from '../scenes/Game';
 
 export class UISystem {
-  private leaveText: CustomText;
-  public ironCountText: CustomText;
-  public goldCountText: CustomText;
   public fogOverlay: FogOverlay;
   public fpsDisplay: FpsDisplay;
   public pingDisplay: PingDisplay;
+  private leaveText: CustomText;
+  private ironCountText: CustomText;
+  private goldCountText: CustomText;
 
   constructor(private scene: Game) {
     // set the camera bounds to the map size
@@ -73,5 +74,10 @@ export class UISystem {
     this.goldCountText.destroy();
     this.fpsDisplay.destroy();
     this.pingDisplay.destroy();
+  }
+
+  public updateInventory(inventory: Inventory) {
+    this.ironCountText.setText(`Iron: ${inventory.iron}`);
+    this.goldCountText.setText(`Gold: ${inventory.gold}`);
   }
 }

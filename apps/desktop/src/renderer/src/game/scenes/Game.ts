@@ -10,7 +10,7 @@ import { BlockSystem } from '../systems/BlockSystem';
 
 export class Game extends Phaser.Scene {
   private elapsedTime = 0;
-  public uiSystem?: UISystem;
+  private uiSystem?: UISystem;
   public roomSystem = new RoomSystem(this);
   private inputSystem = new InputSystem(this);
   private playerSystem = new PlayerSystem(this);
@@ -45,7 +45,9 @@ export class Game extends Phaser.Scene {
     this.roomSystem.setupRoomEventListeners({
       setupStateListeners: () => this.setupStateListeners(),
       onPlayerAdded: (player, sessionId, $) => {
-        this.playerSystem.handleCurrentPlayerAdded(player, sessionId, $);
+        this.playerSystem.handleCurrentPlayerAdded(player, sessionId, $, (inventory) =>
+          this.uiSystem?.updateInventory(inventory)
+        );
         this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId, $);
       },
       onPlayerRemoved: this.remotePlayerSystem.handleRemotePlayerRemoved,

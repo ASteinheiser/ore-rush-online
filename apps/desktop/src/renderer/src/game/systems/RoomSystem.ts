@@ -1,4 +1,4 @@
-import type { GameRoomState, Player as ServerPlayer, Block as ServerBlock } from 'game-api/types';
+import type { GameRoomState, Player as ServerPlayer, Block as ServerBlock, Inventory } from 'game-api/types';
 import { Client, getStateCallbacks, type Room } from '@colyseus/sdk';
 import { WS_EVENT, WS_ROOM, WS_CODE, type AuthPayload } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
@@ -17,7 +17,12 @@ const RECONNECT_BACKOFF_MS = 1000;
 type ServerCallback = ReturnType<typeof getStateCallbacks<GameRoomState>>;
 export interface RoomEventCallbacks {
   setupStateListeners: () => void;
-  onPlayerAdded: (player: ServerPlayer, sessionId: string, $: ServerCallback) => void;
+  onPlayerAdded: (
+    player: ServerPlayer,
+    sessionId: string,
+    $: ServerCallback,
+    updateInventory?: (inventory: Inventory) => void
+  ) => void;
   onPlayerRemoved: (sessionId: string) => void;
   onBlockAdded: (block: ServerBlock, $: ServerCallback) => void;
   onBlockRemoved: (block: ServerBlock) => void;
