@@ -36,14 +36,14 @@ export class Game extends Phaser.Scene {
     EventBus.emit(EVENT_BUS.CURRENT_SCENE_READY, this);
   }
 
-  /** Currently public to allow roomSystem to call when reconnection succeeds */
-  public setupStateListeners() {
+  private setupStateListeners() {
     if (!this.roomSystem.room) return;
 
     this.cleanupScene();
     this.uiSystem = new UISystem(this);
 
     this.roomSystem.setupRoomEventListeners({
+      setupStateListeners: () => this.setupStateListeners(),
       onPlayerAdded: (player, sessionId, $) => {
         this.playerSystem.handleCurrentPlayerAdded(player, sessionId, $);
         this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId, $);

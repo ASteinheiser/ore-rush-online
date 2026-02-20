@@ -16,6 +16,7 @@ const RECONNECT_BACKOFF_MS = 1000;
 
 type ServerCallback = ReturnType<typeof getStateCallbacks<GameRoomState>>;
 export interface RoomEventCallbacks {
+  setupStateListeners: () => void;
   onPlayerAdded: (player: ServerPlayer, sessionId: string, $: ServerCallback) => void;
   onPlayerRemoved: (sessionId: string) => void;
   onBlockAdded: (block: ServerBlock, $: ServerCallback) => void;
@@ -95,7 +96,7 @@ export class RoomSystem {
     });
 
     this.room.onLeave(async (code) => {
-      await this.handleOnLeave(code);
+      await this.handleOnLeave(code, callbacks.setupStateListeners);
     });
 
     const $ = getStateCallbacks(this.room);
@@ -117,7 +118,7 @@ export class RoomSystem {
     });
   }
 
-  private async handleOnLeave(code: number) {
+  private async handleOnLeave(code: number, setupStateListeners: () => void) {
     switch (code) {
       case WS_CODE.SUCCESS:
         this.clearStoredReconnectionToken();
@@ -126,7 +127,7 @@ export class RoomSystem {
       case WS_CODE.INTERNAL_SERVER_ERROR:
       case WS_CODE.BAD_REQUEST:
       case WS_CODE.TIMEOUT:
-        if (!(await this.handleReconnection())) {
+        if (!(await this.handleReconnection(setupStateListeners))) {
           this.scene.sendToMainMenu(new Error('Failed to reconnect'));
         }
         break;
@@ -153,7 +154,7 @@ export class RoomSystem {
     localStorage.removeItem(RECONNECTION_STORAGE_KEY);
   }
 
-  private async handleReconnection() {
+  private async handleReconnection(setupStateListeners: () => void) {
     const reconnectToken = this.getStoredReconnectionToken();
     if (!reconnectToken) return false;
 
@@ -168,7 +169,7 @@ export class RoomSystem {
         this.cleanupRoom();
         // set the new room state and listeners
         this.room = newRoom;
-        this.scene.setupStateListeners();
+        setupStateListeners();
         // store the new reconnection token for future reconnection
         this.storeReconnectionToken(newRoom.reconnectionToken);
         EventBus.emit(EVENT_BUS.RECONNECTION_SUCCESS);
