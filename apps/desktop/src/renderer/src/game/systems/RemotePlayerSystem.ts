@@ -96,11 +96,11 @@ export class RemotePlayerSystem {
       const isMovingY = Math.abs(remotePlayer.entity.y - serverY) > MOVEMENT_THRESHOLD;
       const isMoving = isMovingX || isMovingY;
 
-      const factor = Math.min(1, (LERP_SPEED * delta) / 1000);
+      const alpha = Math.min(1, (LERP_SPEED * delta) / 1000);
       remotePlayer.move(
         {
-          x: Phaser.Math.Linear(remotePlayer.entity.x, serverX, factor),
-          y: Phaser.Math.Linear(remotePlayer.entity.y, serverY, factor),
+          x: Phaser.Math.Linear(remotePlayer.entity.x, serverX, alpha),
+          y: Phaser.Math.Linear(remotePlayer.entity.y, serverY, alpha),
         },
         { delta, isMoving, isMovingX, isMovingY }
       );
