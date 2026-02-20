@@ -59,6 +59,7 @@ export class RemotePlayerSystem {
       // if the player was not visible before, force move them (prevents weird interpolation)
       if (!remotePlayer.entity.visible || !remotePlayer.nameText.visible) {
         remotePlayer.forceMove({ x: player.x, y: player.y });
+        remotePlayer.entity.setFlipX(!player.isFacingRight);
       }
 
       // #region FOR DEBUGGING PURPOSES
