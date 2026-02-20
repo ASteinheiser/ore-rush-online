@@ -19,13 +19,10 @@ export class FogOverlay {
     this.fogOverlay.clear();
     this.fogOverlay.fillStyle(0x000000, 1);
 
-    // Left
-    this.fogOverlay.fillRect(0, innerY, innerX, holeSize);
-    // Top
-    this.fogOverlay.fillRect(0, 0, MAP_SIZE.width, innerY);
-    // Right
-    this.fogOverlay.fillRect(innerX + holeSize, innerY, MAP_SIZE.width - innerX - holeSize, holeSize);
-    // Bottom
-    this.fogOverlay.fillRect(0, innerY + holeSize, MAP_SIZE.width, MAP_SIZE.height - innerY - holeSize);
+    this.fogOverlay
+      .fillRect(0, innerY, innerX, holeSize) // Left
+      .fillRect(0, 0, MAP_SIZE.width, innerY) // Top
+      .fillRect(innerX + holeSize, innerY, MAP_SIZE.width - innerX - holeSize, holeSize) // Right
+      .fillRect(0, innerY + holeSize, MAP_SIZE.width, MAP_SIZE.height - innerY - holeSize); // Bottom
   }
 }
