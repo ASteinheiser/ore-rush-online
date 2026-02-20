@@ -67,7 +67,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --filter="!game-api" --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Import macOS signing cert
         if: matrix.os == 'macos-latest'
