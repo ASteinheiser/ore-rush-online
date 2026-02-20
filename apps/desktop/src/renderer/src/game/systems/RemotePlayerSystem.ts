@@ -5,7 +5,7 @@ import type { Game } from '../scenes/Game';
 import type { RoomEventCallbacks } from './RoomSystem';
 
 /** Used to handle slight differences in player position due to interpolation of server values */
-const MOVEMENT_THRESHOLD = 0.1;
+const MOVEMENT_THRESHOLD = 0.5;
 /** The speed of the player in pixels per tick (independent of frame rate) */
 const LERP_SPEED = 15;
 
