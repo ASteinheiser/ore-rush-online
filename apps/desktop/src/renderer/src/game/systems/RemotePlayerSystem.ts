@@ -4,8 +4,15 @@ import { PunchBox } from '../objects/PunchBox';
 import type { Game } from '../scenes/Game';
 import type { RoomEventCallbacks } from './RoomSystem';
 
+interface RemotePlayer extends Player {
+  serverX?: number;
+  serverY?: number;
+  serverAttack?: boolean;
+  serverUsername?: string;
+}
+
 export class RemotePlayerSystem {
-  private playerEntities: Record<string, Player> = {};
+  private playerEntities: Record<string, RemotePlayer> = {};
 
   constructor(private scene: Game) {}
 
@@ -18,11 +25,10 @@ export class RemotePlayerSystem {
     // skip the current player since we are handling via PlayerSystem
     if (sessionId === this.scene.roomSystem.room?.sessionId) return;
 
-    const playerEntity = new Player(this.scene, player.username, player.x, player.y);
-    this.playerEntities[sessionId] = playerEntity;
+    this.playerEntities[sessionId] = new Player(this.scene, player.username, player.x, player.y);
 
     $(player).onChange(() => {
-      this.handleRemotePlayerUpdated(player, playerEntity);
+      this.handleRemotePlayerUpdated(player, sessionId);
     });
   };
 
@@ -34,18 +40,20 @@ export class RemotePlayerSystem {
     }
   };
 
-  private handleRemotePlayerUpdated(player: ServerPlayer, playerEntity: Player) {
-    const inView = player.x !== undefined && player.y !== undefined;
+  private handleRemotePlayerUpdated(player: ServerPlayer, sessionId: string) {
+    const remotePlayer = this.playerEntities[sessionId];
+    if (!remotePlayer) return;
 
+    const inView = player.x !== undefined && player.y !== undefined;
     if (inView) {
-      playerEntity.entity.setData('serverUsername', player.username);
-      playerEntity.entity.setData('serverX', player.x);
-      playerEntity.entity.setData('serverY', player.y);
-      playerEntity.entity.setData('serverAttack', player.isAttacking);
+      remotePlayer.serverUsername = player.username;
+      remotePlayer.serverX = player.x;
+      remotePlayer.serverY = player.y;
+      remotePlayer.serverAttack = player.isAttacking;
 
       // if the player was not visible before, force move them (prevents weird interpolation)
-      if (!playerEntity.entity.visible || !playerEntity.nameText.visible) {
-        playerEntity.forceMove({ x: player.x, y: player.y });
+      if (!remotePlayer.entity.visible || !remotePlayer.nameText.visible) {
+        remotePlayer.forceMove({ x: player.x, y: player.y });
       }
 
       // #region FOR DEBUGGING PURPOSES
@@ -55,8 +63,8 @@ export class RemotePlayerSystem {
       // #endregion FOR DEBUGGING PURPOSES
     }
 
-    playerEntity.entity.setVisible(inView);
-    playerEntity.nameText.setVisible(inView);
+    remotePlayer.entity.setVisible(inView);
+    remotePlayer.nameText.setVisible(inView);
   }
 
   public interpolateRemotePlayers(delta: number) {
@@ -66,8 +74,8 @@ export class RemotePlayerSystem {
 
       // interpolate all other player entities from the server
       const remotePlayer = this.playerEntities[sessionId];
-      const { serverX, serverY, serverAttack, serverUsername } = remotePlayer.entity.data.values;
-      if (!remotePlayer.entity.visible || serverX === undefined || serverY === undefined) {
+      const { serverX, serverY, serverAttack, serverUsername } = remotePlayer;
+      if (!remotePlayer.entity.visible || !serverUsername || serverX === undefined || serverY === undefined) {
         continue; // skip player if not visible
       }
 
