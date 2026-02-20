@@ -22,19 +22,19 @@ interface GameRoomArgs {
 }
 
 export class GameRoom extends Room {
-  patchRate = SERVER_PATCH_RATE;
-  maxClients = MAX_PLAYERS_PER_ROOM;
+  readonly patchRate = SERVER_PATCH_RATE;
+  readonly maxClients = MAX_PLAYERS_PER_ROOM;
 
-  prisma?: PrismaClient;
-  auth = new Auth(this);
+  public prisma?: PrismaClient;
+  public auth = new Auth(this);
 
-  elapsedTime = 0;
-  state = new GameRoomState();
-  blockMap = new BlockMap(this);
-  playerInput = new PlayerInput(this);
-  playerVision = new PlayerVision(this);
-  playerMovement = new PlayerMovement(this);
-  playerMining = new PlayerMining(this);
+  private elapsedTime = 0;
+  public state = new GameRoomState();
+  public blockMap = new BlockMap(this);
+  private playerInput = new PlayerInput(this);
+  private playerVision = new PlayerVision(this);
+  private playerMovement = new PlayerMovement(this);
+  private playerMining = new PlayerMining(this);
 
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
     logger.info({
