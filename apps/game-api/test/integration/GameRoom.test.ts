@@ -168,7 +168,9 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       await client.leave(false);
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.forcedDisconnects.size, 0);
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 1);
       assertExtraPlayerState({ room, clientIds: [], extraPlayerIds: [client.sessionId] });
 
@@ -184,6 +186,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
 
       const room = getRoom(client.roomId);
+      // @ts-expect-error - allow use of private property for testing
       room.auth.reconnectionTimeout = 0;
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
@@ -203,7 +206,9 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       await client.leave(false);
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.forcedDisconnects.size, 0);
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 1);
       assertExtraPlayerState({ room, clientIds: [], extraPlayerIds: [client.sessionId] });
 
@@ -230,6 +235,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const newClient = await joinTestRoom({ server, token: generateTestJWT({}) });
 
       assert.notStrictEqual(newClient.sessionId, client.sessionId);
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.forcedDisconnects.has(client.sessionId), true);
 
       await room.waitForNextSimulationTick();
@@ -266,7 +272,9 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       // ensure that this user matches the userId of the orphaned player above
       const client = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[1] }) });
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.forcedDisconnects.size, 0);
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assert.notStrictEqual(client.sessionId, badSessionId);
 
@@ -344,6 +352,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       });
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 1);
       assertExtraPlayerState({ room, clientIds: [], extraPlayerIds: [client.sessionId] });
 
@@ -364,7 +373,9 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       room.state.players.get(client.sessionId)!.inputQueue = null as unknown as InputPayload[];
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.forcedDisconnects.size, 0);
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 1);
       assertExtraPlayerState({ room, clientIds: [], extraPlayerIds: [client.sessionId] });
 
@@ -391,6 +402,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       });
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
     });
@@ -415,6 +427,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         player.y = y;
         await room.waitForNextSimulationTick();
 
+        // @ts-expect-error - allow use of private property for testing
         const visibleBlockCount = room.blockMap.clientVisibleBlocks.get(client.sessionId)?.size ?? 0;
         assert.strictEqual(visibleBlockCount, expectedBlocks);
       }
@@ -482,6 +495,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       client.send(WS_EVENT.REFRESH_TOKEN, { token: 'invalid-token' });
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
     });
@@ -495,6 +509,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({ expiresInMs: 0 }) });
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
     });
@@ -508,6 +523,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({ user: TEST_USERS[1] }) });
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
     });
@@ -522,6 +538,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({}) });
       await room.waitForNextSimulationTick();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
     });
@@ -552,6 +569,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       const badSessionId = 'bad-session-id';
+      // @ts-expect-error - allow use of private property for testing
       room.auth.expectingReconnections.add(badSessionId);
       room.state.players.set(badSessionId, new Player());
       await room.waitForNextSimulationTick();
@@ -562,6 +580,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertExtraPlayerState({ room, clientIds: [client.sessionId], extraPlayerIds: [badSessionId] });
 
+      // @ts-expect-error - allow use of private property for testing
       room.auth.expectingReconnections.delete(badSessionId);
       await waitForConnectionCheck();
 
@@ -577,6 +596,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       room.state.players.get(client.sessionId)!.tokenExpiresAt = Date.now();
       await waitForConnectionCheck();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [] });
     });
@@ -595,6 +615,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       room.state.players.get(client2.sessionId)!.lastActivityTime = Date.now() - INACTIVITY_TIMEOUT;
       await waitForConnectionCheck();
 
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 2);
       assertExtraPlayerState({ room, clientIds: [], extraPlayerIds: [client1.sessionId, client2.sessionId] });
 
@@ -604,6 +625,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assert.strictEqual(sameClient1.sessionId, client1.sessionId);
       assert.strictEqual(sameClient2.sessionId, client2.sessionId);
+      // @ts-expect-error - allow use of private property for testing
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
       assertBasicPlayerState({ room, clientIds: [sameClient1.sessionId, sameClient2.sessionId] });
     });

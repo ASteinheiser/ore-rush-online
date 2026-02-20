@@ -90,11 +90,10 @@ export class GameRoom extends Room {
       data: { roomId: this.roomId, clientId: sessionId },
     });
 
-    this.auth.expectingReconnections.delete(sessionId);
-    this.auth.forcedDisconnects.delete(sessionId);
     this.state.players.delete(sessionId);
-    this.blockMap.clientVisibleBlocks.delete(sessionId);
-    this.playerVision.clientVisiblePlayers.delete(sessionId);
+    this.auth.cleanupPlayer(sessionId);
+    this.blockMap.cleanupPlayer(sessionId);
+    this.playerVision.cleanupPlayer(sessionId);
   }
 
   onDispose() {

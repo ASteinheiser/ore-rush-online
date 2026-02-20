@@ -11,7 +11,7 @@ export class BlockMap {
   private blockGrid: string[][];
   /** the number of cells to search in each direction for visibility */
   private viewRadiusCells: number;
-  public clientVisibleBlocks = new Map<string, Set<string>>();
+  private clientVisibleBlocks = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {
     this.cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
@@ -20,6 +20,10 @@ export class BlockMap {
 
     this.blockGrid = Array.from({ length: this.rows }, () => Array.from({ length: this.cols }, () => ''));
     this.generateBlockMap();
+  }
+
+  public cleanupPlayer(sessionId: string) {
+    this.clientVisibleBlocks.delete(sessionId);
   }
 
   public deleteBlock(blockId: string) {

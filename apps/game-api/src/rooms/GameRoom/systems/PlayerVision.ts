@@ -5,9 +5,13 @@ import { PLAYER_VIEW_LEVELS, type Player } from '../schemas/Player';
 import type { GameRoom } from '../index';
 
 export class PlayerVision {
-  public clientVisiblePlayers = new Map<string, Set<string>>();
+  private clientVisiblePlayers = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {}
+
+  public cleanupPlayer(sessionId: string) {
+    this.clientVisiblePlayers.delete(sessionId);
+  }
 
   public setupVisionForClient(client: Client, player: Player) {
     // initialize StateView

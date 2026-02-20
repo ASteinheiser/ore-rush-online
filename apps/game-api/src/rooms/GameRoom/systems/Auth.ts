@@ -20,13 +20,16 @@ export interface AuthResult {
 
 export class Auth {
   private connectionCheckTimeout?: NodeJS.Timeout;
-  // this needs to be set here and public to allow for modification in tests
-  public reconnectionTimeout = RECONNECTION_TIMEOUT;
-  // these remain public to allow for player cleanup (and testing)
-  public expectingReconnections = new Set<string>();
-  public forcedDisconnects = new Set<string>();
+  private reconnectionTimeout = RECONNECTION_TIMEOUT;
+  private expectingReconnections = new Set<string>();
+  private forcedDisconnects = new Set<string>();
 
   constructor(private room: GameRoom) {}
+
+  public cleanupPlayer(sessionId: string) {
+    this.forcedDisconnects.delete(sessionId);
+    this.expectingReconnections.delete(sessionId);
+  }
 
   /**
    * Validates the user's token and fetches their profile from the DB
