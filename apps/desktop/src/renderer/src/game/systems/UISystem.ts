@@ -11,6 +11,8 @@ export class UISystem {
   public fogOverlay: FogOverlay;
   public fpsDisplay: FpsDisplay;
   public pingDisplay: PingDisplay;
+  private mapBorder: Phaser.GameObjects.Rectangle;
+  private mapBackground: Phaser.GameObjects.Image;
   private leaveText: CustomText;
   private ironCountText: CustomText;
   private goldCountText: CustomText;
@@ -20,14 +22,14 @@ export class UISystem {
     this.scene.cameras.main.setBackgroundColor(0x00ff00).setBounds(0, 0, MAP_SIZE.width, MAP_SIZE.height);
 
     // draw a border around the map area
-    this.scene.add
+    this.mapBorder = this.scene.add
       .rectangle(0, 0, MAP_SIZE.width, MAP_SIZE.height)
       .setOrigin(0, 0)
       .setDepth(100)
       .setStrokeStyle(8, 0x990099);
 
     // set the background image to cover the entire map area
-    this.scene.add
+    this.mapBackground = this.scene.add
       .image(0, 0, ASSET.BACKGROUND)
       .setAlpha(0.5)
       .setOrigin(0.5)
@@ -69,11 +71,13 @@ export class UISystem {
 
   public destroy() {
     this.fogOverlay.destroy();
+    this.fpsDisplay.destroy();
+    this.pingDisplay.destroy();
+    this.mapBorder.destroy();
+    this.mapBackground.destroy();
     this.leaveText.destroy();
     this.ironCountText.destroy();
     this.goldCountText.destroy();
-    this.fpsDisplay.destroy();
-    this.pingDisplay.destroy();
   }
 
   public updateInventory(inventory: Inventory) {
