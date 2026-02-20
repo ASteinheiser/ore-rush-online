@@ -48,7 +48,8 @@ export class BlockMap {
         const blockId = this.blockGrid[row][col];
         if (blockId === '') continue; // ignore empty cells
 
-        blocks.push(this.room.state.blocks.get(blockId));
+        const block = this.room.state.blocks.get(blockId);
+        if (block) blocks.push(block);
       }
     }
     return blocks;
@@ -72,10 +73,11 @@ export class BlockMap {
         if (blockId === '') continue; // ignore empty cells
 
         const block = this.room.state.blocks.get(blockId);
+        if (!block) continue;
         nowVisible.add(block.id);
 
         if (!currentlyVisibleBlocks.has(block.id)) {
-          client.view.add(block);
+          client.view?.add(block);
         }
       }
     }
@@ -83,7 +85,7 @@ export class BlockMap {
     for (const blockId of currentlyVisibleBlocks) {
       if (!nowVisible.has(blockId)) {
         const block = this.room.state.blocks.get(blockId);
-        if (block) client.view.remove(block);
+        if (block) client.view?.remove(block);
       }
     }
 

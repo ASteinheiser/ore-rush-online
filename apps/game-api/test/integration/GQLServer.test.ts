@@ -29,8 +29,8 @@ describe('GQLServer', () => {
       dataSources: {
         profilesDb: new ProfilesRepository(prisma),
       },
-      authClient: null as GoTrueAdminApi,
-      user: null as User,
+      authClient: null as unknown as GoTrueAdminApi,
+      user: null as unknown as User,
     },
   });
 

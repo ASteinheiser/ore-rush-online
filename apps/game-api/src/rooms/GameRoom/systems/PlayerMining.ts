@@ -64,6 +64,8 @@ export class PlayerMining {
     for (const block of nearbyBlocks) {
       if (
         !player.blocksHit.includes(block.id) &&
+        player.attackDamageFrameX &&
+        player.attackDamageFrameY &&
         checkAABBCollision(
           {
             x: block.x,

@@ -21,13 +21,13 @@ export class PlayerVision {
     // allow otherPlayers to see player's public fields (username only)
     this.room.clients.forEach((otherClient) => {
       if (otherClient.sessionId === client.sessionId) return;
-      otherClient.view.add(player);
+      otherClient.view?.add(player);
     });
 
     // add all otherPlayers to current client's view (username only)
     this.room.state.players.forEach((otherPlayer, sessionId) => {
       if (sessionId === client.sessionId) return;
-      client.view.add(otherPlayer);
+      client.view?.add(otherPlayer);
     });
   }
 
@@ -44,15 +44,15 @@ export class PlayerVision {
       if (dx <= PLAYER_VIEW_RADIUS && dy <= PLAYER_VIEW_RADIUS) {
         nowVisible.add(otherSessionId);
         if (!visibleToClient.has(otherSessionId)) {
-          client.view.add(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
-          client.view.add(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
+          client.view?.add(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
+          client.view?.add(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
         }
       } else {
         if (visibleToClient.has(otherSessionId)) {
-          client.view.remove(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
-          client.view.remove(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
+          client.view?.remove(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
+          client.view?.remove(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
           // ensure we still see basic player info (username)
-          client.view.add(otherPlayer);
+          client.view?.add(otherPlayer);
         }
       }
     }

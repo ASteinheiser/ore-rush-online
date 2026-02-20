@@ -156,8 +156,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const reconnectionToken = client.reconnectionToken;
 
       const room = getRoom(client.roomId);
-      room.state.players.get(client.sessionId).attackCount = 100;
-      room.state.players.get(client.sessionId).killCount = 50;
+      room.state.players.get(client.sessionId)!.attackCount = 100;
+      room.state.players.get(client.sessionId)!.killCount = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
@@ -218,8 +218,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
 
-      room.state.players.get(client.sessionId).attackCount = 100;
-      room.state.players.get(client.sessionId).killCount = 50;
+      room.state.players.get(client.sessionId)!.attackCount = 100;
+      room.state.players.get(client.sessionId)!.killCount = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
@@ -296,8 +296,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
 
-      room.state.players.get(client.sessionId).attackCount = 100;
-      room.state.players.get(client.sessionId).killCount = 50;
+      room.state.players.get(client.sessionId)!.attackCount = 100;
+      room.state.players.get(client.sessionId)!.killCount = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
@@ -361,7 +361,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      room.state.players.get(client.sessionId).inputQueue = null;
+      room.state.players.get(client.sessionId)!.inputQueue = null as unknown as InputPayload[];
       await room.waitForNextSimulationTick();
 
       assert.strictEqual(room.auth.forcedDisconnects.size, 0);
@@ -401,7 +401,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      const player = room.state.players.get(client.sessionId);
+      const player = room.state.players.get(client.sessionId)!;
       const locations = [
         { x: 0, y: 0, expectedBlocks: 36 }, // top-left corner
         { x: 546, y: 546, expectedBlocks: 121 }, // top-left area
@@ -427,9 +427,9 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [observer.sessionId, observed.sessionId] });
 
-      const observerPlayer = room.state.players.get(observer.sessionId);
-      const observedPlayer = room.state.players.get(observed.sessionId);
-      const observerClient = room.clients.getById(observer.sessionId);
+      const observerPlayer = room.state.players.get(observer.sessionId)!;
+      const observedPlayer = room.state.players.get(observed.sessionId)!;
+      const observerClient = room.clients.getById(observer.sessionId)!;
 
       // Start out of vision: observer at (0,0), observed far away
       observerPlayer.x = 0;
@@ -438,8 +438,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       observedPlayer.y = PLAYER_VIEW_RADIUS + 100;
 
       await room.waitForNextSimulationTick();
-      assert.strictEqual(observerClient.view.has(observedPlayer), true);
-      assert.strictEqual(observerClient.view.hasTag(observedPlayer, PLAYER_VIEW_LEVELS.VIEW), false);
+      assert.strictEqual(observerClient?.view?.has(observedPlayer), true);
+      assert.strictEqual(observerClient?.view?.hasTag(observedPlayer, PLAYER_VIEW_LEVELS.VIEW), false);
 
       // Move observed into vision
       observedPlayer.x = PLAYER_VIEW_RADIUS - 50;
@@ -466,7 +466,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      room.state.players.get(client.sessionId).tokenExpiresAt = Date.now();
+      room.state.players.get(client.sessionId)!.tokenExpiresAt = Date.now();
       client.send(WS_EVENT.REFRESH_TOKEN, { token: generateTestJWT({}) });
       await waitForConnectionCheck();
 
@@ -574,7 +574,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      room.state.players.get(client.sessionId).tokenExpiresAt = Date.now();
+      room.state.players.get(client.sessionId)!.tokenExpiresAt = Date.now();
       await waitForConnectionCheck();
 
       assert.strictEqual(room.auth.expectingReconnections.size, 0);
@@ -591,8 +591,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         clientIds: [client1.sessionId, client2.sessionId],
       });
 
-      room.state.players.get(client1.sessionId).lastActivityTime = Date.now() - INACTIVITY_TIMEOUT;
-      room.state.players.get(client2.sessionId).lastActivityTime = Date.now() - INACTIVITY_TIMEOUT;
+      room.state.players.get(client1.sessionId)!.lastActivityTime = Date.now() - INACTIVITY_TIMEOUT;
+      room.state.players.get(client2.sessionId)!.lastActivityTime = Date.now() - INACTIVITY_TIMEOUT;
       await waitForConnectionCheck();
 
       assert.strictEqual(room.auth.expectingReconnections.size, 2);
@@ -661,7 +661,7 @@ interface PlayerSnapshot {
 }
 /** Snapshot of player fields for assertion (use live object, not toJSON which omits non-@type fields) */
 const getPlayerSnapshot = (room: GameRoom, playerId: string): PlayerSnapshot => {
-  const p = room.state.players.get(playerId);
+  const p = room.state.players.get(playerId)!;
   return {
     userId: p.userId,
     username: p.username,
@@ -680,7 +680,7 @@ interface AssertPlayerFieldsStateArgs {
 }
 /** Asserts that the player has the correct fields */
 const assertPlayerFieldsState = ({ room, playerId, expectedPlayer }: AssertPlayerFieldsStateArgs) => {
-  const actualPlayer = room.state.players.get(playerId);
+  const actualPlayer = room.state.players.get(playerId)!;
 
   assert.strictEqual(actualPlayer.x, expectedPlayer.x);
   assert.strictEqual(actualPlayer.y, expectedPlayer.y);

@@ -34,7 +34,7 @@ export async function main(options: Options) {
   room.onMessage(WS_EVENT.PLAYGROUND_MESSAGE_TYPES, () => {});
 
   room.onStateChange((state) => {
-    const player = state.players.get(room.sessionId);
+    const player = state.players.get(room.sessionId)!;
 
     let closestDistanceSquared = Infinity;
     let closestBlock: Block | undefined;

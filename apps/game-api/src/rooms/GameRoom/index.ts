@@ -25,7 +25,7 @@ export class GameRoom extends Room {
   patchRate = SERVER_PATCH_RATE;
   maxClients = MAX_PLAYERS_PER_ROOM;
 
-  prisma: PrismaClient;
+  prisma?: PrismaClient;
   auth = new Auth(this);
 
   elapsedTime = 0;

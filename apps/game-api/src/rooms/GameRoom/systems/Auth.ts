@@ -19,7 +19,7 @@ export interface AuthResult {
 }
 
 export class Auth {
-  private connectionCheckTimeout: NodeJS.Timeout;
+  private connectionCheckTimeout?: NodeJS.Timeout;
   // this needs to be set here and public to allow for modification in tests
   public reconnectionTimeout = RECONNECTION_TIMEOUT;
   // these remain public to allow for player cleanup (and testing)
@@ -37,7 +37,7 @@ export class Auth {
     const authUser = validateJwt(context.token);
     if (!authUser) throw new ServerError(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN);
 
-    const dbUser = await this.room.prisma.profile.findUnique({
+    const dbUser = await this.room.prisma?.profile.findUnique({
       where: { userId: authUser.id },
     });
     if (!dbUser) throw new ServerError(WS_CODE.NOT_FOUND, ROOM_ERROR.PROFILE_NOT_FOUND);
