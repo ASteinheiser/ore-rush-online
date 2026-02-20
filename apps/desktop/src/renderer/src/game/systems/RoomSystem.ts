@@ -1,6 +1,14 @@
-import type { GameRoomState, Player as ServerPlayer, Block as ServerBlock, Inventory } from 'game-api/types';
 import { Client, getStateCallbacks, type Room } from '@colyseus/sdk';
-import { WS_EVENT, WS_ROOM, WS_CODE, type AuthPayload } from '@repo/core-game';
+import {
+  WS_EVENT,
+  WS_ROOM,
+  WS_CODE,
+  type AuthPayload,
+  type GameRoomState,
+  type Player as ServerPlayer,
+  type Block as ServerBlock,
+  type Inventory,
+} from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import type { Game } from '../scenes/Game';
 

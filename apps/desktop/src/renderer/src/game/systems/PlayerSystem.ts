@@ -1,5 +1,10 @@
-import { calculateMovement, PLAYER_SIZE, FIXED_TIME_STEP, type InputPayload } from '@repo/core-game';
-import type { Player as ServerPlayer } from 'game-api/types';
+import {
+  calculateMovement,
+  PLAYER_SIZE,
+  FIXED_TIME_STEP,
+  type InputPayload,
+  type Player as ServerPlayer,
+} from '@repo/core-game';
 import { Player } from '../objects/Player';
 import { PunchBox } from '../objects/PunchBox';
 import type { Game } from '../scenes/Game';

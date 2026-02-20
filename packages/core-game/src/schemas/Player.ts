@@ -1,5 +1,6 @@
 import { Schema, type, view } from '@colyseus/schema';
-import { type InputPayload, BLOCK_TYPES } from '@repo/core-game';
+import { BLOCK_TYPES } from '../constants/block';
+import type { InputPayload } from '../constants/player';
 
 /** adding a player to the view without a view level will only show the username */
 export const PLAYER_VIEW_LEVELS = {

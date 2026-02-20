@@ -1,7 +1,6 @@
-import { WS_EVENT, WS_CODE, InputSchema, type InputPayload } from '@repo/core-game';
+import { WS_EVENT, WS_CODE, InputSchema, type InputPayload, type Player } from '@repo/core-game';
 import { ROOM_ERROR } from '../../error';
 import type { GameRoom } from '../index';
-import type { Player } from '../schemas/Player';
 
 export class PlayerInput {
   constructor(private room: GameRoom) {}

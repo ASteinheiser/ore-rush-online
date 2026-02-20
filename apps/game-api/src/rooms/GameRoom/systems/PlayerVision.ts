@@ -1,7 +1,6 @@
 import type { Client } from 'colyseus';
 import { StateView } from '@colyseus/schema';
-import { PLAYER_VIEW_RADIUS } from '@repo/core-game';
-import { PLAYER_VIEW_LEVELS, type Player } from '../schemas/Player';
+import { PLAYER_VIEW_RADIUS, PLAYER_VIEW_LEVELS, type Player } from '@repo/core-game';
 import type { GameRoom } from '../index';
 
 export class PlayerVision {

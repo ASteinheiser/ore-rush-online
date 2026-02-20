@@ -10,10 +10,11 @@ import {
   INACTIVITY_TIMEOUT,
   PLAYER_MOVE_SPEED,
   PLAYER_VIEW_RADIUS,
+  PLAYER_VIEW_LEVELS,
+  Player,
   type InputPayload,
 } from '@repo/core-game';
 import type { GameRoom } from '../../src/rooms/GameRoom';
-import { Player, PLAYER_VIEW_LEVELS } from '../../src/rooms/GameRoom/schemas/Player';
 import { makeApp } from '../../src/app.config';
 import { ROOM_ERROR } from '../../src/rooms/error';
 import { prisma } from '../../src/repo/client';

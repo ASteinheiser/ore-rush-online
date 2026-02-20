@@ -1,9 +1,7 @@
 import 'dotenv/config';
 import { Client } from '@colyseus/sdk';
 import { cli, type Options } from '@colyseus/loadtest';
-import { WS_ROOM, WS_EVENT, type InputPayload } from '@repo/core-game';
-import type { GameRoomState } from '../../src/rooms/GameRoom/schemas';
-import type { Block } from '../../src/rooms/GameRoom/schemas/Block';
+import { WS_ROOM, WS_EVENT, type InputPayload, type GameRoomState, type Block } from '@repo/core-game';
 import { prisma } from '../../src/repo/client';
 import { generateTestJWT, setupTestDb, cleanupTestDb, TEST_USERS } from '../integration/utils';
 

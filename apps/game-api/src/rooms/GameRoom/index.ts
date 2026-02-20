@@ -1,9 +1,8 @@
 import { Room, type AuthContext, type Client } from '@colyseus/core';
-import { FIXED_TIME_STEP, WS_EVENT, WS_CODE } from '@repo/core-game';
+import { GameRoomState, FIXED_TIME_STEP, WS_EVENT, WS_CODE } from '@repo/core-game';
 import type { PrismaClient } from '../../repo/prisma-client/client';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
-import { GameRoomState } from './schemas';
 import { Auth, type AuthResult } from './systems/Auth';
 import { BlockMap } from './systems/BlockMap';
 import { PlayerInput } from './systems/PlayerInput';

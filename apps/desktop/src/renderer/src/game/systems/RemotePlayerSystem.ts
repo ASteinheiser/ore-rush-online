@@ -1,4 +1,4 @@
-import type { Player as ServerPlayer } from 'game-api/types';
+import type { Player as ServerPlayer } from '@repo/core-game';
 import { Player } from '../objects/Player';
 import { PunchBox } from '../objects/PunchBox';
 import type { Game } from '../scenes/Game';

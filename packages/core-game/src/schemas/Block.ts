@@ -1,5 +1,5 @@
 import { Schema, type } from '@colyseus/schema';
-import { type BLOCK_TYPE } from '@repo/core-game';
+import { type BLOCK_TYPE } from '../constants/block';
 
 export class Block extends Schema {
   @type('string') id!: string;

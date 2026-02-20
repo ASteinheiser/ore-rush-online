@@ -1,7 +1,5 @@
 import type { Client } from 'colyseus';
-import { MAP_SIZE, BLOCK_SIZE, BLOCK_TYPES, PLAYER_VIEW_RADIUS } from '@repo/core-game';
-import { Block } from '../schemas/Block';
-import type { Player } from '../schemas/Player';
+import { Block, type Player, MAP_SIZE, BLOCK_SIZE, BLOCK_TYPES, PLAYER_VIEW_RADIUS } from '@repo/core-game';
 import type { GameRoom } from '../index';
 
 export class BlockMap {

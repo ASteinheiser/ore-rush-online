@@ -22,7 +22,7 @@
       "persistent": true
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types", "generate:db-types", "generate:gql-types"]
     },
     "lint": {
       "dependsOn": ["^lint", "check-types"]

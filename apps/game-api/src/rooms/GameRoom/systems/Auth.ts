@@ -4,13 +4,13 @@ import {
   INACTIVITY_TIMEOUT,
   RECONNECTION_TIMEOUT,
   WS_EVENT,
+  Player,
   type AuthPayload,
 } from '@repo/core-game';
 import { logger } from '../../../logger';
 import type { Profile } from '../../../repo/prisma-client/client';
 import { validateJwt } from '../../../auth/jwt';
 import { ROOM_ERROR } from '../../error';
-import { Player } from '../schemas/Player';
 import type { GameRoom } from '../index';
 
 export interface AuthResult {

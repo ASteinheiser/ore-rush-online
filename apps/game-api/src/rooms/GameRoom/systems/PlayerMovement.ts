@@ -1,7 +1,6 @@
-import { MAP_SIZE, PLAYER_SIZE, calculateMovement, type InputPayload } from '@repo/core-game';
+import { MAP_SIZE, PLAYER_SIZE, calculateMovement, type InputPayload, type Player } from '@repo/core-game';
 import { logger } from '../../../logger';
 import type { GameRoom } from '../index';
-import type { Player } from '../schemas/Player';
 
 export class PlayerMovement {
   constructor(private room: GameRoom) {}

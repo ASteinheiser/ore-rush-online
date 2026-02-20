@@ -6,11 +6,11 @@ import {
   ATTACK_DAMAGE__DELAY,
   ATTACK_DAMAGE__FRAME_TIME,
   BLOCK_SIZE,
-  type InputPayload,
   checkAABBCollision,
+  type InputPayload,
+  type Player,
 } from '@repo/core-game';
 import type { GameRoom } from '../index';
-import type { Player } from '../schemas/Player';
 
 export class PlayerMining {
   constructor(private room: GameRoom) {}

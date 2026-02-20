@@ -60,7 +60,6 @@
     "electron": "catalog:",
     "electron-builder": "^26.7.0",
     "electron-vite": "^5.0.0",
-    "game-api": "workspace:*",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

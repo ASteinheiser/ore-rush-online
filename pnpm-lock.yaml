@@ -12,6 +12,9 @@ catalogs:
     '@apollo/server':
       specifier: ^5.2.0
       version: 5.4.0
+    '@colyseus/schema':
+      specifier: ^4.0.8
+      version: 4.0.8
     '@colyseus/sdk':
       specifier: ^0.17.26
       version: 0.17.26
@@ -276,9 +279,6 @@ importers:
       electron-vite:
         specifier: ^5.0.0
         version: 5.0.0(vite@7.3.1(@types/node@24.10.11)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
-      game-api:
-        specifier: workspace:*
-        version: link:../game-api
       tailwindcss:
         specifier: 'catalog:'
         version: 4.1.18
@@ -310,7 +310,7 @@ importers:
         specifier: ^0.17.9
         version: 0.17.10(@colyseus/auth@0.17.6(@colyseus/core@0.17.31)(express@5.2.1))(@colyseus/core@0.17.31)(express@5.2.1)(zod@4.3.6)
       '@colyseus/schema':
-        specifier: ^4.0.8
+        specifier: 'catalog:'
         version: 4.0.8(typescript@5.9.3)
       '@colyseus/tools':
         specifier: ^0.17.16
@@ -576,6 +576,9 @@ importers:
 
   packages/core-game:
     dependencies:
+      '@colyseus/schema':
+        specifier: 'catalog:'
+        version: 4.0.8(typescript@5.9.3)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
