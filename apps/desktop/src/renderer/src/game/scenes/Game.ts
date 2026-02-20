@@ -59,16 +59,27 @@ export class Game extends Phaser.Scene {
     // skip if not yet connected
     if (!this.roomSystem.room || !this.playerSystem.currentPlayer) return;
 
-    this.uiSystem?.fpsDisplay.update(delta);
-    this.uiSystem?.fogOverlay.update(this.playerSystem.currentPlayer.entity);
-
-    this.remotePlayerSystem.interpolateRemotePlayers(delta);
-
     this.elapsedTime += delta;
     while (this.elapsedTime >= FIXED_TIME_STEP) {
       this.elapsedTime -= FIXED_TIME_STEP;
       this.fixedTick();
     }
+
+    /** This indicates when we are processing more than 1 tick per frame.
+     * When this happens, set alpha to 1 to skip interpolation.
+     * This is fine because the low frame rate will cause "stepping" regardless.
+     * This will at least avoid additional lag due to interpolation. */
+    const interpolationDeltaThreshold = delta >= FIXED_TIME_STEP * 2;
+    /** Calculate the alpha for interpolation. A number between 0 and 1,
+     * representing the percentage of the current tick that has elapsed. */
+    const alpha = Math.min(1, this.elapsedTime / FIXED_TIME_STEP);
+
+    this.playerSystem.interpolateLocalPlayer(interpolationDeltaThreshold ? 1 : alpha);
+
+    this.remotePlayerSystem.interpolateRemotePlayers(delta);
+
+    this.uiSystem?.fpsDisplay.update(delta);
+    this.uiSystem?.fogOverlay.update(this.playerSystem.currentPlayer.entity);
   }
 
   private fixedTick() {

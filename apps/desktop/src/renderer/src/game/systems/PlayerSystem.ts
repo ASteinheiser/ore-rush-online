@@ -7,6 +7,9 @@ import type { RoomEventCallbacks } from './RoomSystem';
 
 export class PlayerSystem {
   public currentPlayer?: Player;
+  /** Position at start of last fixed tick, used for interpolation */
+  private previousPosition = { x: 0, y: 0 };
+  private currentPosition = { x: 0, y: 0 };
   /** The last input sequence acknowledged by the server */
   private serverAckSeq = 0;
   /** The inputs being predicted by the client */
@@ -20,6 +23,7 @@ export class PlayerSystem {
     delete this.currentPlayer;
   }
 
+  /** Predict and update local player state per fixed tick */
   public clientSidePrediction(inputPayload?: InputPayload) {
     // skip if no input payload or current player
     if (!inputPayload || !this.currentPlayer?.entity) return;
@@ -31,9 +35,22 @@ export class PlayerSystem {
 
     if (attack) this.currentPlayer.punch();
 
-    const { x, y } = this.currentPlayer.entity;
-    const newPosition = calculateMovement({ x, y, ...PLAYER_SIZE, left, right, up, down });
-    this.currentPlayer.move(newPosition);
+    this.previousPosition.x = this.currentPosition.x;
+    this.previousPosition.y = this.currentPosition.y;
+
+    const newPosition = calculateMovement({ ...this.currentPosition, ...PLAYER_SIZE, left, right, up, down });
+    this.currentPosition.x = newPosition.x;
+    this.currentPosition.y = newPosition.y;
+  }
+
+  /** Interpolate local player between fixed ticks */
+  public interpolateLocalPlayer(alpha: number) {
+    if (!this.currentPlayer?.entity) return;
+
+    this.currentPlayer.move({
+      x: Phaser.Math.Linear(this.previousPosition.x, this.currentPosition.x, alpha),
+      y: Phaser.Math.Linear(this.previousPosition.y, this.currentPosition.y, alpha),
+    });
   }
 
   public handleCurrentPlayerAdded: RoomEventCallbacks['onPlayerAdded'] = (player, sessionId, $) => {
@@ -41,6 +58,8 @@ export class PlayerSystem {
     if (sessionId !== this.scene.roomSystem.room?.sessionId) return;
 
     this.currentPlayer = new Player(this.scene, player.username, player.x, player.y);
+    this.previousPosition = { x: player.x, y: player.y };
+    this.currentPosition = { x: player.x, y: player.y };
     // ensure the camera is following the current player
     this.scene.cameras.main.startFollow(this.currentPlayer.entity, true, 0.1, 0.1);
     this.currentPlayer.createDebugBox();
@@ -103,6 +122,10 @@ export class PlayerSystem {
       this.currentPlayer.entity.x !== targetPosition.x ||
       this.currentPlayer.entity.y !== targetPosition.y
     ) {
+      this.previousPosition.x = targetPosition.x;
+      this.previousPosition.y = targetPosition.y;
+      this.currentPosition.x = targetPosition.x;
+      this.currentPosition.y = targetPosition.y;
       this.currentPlayer.forceMove(targetPosition);
     }
   }
