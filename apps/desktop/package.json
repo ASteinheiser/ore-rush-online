@@ -65,8 +65,5 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
-  },
-  "pnpm": {
-    "neverBuiltDependencies": ["game-api"]
   }
 }
