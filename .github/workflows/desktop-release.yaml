@@ -32,6 +32,9 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      # used for game-api CI tests
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
     strategy:
       fail-fast: false
@@ -68,8 +71,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        env:
-          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
       - name: Import macOS signing cert
         if: matrix.os == 'macos-latest'
