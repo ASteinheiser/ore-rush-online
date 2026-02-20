@@ -15,12 +15,7 @@ export class InputSystem {
   }
 
   public processInput() {
-    if (
-      !this.scene.roomSystem.room?.connection.isOpen ||
-      !this.scene.playerSystem.currentPlayer ||
-      !this.cursorKeys ||
-      !this.escapeKey
-    ) {
+    if (!this.scene.roomSystem.room?.connection.isOpen || !this.cursorKeys || !this.escapeKey) {
       return;
     }
 
