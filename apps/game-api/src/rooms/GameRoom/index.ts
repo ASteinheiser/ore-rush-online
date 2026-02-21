@@ -101,7 +101,7 @@ export class GameRoom extends Room {
       data: { roomId: this.roomId },
     });
 
-    this.auth.stopConnectionCheck();
+    // handle room closing logic, such as saving state, etc.
   }
 
   onUncaughtException(error: Error, methodName: string) {

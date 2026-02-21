@@ -19,7 +19,6 @@ export interface AuthResult {
 }
 
 export class Auth {
-  private connectionCheckTimeout?: NodeJS.Timeout;
   private reconnectionTimeout = RECONNECTION_TIMEOUT;
   private expectingReconnections = new Set<string>();
   private forcedDisconnects = new Set<string>();
@@ -190,11 +189,7 @@ export class Auth {
   }
 
   public startConnectionCheck(connectionCheckInterval: number) {
-    this.connectionCheckTimeout = setInterval(() => this.checkPlayerConnection(), connectionCheckInterval);
-  }
-
-  public stopConnectionCheck() {
-    if (this.connectionCheckTimeout) clearInterval(this.connectionCheckTimeout);
+    this.room.clock.setInterval(() => this.checkPlayerConnection(), connectionCheckInterval);
   }
 
   private checkPlayerConnection() {
