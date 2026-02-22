@@ -10,7 +10,7 @@ import { PlayerVision } from './systems/PlayerVision';
 import { PlayerMovement } from './systems/PlayerMovement';
 import { PlayerMining } from './systems/PlayerMining';
 
-const MAX_PLAYERS_PER_ROOM = 5;
+const MAX_PLAYERS_PER_ROOM = 10;
 /** This is the speed at which we stream updates to the client.
  * Updates should be interpolated clientside to appear smoother */
 const SERVER_PATCH_RATE = 1000 / 20; // 20fps = 50ms
