@@ -109,19 +109,19 @@ export const Game = () => {
 
   // handle removing clients that are connected to dead rooms
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-
+    const handleFocus = async () => {
       const scene = phaserRef?.current?.scene as GameScene;
       if (!scene?.roomSystem?.room) return;
 
-      if (!scene.roomSystem.room.connection.isOpen) {
+      const isAlive = await scene.roomSystem.isConnectionAlive();
+
+      if (!scene.roomSystem.room.connection.isOpen || !isAlive) {
         scene.sendToMainMenu('Connection lost. Please try again.');
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   return (

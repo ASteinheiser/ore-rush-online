@@ -21,6 +21,8 @@ const AUTO_RECONNECT_MAX_ATTEMPTS = 8;
 const RECONNECTION_STORAGE_KEY = 'game_reconnection_token';
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_BACKOFF_MS = 1000;
+/** The timeout for the connection to be considered alive (in ms) */
+const CONNECTION_IS_ALIVE_TIMEOUT = 5000;
 
 type ServerCallback = ReturnType<typeof getStateCallbacks<GameRoomState>>;
 export interface RoomEventCallbacks {
@@ -82,6 +84,21 @@ export class RoomSystem {
     } catch (error) {
       console.error('Failed to refresh token: ', error);
     }
+  }
+
+  public async isConnectionAlive(): Promise<boolean> {
+    const room = this.room;
+    if (!room) return false;
+
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => resolve(false), CONNECTION_IS_ALIVE_TIMEOUT);
+      const unsubscribe = room.onMessage(WS_EVENT.PONG, () => {
+        clearTimeout(timeout);
+        unsubscribe(); // remove one-time listener
+        resolve(true);
+      });
+      room.send(WS_EVENT.PING);
+    });
   }
 
   public setupRoomEventListeners(callbacks: RoomEventCallbacks) {
