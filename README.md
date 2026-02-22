@@ -243,6 +243,30 @@ This snapshot was created on `2026-01-27`. All tests were run for 3 minutes agai
 
 It appears to be more efficient on the server to have larger rooms, but at a certain size, you will get buffer overflows. This is due to the sheer size of the room state (many players, each with their own state). You should try to strike a balance between room size and state. The smaller you can make the room state, the more players you can support in a single room. Conversely, if you have a lot of state to track, you will need to limit your maximum room size accordingly.
 
+### v0.0.2 Snapshot
+
+This snapshot was created on `2026-02-21`. All tests were run for 3 minutes against the 2nd cheapest DigitalOcean Droplet:
+- 1GB RAM
+- 1 vCPU
+- 10GB SSD
+- Ubuntu 24.04 LTS
+- US West - San Francisco
+
+The cheapest Droplet was having issues with available memory given the number of "blocks" that fill the map now, causing it to freeze up. The next tier up (from $4 to $6) gives you double the memory and seems stable with `v0.0.2` logic (fog of war + block map).
+
+| Room Size | Players | CPU Peak | Memory Peak |
+|---------|-----------|----------|-------------|
+| - | - (idle) | 3% | 51% (140 mb) |
+| 5 | 5 | 16% | 61% (190 mb) |
+| 5 | 25 | 26% | 64% (260 mb) |
+| 5 | 100 | 70% | 83% (380 mb) |
+| 10 | 10 | 13% | 58% (190 mb) |
+| 10 | 30 | 31% | 65% (230 mb) |
+| 10 | 100 | 67% | 74% (300 mb) |
+| 100 | 100 | -% | -% (- mb) |
+
+**NOTE:** When trying to run 100 players in a room, you will get a buffer overflow at ~25 players now.
+
 ## Available Commands
 
 | Command | Description |
