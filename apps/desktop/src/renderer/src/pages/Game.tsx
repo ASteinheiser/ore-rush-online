@@ -107,6 +107,23 @@ export const Game = () => {
     phaserRef?.current?.game?.sound.setVolume(volume / 100);
   }, [volume]);
 
+  // handle removing clients that are connected to dead rooms
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      const scene = phaserRef?.current?.scene as GameScene;
+      if (!scene?.roomSystem?.room) return;
+
+      if (!scene.roomSystem.room.connection.isOpen) {
+        scene.sendToMainMenu('Connection lost. Please try again.');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   return (
     <>
       <PhaserGame ref={phaserRef} currentActiveScene={onCurrentSceneChange} />
