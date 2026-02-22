@@ -55,7 +55,7 @@ export class RoomSystem {
     if (reconnectToken) {
       try {
         this.room = await this.client.reconnect<GameRoomState>(reconnectToken);
-        EventBus.emit(EVENT_BUS.RECONNECTION_SUCCESS);
+        EventBus.emit(EVENT_BUS.TOAST_SUCCESS, 'Reconnection successful!');
       } catch (reconnectError) {
         console.warn('Reconnection failed, falling back to joinOrCreate:', reconnectError);
       }
@@ -95,17 +95,17 @@ export class RoomSystem {
       if (code || message) {
         errorMessage = `Room error: ${code} - ${message}`;
       }
-      EventBus.emit(EVENT_BUS.JOIN_ERROR, new Error(errorMessage));
+      EventBus.emit(EVENT_BUS.TOAST_ERROR, errorMessage);
     });
 
     this.room.onDrop(() => {
       this.reconnectionAttempt++;
-      EventBus.emit(EVENT_BUS.RECONNECTION_ATTEMPT, this.reconnectionAttempt);
+      EventBus.emit(EVENT_BUS.TOAST_INFO, `Reconnecting... (${this.reconnectionAttempt})`);
     });
 
     this.room.onReconnect(() => {
       this.reconnectionAttempt = 0;
-      EventBus.emit(EVENT_BUS.RECONNECTION_SUCCESS);
+      EventBus.emit(EVENT_BUS.TOAST_SUCCESS, 'Reconnection successful!');
     });
 
     this.room.onLeave(async (code) => {
@@ -141,17 +141,17 @@ export class RoomSystem {
       case WS_CODE.BAD_REQUEST:
       case WS_CODE.TIMEOUT:
         if (!(await this.handleReconnection(setupStateListeners))) {
-          this.scene.sendToMainMenu(new Error('Failed to reconnect'));
+          this.scene.sendToMainMenu('Failed to reconnect');
         }
         break;
       case WS_CODE.UNAUTHORIZED:
       case WS_CODE.FORBIDDEN:
       case WS_CODE.NOT_FOUND:
         this.clearStoredReconnectionToken();
-        this.scene.sendToMainMenu(new Error('You were removed from the game'));
+        this.scene.sendToMainMenu('You were removed from the game');
         break;
       default:
-        this.scene.sendToMainMenu(new Error(`Oops, something went wrong. Please try to reconnect.`));
+        this.scene.sendToMainMenu('Oops, something went wrong. Please try to reconnect.');
     }
   }
 
@@ -173,7 +173,7 @@ export class RoomSystem {
 
     for (let attempt = 0; attempt < MAX_RECONNECT_ATTEMPTS; attempt++) {
       const attemptDisplay = attempt + 1;
-      EventBus.emit(EVENT_BUS.RECONNECTION_ATTEMPT, attemptDisplay);
+      EventBus.emit(EVENT_BUS.TOAST_INFO, `Reconnecting... (${attemptDisplay})`);
 
       try {
         const newRoom = await this.client.reconnect(reconnectToken);
@@ -185,7 +185,7 @@ export class RoomSystem {
         setupStateListeners();
         // store the new reconnection token for future reconnection
         this.storeReconnectionToken(newRoom.reconnectionToken);
-        EventBus.emit(EVENT_BUS.RECONNECTION_SUCCESS);
+        EventBus.emit(EVENT_BUS.TOAST_SUCCESS, 'Reconnection successful!');
         return true;
       } catch (error) {
         console.warn(`Reconnection attempt ${attemptDisplay} failed:`, error);

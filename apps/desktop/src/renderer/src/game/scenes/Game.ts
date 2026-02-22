@@ -28,7 +28,7 @@ export class Game extends Phaser.Scene {
   async create({ token }: AuthPayload) {
     await this.roomSystem.joinRoom(token);
     if (!this.roomSystem.room) {
-      return this.sendToMainMenu(new Error('Failed to join room'));
+      return this.sendToMainMenu('Failed to join room');
     }
 
     this.setupStateListeners();
@@ -86,9 +86,9 @@ export class Game extends Phaser.Scene {
     this.blockSystem.destroy();
   }
 
-  public sendToMainMenu(error: Error) {
-    console.error(error);
-    EventBus.emit(EVENT_BUS.JOIN_ERROR, error.message);
+  public sendToMainMenu(message: string) {
+    console.error(message);
+    EventBus.emit(EVENT_BUS.TOAST_ERROR, message);
 
     this.roomSystem.cleanupRoom();
     this.cleanupScene();
