@@ -263,6 +263,7 @@ The cheapest Droplet was having issues with available memory given the number of
 | 10 | 10 | 13% | 58% (190 mb) |
 | 10 | 30 | 31% | 65% (230 mb) |
 | 10 | 100 | 67% | 74% (300 mb) |
+| 10 | 200 | 90% | 84% (400 mb) |
 | 100 | 100 | -% | -% (- mb) |
 
 **NOTE:** When trying to run 100 players in a room, you will get a buffer overflow at ~25 players now.
