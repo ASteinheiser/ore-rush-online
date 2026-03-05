@@ -18,7 +18,7 @@ export class UISystem {
 
   constructor(private scene: Game) {
     // set the camera bounds to the map size
-    this.scene.cameras.main.setBackgroundColor(0x00ff00).setBounds(0, 0, MAP_SIZE.width, MAP_SIZE.height);
+    this.scene.cameras.main.setBounds(0, 0, MAP_SIZE.width, MAP_SIZE.height);
 
     // draw a border around the map area
     this.mapBorder = this.scene.add
@@ -30,7 +30,7 @@ export class UISystem {
     // set the background image to cover the entire map area
     this.mapBackground = this.scene.add
       .image(0, 0, ASSET.BACKGROUND)
-      .setAlpha(0.5)
+      .setAlpha(0)
       .setOrigin(0.5)
       .setPosition(MAP_SIZE.width / 2, MAP_SIZE.height / 2)
       .setDisplaySize(MAP_SIZE.width, MAP_SIZE.height);
