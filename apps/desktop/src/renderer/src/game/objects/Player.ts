@@ -1,18 +1,22 @@
-import { ATTACK_DAMAGE__DELAY, type EntityPosition } from '@repo/core-game';
+import type { EntityPosition } from '@repo/core-game';
 import { ASSET, SOUND } from '../constants';
 import { CustomText } from './CustomText';
 
-interface MoveIntent {
+interface MoveIntent extends EntityPosition {
   delta: number;
   isMoving: boolean;
   isMovingX: boolean;
   isMovingY: boolean;
+  isGrounded: boolean;
 }
 
 export const PLAYER_ANIM = {
   IDLE: 'playerIdle',
-  WALK: 'playerWalk',
-  PUNCH: 'playerPunch',
+  ROLL: 'playerRoll',
+  FLY: 'playerFly',
+  DRILL_LEFT: 'playerDrillLeft',
+  DRILL_RIGHT: 'playerDrillRight',
+  DRILL_DOWN: 'playerDrillDown',
 };
 
 export class Player {
@@ -65,8 +69,8 @@ export class Player {
     this.nameText.y = y;
   }
 
-  public move({ x, y }: EntityPosition, { delta, isMoving, isMovingX }: MoveIntent) {
-    // Asymmetric buffer: switch to WALK immediately, delay switching to IDLE
+  public move({ x, y, delta, isMoving, isGrounded }: MoveIntent) {
+    // Asymmetric buffer: switch to ROLL/FLY immediately, delay switching to IDLE
     if (isMoving) {
       this.idleAccumulator = 0;
       this.displayedMoving = true;
@@ -78,40 +82,59 @@ export class Player {
       }
     }
 
-    if (isMovingX) {
-      this.entity.setFlipX(this.entity.x > x);
-    }
-
     this.entity.x = x;
     this.entity.y = y;
     this.nameText.x = x;
     this.nameText.y = y;
 
-    if (!this.displayedMoving && !this.isPunching()) {
+    if (!this.displayedMoving && isGrounded && !this.isDrilling()) {
       this.entity.play(PLAYER_ANIM.IDLE);
     }
-    if (this.displayedMoving && !(this.isPunching() || this.isWalking())) {
-      this.entity.play(PLAYER_ANIM.WALK);
+    if (this.displayedMoving && isGrounded && !(this.isRolling() || this.isDrilling())) {
+      this.entity.play(PLAYER_ANIM.ROLL);
+    }
+    if (!isGrounded && !this.isFlying()) {
+      this.entity.play(PLAYER_ANIM.FLY);
     }
   }
 
-  public punch() {
-    if (this.isPunching()) return;
+  public startDrilling(direction: 'left' | 'right' | 'down') {
+    if (this.isDrilling()) return;
 
-    this.entity.anims.play(PLAYER_ANIM.PUNCH);
-    this.punchSfx.play('', { delay: ATTACK_DAMAGE__DELAY / 1000 });
+    switch (direction) {
+      case 'left':
+        this.entity.anims.play(PLAYER_ANIM.DRILL_LEFT);
+        break;
+      case 'right':
+        this.entity.anims.play(PLAYER_ANIM.DRILL_RIGHT);
+        break;
+      case 'down':
+        this.entity.anims.play(PLAYER_ANIM.DRILL_DOWN);
+        break;
+      default:
+    }
   }
 
-  public stopPunch() {
-    if (!this.isPunching()) return;
+  public stopDrilling() {
+    if (!this.isDrilling()) return;
+
     this.entity.anims.stop();
   }
 
-  private isPunching() {
-    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.PUNCH;
+  private isRolling() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.ROLL;
   }
 
-  private isWalking() {
-    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.WALK;
+  private isFlying() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.FLY;
+  }
+
+  private isDrilling() {
+    return (
+      this.entity.anims.isPlaying &&
+      (this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_LEFT ||
+        this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_RIGHT ||
+        this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_DOWN)
+    );
   }
 }
