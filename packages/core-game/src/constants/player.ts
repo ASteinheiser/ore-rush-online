@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { BLOCK_SIZE } from './block';
 
 /** The size of the player in pixels */
 export const PLAYER_SIZE = {
@@ -24,16 +23,6 @@ export const PLAYER_THRUST_VY_PER_TICK = 0.5;
 export const PLAYER_GRAVITY_VY_MAX = 24;
 /** Maximum upward speed per tick */
 export const PLAYER_THRUST_VY_MAX = 24;
-
-/**
- * Determines how many "cells" around the player to search when checking for solid blocks (walls)
- * This ensures that if player velocity increases, the number of cells to check per tick scales accordingly
- */
-export const PLAYER_BLOCK_COLLISION_RADIUS_CELLS = (() => {
-  const hReach = PLAYER_SIZE.width / 2 + PLAYER_VX_PER_TICK;
-  const vReach = PLAYER_SIZE.height / 2 + Math.max(PLAYER_GRAVITY_VY_MAX, PLAYER_THRUST_VY_MAX);
-  return Math.max(Math.ceil(hReach / BLOCK_SIZE.width) + 1, Math.ceil(vReach / BLOCK_SIZE.height) + 1);
-})();
 
 /** The zod schema for player input */
 export const InputSchema = z.object({
