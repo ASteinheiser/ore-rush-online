@@ -1,4 +1,4 @@
-import type { EntityPosition } from '@repo/core-game';
+import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '@repo/core-game';
 import { ASSET, SOUND } from '../constants';
 import { CustomText } from './CustomText';
 
@@ -98,27 +98,24 @@ export class Player {
     }
   }
 
-  public startDrilling(direction: 'left' | 'right' | 'down') {
-    if (this.isDrilling()) return;
-
+  public setDrillDirection(direction: DRILL_DIRECTION) {
     switch (direction) {
-      case 'left':
+      case DRILL_DIRECTIONS.LEFT:
+        if (this.isDrillingLeft()) return;
         this.entity.anims.play(PLAYER_ANIM.DRILL_LEFT);
         break;
-      case 'right':
+      case DRILL_DIRECTIONS.RIGHT:
+        if (this.isDrillingRight()) return;
         this.entity.anims.play(PLAYER_ANIM.DRILL_RIGHT);
         break;
-      case 'down':
+      case DRILL_DIRECTIONS.DOWN:
+        if (this.isDrillingDown()) return;
         this.entity.anims.play(PLAYER_ANIM.DRILL_DOWN);
         break;
+      case DRILL_DIRECTIONS.IDLE:
       default:
+        this.entity.anims.stop();
     }
-  }
-
-  public stopDrilling() {
-    if (!this.isDrilling()) return;
-
-    this.entity.anims.stop();
   }
 
   private isRolling() {
@@ -130,11 +127,18 @@ export class Player {
   }
 
   private isDrilling() {
-    return (
-      this.entity.anims.isPlaying &&
-      (this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_LEFT ||
-        this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_RIGHT ||
-        this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_DOWN)
-    );
+    return this.isDrillingLeft() || this.isDrillingRight() || this.isDrillingDown();
+  }
+
+  private isDrillingLeft() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_LEFT;
+  }
+
+  private isDrillingRight() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_RIGHT;
+  }
+
+  private isDrillingDown() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_DOWN;
   }
 }
