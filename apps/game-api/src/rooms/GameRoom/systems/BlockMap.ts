@@ -1,5 +1,13 @@
 import type { Client } from 'colyseus';
-import { Block, type Player, MAP_SIZE, BLOCK_SIZE, BLOCK_TYPES, PLAYER_VIEW_RADIUS } from '@repo/core-game';
+import {
+  Block,
+  BLOCK_SIZE,
+  BLOCK_TYPES,
+  type Player,
+  PLAYER_VIEW_RADIUS,
+  MAP_SIZE,
+  EMPTY_MAP_ROWS,
+} from '@repo/core-game';
 import type { GameRoom } from '../index';
 
 export class BlockMap {
@@ -100,6 +108,9 @@ export class BlockMap {
     for (let i = 0; i < totalBlocks; i++) {
       const col = i % this.cols;
       const row = Math.floor(i / this.cols);
+
+      // leave rows at the top of the map empty for players to spawn
+      if (row < EMPTY_MAP_ROWS) continue;
 
       const block = new Block();
       block.id = `${i}`;
