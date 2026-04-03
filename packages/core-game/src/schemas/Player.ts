@@ -21,8 +21,10 @@ export class Player extends Schema {
   /** Position and animation fields */
   @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') x!: number;
   @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') y!: number;
-  @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isGrounded: boolean = false;
   @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isDrilling: boolean = false;
+  @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isGrounded: boolean = false;
+  @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isTouchingBlockLeft: boolean = false;
+  @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isTouchingBlockRight: boolean = false;
   /** Player vertical velocity (only synced to the active player for reconciliation) */
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') velocityY: number = 0;
   /** Private player information for active player */
