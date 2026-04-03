@@ -24,6 +24,15 @@ export const PLAYER_GRAVITY_VY_MAX = 24;
 /** Maximum upward speed per tick */
 export const PLAYER_THRUST_VY_MAX = 24;
 
+/** The directions the player can drill */
+export const DRILL_DIRECTIONS = {
+  IDLE: 'idle',
+  LEFT: 'left',
+  RIGHT: 'right',
+  DOWN: 'down',
+} as const;
+export type DRILL_DIRECTION = (typeof DRILL_DIRECTIONS)[keyof typeof DRILL_DIRECTIONS];
+
 /** The zod schema for player input */
 export const InputSchema = z.object({
   seq: z.number().int().nonnegative(),
