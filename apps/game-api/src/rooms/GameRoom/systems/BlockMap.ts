@@ -5,14 +5,14 @@ import {
   BLOCK_TYPES,
   type Player,
   PLAYER_VIEW_RADIUS,
-  MAP_SIZE,
+  MAP_GRID_SIZE,
   EMPTY_MAP_ROWS,
 } from '@repo/core-game';
 import type { GameRoom } from '../index';
 
 export class BlockMap {
-  private cols: number;
-  private rows: number;
+  private cols = MAP_GRID_SIZE.cols;
+  private rows = MAP_GRID_SIZE.rows;
   /** 2D grid initialized with each cell containing empty string (no blockId) */
   private blockGrid: string[][];
   /** the number of cells to search in each direction for visibility */
@@ -20,8 +20,6 @@ export class BlockMap {
   private clientVisibleBlocks = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {
-    this.cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
-    this.rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
     this.viewRadiusCells = Math.ceil(PLAYER_VIEW_RADIUS / BLOCK_SIZE.width);
 
     this.blockGrid = Array.from({ length: this.rows }, () => Array.from({ length: this.cols }, () => ''));
