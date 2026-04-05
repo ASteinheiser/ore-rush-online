@@ -19,7 +19,6 @@ export class PlayerVision {
     client.view.add(player);
     client.view.add(player, PLAYER_VIEW_LEVELS.VIEW);
     client.view.add(player, PLAYER_VIEW_LEVELS.PRIVATE);
-    client.view.add(player, PLAYER_VIEW_LEVELS.DEBUG);
 
     // allow otherPlayers to see player's public fields (username only)
     this.room.clients.forEach((otherClient) => {
@@ -48,12 +47,10 @@ export class PlayerVision {
         nowVisible.add(otherSessionId);
         if (!visibleToClient.has(otherSessionId)) {
           client.view?.add(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
-          client.view?.add(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
         }
       } else {
         if (visibleToClient.has(otherSessionId)) {
           client.view?.remove(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
-          client.view?.remove(otherPlayer, PLAYER_VIEW_LEVELS.DEBUG);
           // ensure we still see basic player info (username)
           client.view?.add(otherPlayer);
         }
