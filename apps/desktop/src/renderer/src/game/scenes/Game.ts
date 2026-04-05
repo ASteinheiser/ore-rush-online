@@ -15,7 +15,7 @@ export class Game extends Phaser.Scene {
   private inputSystem = new InputSystem(this);
   private playerSystem = new PlayerSystem(this);
   private remotePlayerSystem = new RemotePlayerSystem(this);
-  private blockSystem = new BlockSystem(this);
+  public blockSystem = new BlockSystem(this);
 
   constructor() {
     super(SCENE.GAME);
