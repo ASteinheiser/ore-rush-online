@@ -30,6 +30,13 @@ export class BlockMap {
     this.clientVisibleBlocks.delete(sessionId);
   }
 
+  public getBlock(col: number, row: number) {
+    const blockId = this.blockGrid[row][col];
+    if (blockId === '') return undefined;
+
+    return this.room.state.blocks.get(blockId);
+  }
+
   public deleteBlock(blockId: string) {
     const block = this.room.state.blocks.get(blockId);
     if (!block) return;

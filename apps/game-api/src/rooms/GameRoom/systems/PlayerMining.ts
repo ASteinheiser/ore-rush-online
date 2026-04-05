@@ -1,12 +1,8 @@
 import {
-  ATTACK_SIZE,
-  ATTACK_OFFSET_X,
-  ATTACK_OFFSET_Y,
-  ATTACK_COOLDOWN,
-  ATTACK_DAMAGE__DELAY,
-  ATTACK_DAMAGE__FRAME_TIME,
   BLOCK_SIZE,
-  checkAABBCollision,
+  DRILL_COOLDOWN,
+  DRILL_DIRECTIONS,
+  type DRILL_DIRECTION,
   type InputPayload,
   type Player,
 } from '@repo/core-game';
@@ -17,78 +13,57 @@ export class PlayerMining {
 
   public handleInput(player: Player, input: InputPayload) {
     const currentTime = Date.now();
-    const timeSinceLastAttack = currentTime - player.lastAttackTime;
+    const timeSinceLastDrill = currentTime - player.lastDrillTime;
 
-    if (this.isInDamageFrame(timeSinceLastAttack)) {
-      this.setDamageFrame(player);
-      this.checkForBlockHits(player);
-    } else {
-      player.attackDamageFrameX = undefined;
-      player.attackDamageFrameY = undefined;
-      player.blocksHit = [];
-    }
-
-    const isInAttackFrame = timeSinceLastAttack < ATTACK_COOLDOWN;
-    // if the player is mid-attack, don't process any more inputs
-    if (isInAttackFrame) {
+    const isInDrillFrame = timeSinceLastDrill < DRILL_COOLDOWN;
+    // if the player is mid-drill, don't process any more inputs
+    if (isInDrillFrame) {
       return;
-    } else if (input.attack) {
-      player.isAttacking = true;
-      player.attackCount++;
-      player.lastAttackTime = currentTime;
+    } else if (input.down && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.DOWN)) {
+      player.lastDrillTime = currentTime;
+      player.drillDirection = DRILL_DIRECTIONS.DOWN;
+    } else if (input.left && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.LEFT)) {
+      player.lastDrillTime = currentTime;
+      player.drillDirection = DRILL_DIRECTIONS.LEFT;
+    } else if (input.right && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.RIGHT)) {
+      player.lastDrillTime = currentTime;
+      player.drillDirection = DRILL_DIRECTIONS.RIGHT;
     } else {
-      player.isAttacking = false;
+      player.drillDirection = DRILL_DIRECTIONS.IDLE;
     }
   }
 
-  /** Check if the player is in the damage frame of the attack animation */
-  private isInDamageFrame(timeSinceLastAttack: number) {
-    return (
-      timeSinceLastAttack >= ATTACK_DAMAGE__DELAY &&
-      timeSinceLastAttack < ATTACK_DAMAGE__DELAY + ATTACK_DAMAGE__FRAME_TIME
-    );
-  }
+  /** Check if the player is able to drill a block. Also, updates the state for blocks and player inventory */
+  private checkForBlockToDrill(player: Player, direction: DRILL_DIRECTION) {
+    // only allow drilling if the player is grounded
+    if (!player.isGrounded) return false;
 
-  /** Calculate and set the damage frame */
-  private setDamageFrame(player: Player) {
-    player.attackDamageFrameX = player.isFacingRight
-      ? player.x + ATTACK_OFFSET_X
-      : player.x - ATTACK_OFFSET_X;
-    player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
-  }
+    // start from the player's position (in grid coordinates - cols/rows)
+    let targetCol = Math.floor(player.x / BLOCK_SIZE.width);
+    let targetRow = Math.floor(player.y / BLOCK_SIZE.height);
+    switch (direction) {
+      case DRILL_DIRECTIONS.LEFT:
+        targetCol--;
+        break;
+      case DRILL_DIRECTIONS.RIGHT:
+        targetCol++;
+        break;
+      case DRILL_DIRECTIONS.DOWN:
+        targetRow++;
+        break;
+    }
 
-  /** Check if the damage frame hit a block and, if needed, update the state for blocks and player inventory */
-  private checkForBlockHits(player: Player) {
-    const nearbyBlocks = this.room.blockMap.getNearbyBlocks(player);
+    const block = this.room.blockMap.getBlock(targetCol, targetRow);
+    if (!block) return false;
 
-    for (const block of nearbyBlocks) {
-      if (
-        !player.blocksHit.includes(block.id) &&
-        player.attackDamageFrameX &&
-        player.attackDamageFrameY &&
-        checkAABBCollision(
-          {
-            x: block.x,
-            y: block.y,
-            ...BLOCK_SIZE,
-          },
-          {
-            x: player.attackDamageFrameX,
-            y: player.attackDamageFrameY,
-            ...ATTACK_SIZE,
-          }
-        )
-      ) {
-        player.blocksHit.push(block.id);
-
-        block.hp--;
-        if (block.hp <= 0) {
-          if (block.type === 'iron' || block.type === 'gold') {
-            player.inventory[block.type]++;
-          }
-          this.room.blockMap.deleteBlock(block.id);
-        }
+    block.hp--;
+    if (block.hp <= 0) {
+      if (block.type === 'iron' || block.type === 'gold') {
+        player.inventory[block.type]++;
       }
+      this.room.blockMap.deleteBlock(block.id);
     }
+
+    return true;
   }
 }
