@@ -40,7 +40,7 @@ export class BlockMap {
     this.room.state.blocks.delete(blockId);
   }
 
-  /** Returns blocks in the 3×3 grid around the player (blocks the player could be touching) */
+  /** Returns blocks in the 3×3 grid around the player (matches client `BlockSystem.getNearbyBlocks`) */
   public getNearbyBlocks(player: Player): Block[] {
     const playerCol = Math.floor(player.x / BLOCK_SIZE.width);
     const playerRow = Math.floor(player.y / BLOCK_SIZE.height);

@@ -14,8 +14,8 @@ export class Block {
 
   constructor(
     scene: Phaser.Scene,
-    private x: number,
-    private y: number,
+    public readonly x: number,
+    public readonly y: number,
     type: BLOCK_TYPE,
     hp: number,
     maxHp: number
