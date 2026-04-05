@@ -55,7 +55,7 @@ export class RemotePlayerSystem {
       remotePlayer.serverX = player.x;
       remotePlayer.serverY = player.y;
       remotePlayer.serverIsGrounded = player.isGrounded;
-      remotePlayer.serverDrillDirection = player.drillDirection as DRILL_DIRECTION;
+      remotePlayer.serverDrillDirection = player.drillDirection;
 
       // if the player was not visible before, force move them (prevents weird interpolation)
       if (!remotePlayer.entity.visible || !remotePlayer.nameText.visible) {
