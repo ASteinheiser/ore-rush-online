@@ -19,7 +19,8 @@ export class PlayerMining {
     // if the player is mid-drill, don't process any more inputs
     if (isInDrillFrame) {
       return;
-    } else if (input.down && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.DOWN)) {
+    } // TODO: cleanup this logic - DRY
+    else if (input.down && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.DOWN)) {
       player.lastDrillTime = currentTime;
       player.drillDirection = DRILL_DIRECTIONS.DOWN;
     } else if (input.left && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.LEFT)) {
@@ -41,16 +42,14 @@ export class PlayerMining {
     // start from the player's position (in grid coordinates - cols/rows)
     let targetCol = Math.floor(player.x / BLOCK_SIZE.width);
     let targetRow = Math.floor(player.y / BLOCK_SIZE.height);
-    switch (direction) {
-      case DRILL_DIRECTIONS.LEFT:
-        targetCol--;
-        break;
-      case DRILL_DIRECTIONS.RIGHT:
-        targetCol++;
-        break;
-      case DRILL_DIRECTIONS.DOWN:
-        targetRow++;
-        break;
+
+    if (direction === DRILL_DIRECTIONS.LEFT && player.isTouchingBlockLeft) {
+      targetCol--;
+    } else if (direction === DRILL_DIRECTIONS.RIGHT && player.isTouchingBlockRight) {
+      targetCol++;
+    } // TODO: ensure proper overlap, otherwise players can drill on blocks they barely stand on
+    else if (direction === DRILL_DIRECTIONS.DOWN && player.isGrounded) {
+      targetRow++;
     }
 
     const block = this.room.blockMap.getBlock(targetCol, targetRow);
