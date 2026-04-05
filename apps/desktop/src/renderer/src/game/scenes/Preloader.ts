@@ -72,13 +72,13 @@ export class Preloader extends Phaser.Scene {
       repeat: -1,
     });
     this.anims.create({
-      key: PLAYER_ANIM.DRILL_LEFT,
+      key: PLAYER_ANIM.DRILL_RIGHT,
       frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [6, 7, 8] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,
     });
     this.anims.create({
-      key: PLAYER_ANIM.DRILL_RIGHT,
+      key: PLAYER_ANIM.DRILL_LEFT,
       frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [9, 10, 11] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,

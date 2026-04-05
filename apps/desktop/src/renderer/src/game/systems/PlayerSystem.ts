@@ -66,7 +66,7 @@ export class PlayerSystem {
     this.isGrounded = result.isGrounded;
 
     if (this.isGrounded) {
-      if (down && result.isTouchingBlockDown) this.currentPlayer.setDrillDirection('down');
+      if (down && result.isGrounded) this.currentPlayer.setDrillDirection('down');
       else if (right && result.isTouchingBlockRight) this.currentPlayer.setDrillDirection('right');
       else if (left && result.isTouchingBlockLeft) this.currentPlayer.setDrillDirection('left');
     }
