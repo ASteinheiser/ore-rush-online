@@ -54,6 +54,7 @@ export class BlockSystem {
 
         const blockId = `${col}_${row}`;
         const block = this.blocks[blockId];
+        if (!block) continue;
 
         out.push({
           x: block.x,
