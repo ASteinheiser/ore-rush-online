@@ -34,18 +34,24 @@ export class PlayerMovement {
   }
 
   public handleInput(player: Player, input: InputPayload) {
-    const blocks = this.room.blockMap.getNearbyBlocks(player).map(({ x, y }) => ({ x, y }));
+    const blocks = this.room.blockMap.getNearbyBlocks(player).map((block) => ({
+      x: block.x,
+      y: block.y,
+      width: BLOCK_SIZE.width,
+      height: BLOCK_SIZE.height,
+    }));
 
     const newPosition = calculateMovement({
       x: player.x,
       y: player.y,
-      velocityY: player.velocityY,
       width: PLAYER_SIZE.width,
       height: PLAYER_SIZE.height,
+      velocityY: player.velocityY,
+      blocks,
       left: input.left,
       right: input.right,
       up: input.up,
-      blocks,
+      down: input.down,
     });
 
     player.x = newPosition.x;
