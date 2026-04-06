@@ -19,14 +19,14 @@ export class Player extends Schema {
   tokenExpiresAt!: number;
   @type('string') username!: string;
   /** Position and animation fields */
-  @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') x!: number;
-  @view(PLAYER_VIEW_LEVELS.VIEW) @type('number') y!: number;
+  @view(PLAYER_VIEW_LEVELS.VIEW) @type('float64') x!: number;
+  @view(PLAYER_VIEW_LEVELS.VIEW) @type('float64') y!: number;
   @view(PLAYER_VIEW_LEVELS.VIEW) @type('string') drillDirection: DRILL_DIRECTION = DRILL_DIRECTIONS.IDLE;
   @view(PLAYER_VIEW_LEVELS.VIEW) @type('boolean') isGrounded: boolean = false;
   isTouchingBlockLeft: boolean = false;
   isTouchingBlockRight: boolean = false;
   /** Player vertical velocity (only synced to the active player for reconciliation) */
-  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') velocityY: number = 0;
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('float64') velocityY: number = 0;
   /** Private player information for active player */
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type(Inventory) inventory: Inventory = new Inventory();
   /** Latest input sequence processed by the server (used for client reconciliation) */
