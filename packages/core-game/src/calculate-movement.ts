@@ -1,4 +1,5 @@
 import type { Rectangle, EntityPosition } from './types';
+import { checkAABBCollision } from './check-AABB-collision';
 import {
   MAP_SIZE,
   PLAYER_VX_PER_TICK,
@@ -58,18 +59,14 @@ export const calculateMovement = ({
 
   // Resolve horizontal block collisions (using pre-movement Y to avoid false positives)
   for (const block of blocks) {
-    const bHalfW = block.width / 2;
-    const bHalfH = block.height / 2;
+    const blockHalfWidth = block.width / 2;
 
-    const overlapsX = newX - halfWidth < block.x + bHalfW && newX + halfWidth > block.x - bHalfW;
-    const overlapsY = y - halfHeight < block.y + bHalfH && y + halfHeight > block.y - bHalfH;
-
-    if (overlapsX && overlapsY) {
+    if (checkAABBCollision({ x: newX, y, width, height }, block)) {
       if (newX > block.x) {
-        newX = block.x + bHalfW + halfWidth;
+        newX = block.x + blockHalfWidth + halfWidth;
         isTouchingBlockLeft = true;
       } else {
-        newX = block.x - bHalfW - halfWidth;
+        newX = block.x - blockHalfWidth - halfWidth;
         isTouchingBlockRight = true;
       }
     }
@@ -84,18 +81,14 @@ export const calculateMovement = ({
 
   // Resolve vertical block collisions (using resolved X)
   for (const block of blocks) {
-    const bHalfW = block.width / 2;
-    const bHalfH = block.height / 2;
+    const blockHalfHeight = block.height / 2;
 
-    const overlapsX = newX - halfWidth < block.x + bHalfW && newX + halfWidth > block.x - bHalfW;
-    const overlapsY = newY - halfHeight < block.y + bHalfH && newY + halfHeight > block.y - bHalfH;
-
-    if (overlapsX && overlapsY) {
+    if (checkAABBCollision({ x: newX, y: newY, width, height }, block)) {
       if (newVelocityY > 0) {
-        newY = block.y - bHalfH - halfHeight;
+        newY = block.y - blockHalfHeight - halfHeight;
         isGrounded = true;
       } else {
-        newY = block.y + bHalfH + halfHeight;
+        newY = block.y + blockHalfHeight + halfHeight;
       }
       newVelocityY = 0;
     }
