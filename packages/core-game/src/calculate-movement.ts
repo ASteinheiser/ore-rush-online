@@ -84,7 +84,7 @@ export const calculateMovement = ({
     const blockHalfHeight = block.height / 2;
 
     if (checkAABBCollision({ x: newX, y: newY, width, height }, block)) {
-      if (newVelocityY > 0) {
+      if (newVelocityY >= 0) {
         newY = block.y - blockHalfHeight - halfHeight;
         isGrounded = true;
       } else {
