@@ -31,6 +31,10 @@ export class BlockMap {
   }
 
   public getBlock(col: number, row: number) {
+    if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) {
+      return undefined;
+    }
+
     const blockId = this.blockGrid[row][col];
     if (blockId === '') return undefined;
 
