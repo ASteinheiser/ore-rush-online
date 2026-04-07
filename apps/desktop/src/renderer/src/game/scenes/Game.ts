@@ -75,6 +75,7 @@ export class Game extends Phaser.Scene {
   }
 
   private fixedTick() {
+    this.playerSystem.processReconciliation();
     const input = this.inputSystem.processInput();
     this.playerSystem.clientSidePrediction(input);
   }

@@ -21,6 +21,8 @@ export class PlayerSystem {
   private serverAckSeq = 0;
   /** The inputs being predicted by the client */
   private pendingInputs: Array<InputPayload> = [];
+  /** Queued server state for deferred reconciliation (processed on next `fixedTick`) */
+  private pendingReconciliation?: ServerPlayer;
 
   constructor(private scene: Game) {}
 
@@ -120,7 +122,7 @@ export class PlayerSystem {
     $(player).onChange(() => {
       updateInventory?.(player.inventory);
       this.handleDebugFieldsUpdated(player);
-      this.handleServerReconciliation(player);
+      this.pendingReconciliation = player;
     });
   };
 
@@ -129,6 +131,14 @@ export class PlayerSystem {
 
     this.currentPlayer.debugBox.x = player.x;
     this.currentPlayer.debugBox.y = player.y;
+  }
+
+  /** Process queued server reconciliation before predicting the next input */
+  public processReconciliation() {
+    if (this.pendingReconciliation) {
+      this.handleServerReconciliation(this.pendingReconciliation);
+      this.pendingReconciliation = undefined;
+    }
   }
 
   /** Ensure Client Side Prediction is in sync with server state */
