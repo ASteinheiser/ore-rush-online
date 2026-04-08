@@ -35,4 +35,6 @@ export class Player extends Schema {
   inputQueue: Array<InputPayload> = [];
   lastActivityTime: number = Date.now();
   lastDrillTime: number = 0;
+  drillTargetCol: number = -1;
+  drillTargetRow: number = -1;
 }

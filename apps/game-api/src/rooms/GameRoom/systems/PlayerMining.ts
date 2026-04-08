@@ -14,47 +14,91 @@ export class PlayerMining {
   public handleInput(player: Player, input: InputPayload) {
     const currentTime = Date.now();
     const timeSinceLastDrill = currentTime - player.lastDrillTime;
-
     const isInDrillFrame = timeSinceLastDrill < DRILL_COOLDOWN;
-    // if the player is mid-drill, don't process any more inputs
+
     if (isInDrillFrame) {
+      if (!this.isStillHoldingDrill(player, input) || !this.isTargetUnchanged(player)) {
+        this.stopDrill(player);
+      }
       return;
-    } // handle inputs by checking for blocks and applying damage
-    else if (input.down) this.attemptToDrillBlock(player, DRILL_DIRECTIONS.DOWN, currentTime);
-    else if (input.left) this.attemptToDrillBlock(player, DRILL_DIRECTIONS.LEFT, currentTime);
-    else if (input.right) this.attemptToDrillBlock(player, DRILL_DIRECTIONS.RIGHT, currentTime);
-    else player.drillDirection = DRILL_DIRECTIONS.IDLE;
+    }
+
+    // Cooldown just expired: apply damage, update inventory, etc.
+    if (this.isTargetUnchanged(player)) {
+      this.completeDrill(player);
+    }
+
+    // Try to start a new drill
+    if (input.down) this.startDrill(player, DRILL_DIRECTIONS.DOWN, currentTime);
+    else if (input.left) this.startDrill(player, DRILL_DIRECTIONS.LEFT, currentTime);
+    else if (input.right) this.startDrill(player, DRILL_DIRECTIONS.RIGHT, currentTime);
+    else this.stopDrill(player);
   }
 
-  /** Check if the player is able to drill a block. Updates the state for blocks as well as player drill and inventory */
-  private attemptToDrillBlock(player: Player, direction: DRILL_DIRECTION, currentTime: number) {
+  private isStillHoldingDrill(player: Player, input: InputPayload): boolean {
+    return (
+      player.isGrounded &&
+      ((player.drillDirection === DRILL_DIRECTIONS.DOWN && input.down) ||
+        (player.drillDirection === DRILL_DIRECTIONS.LEFT && input.left) ||
+        (player.drillDirection === DRILL_DIRECTIONS.RIGHT && input.right))
+    );
+  }
+
+  private isTargetUnchanged(player: Player): boolean {
+    // skip check if no target (col/row are -1)
+    if (player.drillTargetCol < 0 || player.drillTargetRow < 0) {
+      return true;
+    }
+    const { col, row } = this.getTargetCell(player, player.drillDirection);
+    return col === player.drillTargetCol && row === player.drillTargetRow;
+  }
+
+  private stopDrill(player: Player) {
+    player.drillDirection = DRILL_DIRECTIONS.IDLE;
+    player.drillTargetCol = -1;
+    player.drillTargetRow = -1;
+  }
+
+  /** Record drill intent and start cooldown, but don't deal damage yet */
+  private startDrill(player: Player, direction: DRILL_DIRECTION, currentTime: number) {
     // only allow drilling if the player is grounded
     if (!player.isGrounded) return;
 
-    // start from the player's position (in grid coordinates - cols/rows)
-    let targetCol = Math.floor(player.x / BLOCK_SIZE.width);
-    let targetRow = Math.floor(player.y / BLOCK_SIZE.height);
-
-    if (direction === DRILL_DIRECTIONS.DOWN && player.isGrounded) {
-      targetRow++;
-    } else if (direction === DRILL_DIRECTIONS.LEFT && player.isTouchingBlockLeft) {
-      targetCol--;
-    } else if (direction === DRILL_DIRECTIONS.RIGHT && player.isTouchingBlockRight) {
-      targetCol++;
-    }
-
-    const block = this.room.blockMap.getBlock(targetCol, targetRow);
+    const { col, row } = this.getTargetCell(player, direction);
+    const block = this.room.blockMap.getBlock(col, row);
     if (!block) return;
 
     player.lastDrillTime = currentTime;
     player.drillDirection = direction;
+    player.drillTargetCol = col;
+    player.drillTargetRow = row;
+  }
 
-    block.hp--;
-    if (block.hp <= 0) {
-      if (block.type === 'iron' || block.type === 'gold') {
-        player.inventory[block.type]++;
+  /** Apply damage after cooldown completes */
+  private completeDrill(player: Player) {
+    const block = this.room.blockMap.getBlock(player.drillTargetCol, player.drillTargetRow);
+    if (block) {
+      block.hp--;
+      if (block.hp <= 0) {
+        if (block.type === 'iron' || block.type === 'gold') {
+          player.inventory[block.type]++;
+        }
+        this.room.blockMap.deleteBlock(block.id);
       }
-      this.room.blockMap.deleteBlock(block.id);
     }
+
+    player.drillTargetCol = -1;
+    player.drillTargetRow = -1;
+  }
+
+  private getTargetCell(player: Player, direction: DRILL_DIRECTION) {
+    let col = Math.floor(player.x / BLOCK_SIZE.width);
+    let row = Math.floor(player.y / BLOCK_SIZE.height);
+
+    if (direction === DRILL_DIRECTIONS.DOWN && player.isGrounded) row++;
+    else if (direction === DRILL_DIRECTIONS.LEFT && player.isTouchingBlockLeft) col--;
+    else if (direction === DRILL_DIRECTIONS.RIGHT && player.isTouchingBlockRight) col++;
+
+    return { col, row };
   }
 }
