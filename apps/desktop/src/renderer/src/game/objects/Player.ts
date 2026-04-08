@@ -61,7 +61,7 @@ export class Player {
     this.debugBox?.destroy();
   }
 
-  /** Force the player to move to a specific position, skips animations, interpolation, etc. */
+  /** Force the player to move to a specific position (skips animations) */
   public forceMove({ x, y }: EntityPosition) {
     this.entity.x = x;
     this.entity.y = y;

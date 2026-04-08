@@ -199,8 +199,6 @@ export class PlayerSystem {
       this.currentPosition.y !== targetY ||
       this.velocityY !== velocityY
     ) {
-      this.previousPosition.x = targetX;
-      this.previousPosition.y = targetY;
       this.currentPosition.x = targetX;
       this.currentPosition.y = targetY;
       this.velocityY = velocityY;
