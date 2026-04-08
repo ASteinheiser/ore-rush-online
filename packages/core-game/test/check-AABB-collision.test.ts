@@ -8,7 +8,7 @@ describe('checkAABBCollision', () => {
 
     const result = checkAABBCollision(rect1, rect2);
 
-    expect(result).toBe(true);
+    expect(result).toEqual({ overlapX: 5, overlapY: 5 });
   });
 
   it('should return false if the rectangles are not colliding', () => {
@@ -17,6 +17,6 @@ describe('checkAABBCollision', () => {
 
     const result = checkAABBCollision(rect1, rect2);
 
-    expect(result).toBe(false);
+    expect(result).toBeNull();
   });
 });

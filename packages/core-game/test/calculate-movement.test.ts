@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateMovement } from '../src/calculate-movement';
-import { MAP_SIZE, PLAYER_MOVE_SPEED } from '../src/constants';
+import { MAP_SIZE, PLAYER_VX_PER_TICK } from '../src/constants';
 
 describe('calculateMovement', () => {
   const noEntitySize = {
@@ -13,6 +13,9 @@ describe('calculateMovement', () => {
     up: false,
     down: false,
   };
+  const noWalls = {
+    blocks: [],
+  };
 
   describe('when the entity is not moving', () => {
     describe('and the entity is in bounds', () => {
@@ -20,17 +23,23 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width / 2,
           y: MAP_SIZE.height / 2,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
         });
 
         const expectedPosition = {
           x: entityPosition.x,
           y: entityPosition.y,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -41,17 +50,23 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: -100,
           y: -100,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
         });
 
         const expectedPosition = {
           x: 0,
           y: 0,
+          velocityY: 0,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -62,17 +77,23 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width + 100,
           y: MAP_SIZE.height + 100,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
         });
 
         const expectedPosition = {
           x: MAP_SIZE.width,
           y: MAP_SIZE.height,
+          velocityY: 0,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -85,18 +106,24 @@ describe('calculateMovement', () => {
       const entityPosition = {
         x: MAP_SIZE.width / 2,
         y: MAP_SIZE.height / 2,
+        velocityY: 0,
       };
 
       const newPosition = calculateMovement({
         ...entityPosition,
         ...noEntitySize,
         ...noMovementArgs,
+        ...noWalls,
         left: true,
       });
 
       const expectedPosition = {
-        x: entityPosition.x - PLAYER_MOVE_SPEED,
+        x: entityPosition.x - PLAYER_VX_PER_TICK,
         y: entityPosition.y,
+        velocityY: entityPosition.velocityY,
+        isGrounded: false,
+        isTouchingBlockLeft: false,
+        isTouchingBlockRight: false,
       };
 
       expect(newPosition).toEqual(expectedPosition);
@@ -107,18 +134,24 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: 0,
           y: MAP_SIZE.height / 2,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           left: true,
         });
 
         const expectedPosition = {
           x: 0,
           y: entityPosition.y,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -129,12 +162,14 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width / 2,
           y: MAP_SIZE.height / 2,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           left: true,
           right: true,
         });
@@ -142,6 +177,10 @@ describe('calculateMovement', () => {
         const expectedPosition = {
           x: entityPosition.x,
           y: entityPosition.y,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -152,19 +191,25 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width / 2,
           y: MAP_SIZE.height / 2,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           left: true,
           up: true,
         });
 
         const expectedPosition = {
-          x: entityPosition.x - PLAYER_MOVE_SPEED,
-          y: entityPosition.y - PLAYER_MOVE_SPEED,
+          x: entityPosition.x - PLAYER_VX_PER_TICK,
+          y: entityPosition.y - PLAYER_VX_PER_TICK,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -177,18 +222,24 @@ describe('calculateMovement', () => {
       const entityPosition = {
         x: MAP_SIZE.width / 2,
         y: MAP_SIZE.height / 2,
+        velocityY: 0,
       };
 
       const newPosition = calculateMovement({
         ...entityPosition,
         ...noEntitySize,
         ...noMovementArgs,
+        ...noWalls,
         down: true,
       });
 
       const expectedPosition = {
         x: entityPosition.x,
-        y: entityPosition.y + PLAYER_MOVE_SPEED,
+        y: entityPosition.y + PLAYER_VX_PER_TICK,
+        velocityY: entityPosition.velocityY,
+        isGrounded: false,
+        isTouchingBlockLeft: false,
+        isTouchingBlockRight: false,
       };
 
       expect(newPosition).toEqual(expectedPosition);
@@ -199,18 +250,24 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width / 2,
           y: MAP_SIZE.height,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           down: true,
         });
 
         const expectedPosition = {
           x: entityPosition.x,
           y: MAP_SIZE.height,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -222,12 +279,14 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width / 2,
           y: MAP_SIZE.height / 2,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           down: true,
           up: true,
         });
@@ -235,6 +294,10 @@ describe('calculateMovement', () => {
         const expectedPosition = {
           x: entityPosition.x,
           y: entityPosition.y,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -245,19 +308,25 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width / 2,
           y: MAP_SIZE.height / 2,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           down: true,
           right: true,
         });
 
         const expectedPosition = {
-          x: entityPosition.x + PLAYER_MOVE_SPEED,
-          y: entityPosition.y + PLAYER_MOVE_SPEED,
+          x: entityPosition.x + PLAYER_VX_PER_TICK,
+          y: entityPosition.y + PLAYER_VX_PER_TICK,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -270,18 +339,24 @@ describe('calculateMovement', () => {
       const entityPosition = {
         x: MAP_SIZE.width / 2,
         y: MAP_SIZE.height / 2,
+        velocityY: 0,
       };
 
       const newPosition = calculateMovement({
         ...entityPosition,
         ...noEntitySize,
         ...noMovementArgs,
+        ...noWalls,
         right: true,
       });
 
       const expectedPosition = {
-        x: entityPosition.x + PLAYER_MOVE_SPEED,
+        x: entityPosition.x + PLAYER_VX_PER_TICK,
         y: entityPosition.y,
+        velocityY: entityPosition.velocityY,
+        isGrounded: false,
+        isTouchingBlockLeft: false,
+        isTouchingBlockRight: false,
       };
 
       expect(newPosition).toEqual(expectedPosition);
@@ -292,18 +367,24 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width,
           y: MAP_SIZE.height / 2,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           right: true,
         });
 
         const expectedPosition = {
           x: MAP_SIZE.width,
           y: entityPosition.y,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -316,18 +397,24 @@ describe('calculateMovement', () => {
       const entityPosition = {
         x: MAP_SIZE.width / 2,
         y: MAP_SIZE.height / 2,
+        velocityY: 0,
       };
 
       const newPosition = calculateMovement({
         ...entityPosition,
         ...noEntitySize,
         ...noMovementArgs,
+        ...noWalls,
         up: true,
       });
 
       const expectedPosition = {
         x: entityPosition.x,
-        y: entityPosition.y - PLAYER_MOVE_SPEED,
+        y: entityPosition.y - PLAYER_VX_PER_TICK,
+        velocityY: entityPosition.velocityY,
+        isGrounded: false,
+        isTouchingBlockLeft: false,
+        isTouchingBlockRight: false,
       };
 
       expect(newPosition).toEqual(expectedPosition);
@@ -338,18 +425,24 @@ describe('calculateMovement', () => {
         const entityPosition = {
           x: MAP_SIZE.width / 2,
           y: 0,
+          velocityY: 0,
         };
 
         const newPosition = calculateMovement({
           ...entityPosition,
           ...noEntitySize,
           ...noMovementArgs,
+          ...noWalls,
           up: true,
         });
 
         const expectedPosition = {
           x: entityPosition.x,
           y: 0,
+          velocityY: entityPosition.velocityY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
         };
 
         expect(newPosition).toEqual(expectedPosition);
@@ -362,11 +455,13 @@ describe('calculateMovement', () => {
       const entityPosition = {
         x: MAP_SIZE.width / 2,
         y: MAP_SIZE.height / 2,
+        velocityY: 0,
       };
 
       const newPosition = calculateMovement({
         ...entityPosition,
         ...noEntitySize,
+        ...noWalls,
         left: true,
         right: true,
         up: true,
@@ -376,6 +471,10 @@ describe('calculateMovement', () => {
       const expectedPosition = {
         x: entityPosition.x,
         y: entityPosition.y,
+        velocityY: entityPosition.velocityY,
+        isGrounded: false,
+        isTouchingBlockLeft: false,
+        isTouchingBlockRight: false,
       };
 
       expect(newPosition).toEqual(expectedPosition);
@@ -393,12 +492,14 @@ describe('calculateMovement', () => {
           const entityPosition = {
             x: MAP_SIZE.width,
             y: MAP_SIZE.height,
+            velocityY: 0,
           };
 
           const newPosition = calculateMovement({
             ...entityPosition,
             ...entitySize,
             ...noMovementArgs,
+            ...noWalls,
             down: true,
             right: true,
           });
@@ -406,6 +507,10 @@ describe('calculateMovement', () => {
           const expectedPosition = {
             x: MAP_SIZE.width - entitySize.width / 2,
             y: MAP_SIZE.height - entitySize.height / 2,
+            velocityY: 0,
+            isGrounded: false,
+            isTouchingBlockLeft: false,
+            isTouchingBlockRight: false,
           };
 
           expect(newPosition).toEqual(expectedPosition);
@@ -416,12 +521,14 @@ describe('calculateMovement', () => {
           const entityPosition = {
             x: 0,
             y: 0,
+            velocityY: 0,
           };
 
           const newPosition = calculateMovement({
             ...entityPosition,
             ...entitySize,
             ...noMovementArgs,
+            ...noWalls,
             up: true,
             left: true,
           });
@@ -429,6 +536,10 @@ describe('calculateMovement', () => {
           const expectedPosition = {
             x: entitySize.width / 2,
             y: entitySize.height / 2,
+            velocityY: 0,
+            isGrounded: false,
+            isTouchingBlockLeft: false,
+            isTouchingBlockRight: false,
           };
 
           expect(newPosition).toEqual(expectedPosition);
@@ -446,12 +557,14 @@ describe('calculateMovement', () => {
           const entityPosition = {
             x: MAP_SIZE.width,
             y: MAP_SIZE.height,
+            velocityY: 0,
           };
 
           const newPosition = calculateMovement({
             ...entityPosition,
             ...entitySize,
             ...noMovementArgs,
+            ...noWalls,
             down: true,
             right: true,
           });
@@ -459,6 +572,10 @@ describe('calculateMovement', () => {
           const expectedPosition = {
             x: MAP_SIZE.width - entitySize.width / 2,
             y: MAP_SIZE.height - entitySize.height / 2,
+            velocityY: 0,
+            isGrounded: false,
+            isTouchingBlockLeft: false,
+            isTouchingBlockRight: false,
           };
 
           expect(newPosition).toEqual(expectedPosition);
@@ -469,12 +586,14 @@ describe('calculateMovement', () => {
           const entityPosition = {
             x: 0,
             y: 0,
+            velocityY: 0,
           };
 
           const newPosition = calculateMovement({
             ...entityPosition,
             ...entitySize,
             ...noMovementArgs,
+            ...noWalls,
             up: true,
             left: true,
           });
@@ -482,6 +601,10 @@ describe('calculateMovement', () => {
           const expectedPosition = {
             x: entitySize.width / 2,
             y: entitySize.height / 2,
+            velocityY: 0,
+            isGrounded: false,
+            isTouchingBlockLeft: false,
+            isTouchingBlockRight: false,
           };
 
           expect(newPosition).toEqual(expectedPosition);

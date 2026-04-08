@@ -52,7 +52,6 @@ export async function main(options: Options) {
         right: player.x < closestBlock.x,
         up: player.y > closestBlock.y,
         down: player.y < closestBlock.y,
-        attack: true,
       };
 
       room.send(WS_EVENT.PLAYER_INPUT, input);

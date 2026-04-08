@@ -8,7 +8,7 @@ import {
   WS_ROOM,
   MAP_SIZE,
   INACTIVITY_TIMEOUT,
-  PLAYER_MOVE_SPEED,
+  PLAYER_VX_PER_TICK,
   PLAYER_VIEW_RADIUS,
   PLAYER_VIEW_LEVELS,
   Player,
@@ -157,13 +157,13 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const reconnectionToken = client.reconnectionToken;
 
       const room = getRoom(client.roomId);
-      room.state.players.get(client.sessionId)!.attackCount = 100;
-      room.state.players.get(client.sessionId)!.killCount = 50;
+      room.state.players.get(client.sessionId)!.inventory.iron = 100;
+      room.state.players.get(client.sessionId)!.inventory.gold = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
-      assert.strictEqual(oldPlayer.attackCount, 100);
-      assert.strictEqual(oldPlayer.killCount, 50);
+      assert.strictEqual(oldPlayer.inventory.iron, 100);
+      assert.strictEqual(oldPlayer.inventory.gold, 50);
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       await client.leave(false);
@@ -224,13 +224,13 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
 
-      room.state.players.get(client.sessionId)!.attackCount = 100;
-      room.state.players.get(client.sessionId)!.killCount = 50;
+      room.state.players.get(client.sessionId)!.inventory.iron = 100;
+      room.state.players.get(client.sessionId)!.inventory.gold = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
-      assert.strictEqual(oldPlayer.attackCount, 100);
-      assert.strictEqual(oldPlayer.killCount, 50);
+      assert.strictEqual(oldPlayer.inventory.iron, 100);
+      assert.strictEqual(oldPlayer.inventory.gold, 50);
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       const newClient = await joinTestRoom({ server, token: generateTestJWT({}) });
@@ -256,14 +256,14 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const orphanedPlayer = new Player();
       orphanedPlayer.userId = TEST_USERS[1].id;
       orphanedPlayer.username = TEST_USERS[1].userName;
-      orphanedPlayer.attackCount = 100;
-      orphanedPlayer.killCount = 50;
+      orphanedPlayer.inventory.iron = 100;
+      orphanedPlayer.inventory.gold = 50;
       room.state.players.set(badSessionId, orphanedPlayer);
 
       const playerSnapshot = getPlayerSnapshot(room, badSessionId);
 
-      assert.strictEqual(playerSnapshot.attackCount, 100);
-      assert.strictEqual(playerSnapshot.killCount, 50);
+      assert.strictEqual(playerSnapshot.inventory.iron, 100);
+      assert.strictEqual(playerSnapshot.inventory.gold, 50);
       assertExtraPlayerState({
         room,
         clientIds: [keepAliveClient.sessionId],
@@ -305,8 +305,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
 
-      room.state.players.get(client.sessionId)!.attackCount = 100;
-      room.state.players.get(client.sessionId)!.killCount = 50;
+      room.state.players.get(client.sessionId)!.inventory.iron = 100;
+      room.state.players.get(client.sessionId)!.inventory.gold = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
@@ -315,8 +315,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       assert.strictEqual(oldPlayer.username, TEST_USERS[0].userName);
       assert.strictEqual(typeof oldPlayer.x, 'number');
       assert.strictEqual(typeof oldPlayer.y, 'number');
-      assert.strictEqual(oldPlayer.attackCount, 100);
-      assert.strictEqual(oldPlayer.killCount, 50);
+      assert.strictEqual(oldPlayer.inventory.iron, 100);
+      assert.strictEqual(oldPlayer.inventory.gold, 50);
 
       client.send(WS_EVENT.PLAYER_INPUT, {
         seq: 0,
@@ -324,7 +324,6 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         right: true,
         up: false,
         down: true,
-        attack: false,
       } satisfies InputPayload);
       // ensure the input is processed
       await waitForConnectionCheck();
@@ -334,8 +333,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         playerId: client.sessionId,
         expectedPlayer: {
           ...oldPlayer,
-          x: oldPlayer.x + PLAYER_MOVE_SPEED,
-          y: oldPlayer.y + PLAYER_MOVE_SPEED,
+          x: oldPlayer.x + PLAYER_VX_PER_TICK,
+          y: oldPlayer.y + PLAYER_VX_PER_TICK,
         },
       });
     });
@@ -678,8 +677,10 @@ interface PlayerSnapshot {
   username: string;
   x: number;
   y: number;
-  attackCount: number;
-  killCount: number;
+  inventory: {
+    iron: number;
+    gold: number;
+  };
   lastActivityTime: number;
 }
 /** Snapshot of player fields for assertion (use live object, not toJSON which omits non-@type fields) */
@@ -690,8 +691,10 @@ const getPlayerSnapshot = (room: GameRoom, playerId: string): PlayerSnapshot => 
     username: p.username,
     x: p.x,
     y: p.y,
-    attackCount: p.attackCount,
-    killCount: p.killCount,
+    inventory: {
+      iron: p.inventory.iron,
+      gold: p.inventory.gold,
+    },
     lastActivityTime: p.lastActivityTime,
   };
 };
@@ -709,8 +712,8 @@ const assertPlayerFieldsState = ({ room, playerId, expectedPlayer }: AssertPlaye
   assert.strictEqual(actualPlayer.y, expectedPlayer.y);
   assert.strictEqual(actualPlayer.userId, expectedPlayer.userId);
   assert.strictEqual(actualPlayer.username, expectedPlayer.username);
-  assert.strictEqual(actualPlayer.attackCount, expectedPlayer.attackCount);
-  assert.strictEqual(actualPlayer.killCount, expectedPlayer.killCount);
+  assert.strictEqual(actualPlayer.inventory.iron, expectedPlayer.inventory.iron);
+  assert.strictEqual(actualPlayer.inventory.gold, expectedPlayer.inventory.gold);
   // ensure that the new player state is not simply a reference to the old player state
   // by checking that the lastActivityTime is updated, since all joins/reconnects should update this
   assert.strictEqual(actualPlayer.lastActivityTime > expectedPlayer.lastActivityTime, true);
