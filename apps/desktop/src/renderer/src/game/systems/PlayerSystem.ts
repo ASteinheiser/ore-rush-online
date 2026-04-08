@@ -61,7 +61,6 @@ export class PlayerSystem {
       left,
       right,
       up,
-      down,
     });
     this.currentPosition.x = result.x;
     this.currentPosition.y = result.y;
@@ -170,7 +169,7 @@ export class PlayerSystem {
     let targetY = player.y;
     let velocityY = player.velocityY;
 
-    for (const { left, right, up, down } of this.pendingInputs) {
+    for (const { left, right, up } of this.pendingInputs) {
       const playerRectangle = {
         x: targetX,
         y: targetY,
@@ -186,7 +185,6 @@ export class PlayerSystem {
         left,
         right,
         up,
-        down,
       });
       targetX = result.x;
       targetY = result.y;

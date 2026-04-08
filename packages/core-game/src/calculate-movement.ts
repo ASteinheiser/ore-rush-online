@@ -17,7 +17,6 @@ export interface MovementInput {
   left: boolean;
   right: boolean;
   up: boolean;
-  down: boolean;
 }
 interface MovementVelocity {
   velocityY: number;

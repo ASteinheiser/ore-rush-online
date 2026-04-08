@@ -51,7 +51,6 @@ export class PlayerMovement {
       left: input.left,
       right: input.right,
       up: input.up,
-      down: input.down,
     });
 
     player.x = newPosition.x;
