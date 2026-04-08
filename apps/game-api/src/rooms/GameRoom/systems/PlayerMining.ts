@@ -36,11 +36,11 @@ export class PlayerMining {
   }
 
   private isStillHoldingDrill(player: Player, input: InputPayload): boolean {
+    if (!player.isGrounded) return false;
+    if (input.down) return player.drillDirection === DRILL_DIRECTIONS.DOWN;
     return (
-      player.isGrounded &&
-      ((player.drillDirection === DRILL_DIRECTIONS.DOWN && input.down) ||
-        (player.drillDirection === DRILL_DIRECTIONS.LEFT && input.left) ||
-        (player.drillDirection === DRILL_DIRECTIONS.RIGHT && input.right))
+      (player.drillDirection === DRILL_DIRECTIONS.LEFT && input.left) ||
+      (player.drillDirection === DRILL_DIRECTIONS.RIGHT && input.right)
     );
   }
 
