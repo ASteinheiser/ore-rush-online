@@ -114,7 +114,7 @@ export class Player {
         break;
       case DRILL_DIRECTIONS.IDLE:
       default:
-        this.entity.anims.stop();
+        if (this.isDrilling()) this.entity.anims.stop();
     }
   }
 

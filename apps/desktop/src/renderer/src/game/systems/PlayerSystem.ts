@@ -1,5 +1,6 @@
 import {
   calculateMovement,
+  BLOCK_SIZE,
   PLAYER_SIZE,
   FIXED_TIME_STEP,
   type InputPayload,
@@ -67,11 +68,15 @@ export class PlayerSystem {
     this.velocityY = result.velocityY;
     this.isGrounded = result.isGrounded;
 
-    if (this.isGrounded) {
-      if (down && result.isGrounded) this.currentPlayer.setDrillDirection('down');
-      else if (right && result.isTouchingBlockRight) this.currentPlayer.setDrillDirection('right');
-      else if (left && result.isTouchingBlockLeft) this.currentPlayer.setDrillDirection('left');
-    }
+    const playerCol = Math.floor(this.currentPosition.x / BLOCK_SIZE.width);
+    const playerRow = Math.floor(this.currentPosition.y / BLOCK_SIZE.height);
+    const canDrillBlockBottom = this.scene.blockSystem.hasBlockAt(playerCol, playerRow + 1);
+
+    if (!this.isGrounded) this.currentPlayer.setDrillDirection('idle');
+    else if (down && canDrillBlockBottom) this.currentPlayer.setDrillDirection('down');
+    else if (left && result.isTouchingBlockLeft) this.currentPlayer.setDrillDirection('left');
+    else if (right && result.isTouchingBlockRight) this.currentPlayer.setDrillDirection('right');
+    else this.currentPlayer.setDrillDirection('idle');
   }
 
   /** Interpolate local player between fixed ticks */

@@ -20,6 +20,10 @@ export class BlockSystem {
     return `${col}_${row}`;
   }
 
+  public hasBlockAt(col: number, row: number): boolean {
+    return !!this.blocks[this.getBlockIndex(col, row)];
+  }
+
   public handleBlockAdded: RoomEventCallbacks['onBlockAdded'] = (block, $) => {
     const entity = new Block(this.scene, block.x, block.y, block.type, block.hp, block.maxHp);
 
@@ -41,7 +45,7 @@ export class BlockSystem {
     }
   };
 
-  /** Blocks in the 3×3 grid of cells around `searchEntity`’s center (matches server `BlockMap.getNearbyBlocks`) */
+  /** Blocks in the 3×3 grid of cells around `searchEntity`'s center (matches server `BlockMap.getNearbyBlocks`) */
   public getNearbyBlocks(searchEntity: Rectangle): Rectangle[] {
     const playerCol = Math.floor(searchEntity.x / BLOCK_SIZE.width);
     const playerRow = Math.floor(searchEntity.y / BLOCK_SIZE.height);
