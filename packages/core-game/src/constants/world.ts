@@ -17,3 +17,6 @@ export const MAP_GRID_SIZE = {
 
 /** The number of rows at the top of the map that are empty (used as a spawn area) */
 export const EMPTY_MAP_ROWS = 2;
+
+/** The tolerance for edge collisions (in pixels) */
+export const EDGE_COLLISION_TOLERANCE = 8;
