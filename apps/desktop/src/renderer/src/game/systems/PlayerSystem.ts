@@ -68,9 +68,12 @@ export class PlayerSystem {
     this.velocityY = result.velocityY;
     this.isGrounded = result.isGrounded;
 
-    const playerCol = Math.floor(this.currentPosition.x / BLOCK_SIZE.width);
-    const playerRow = Math.floor(this.currentPosition.y / BLOCK_SIZE.height);
-    const canDrillBlockBottom = this.scene.blockSystem.hasBlockAt(playerCol, playerRow + 1);
+    // check if there is a drillable block below the player
+    // since x is centered, must be at least half way over the block (different than isGrounded)
+    const canDrillBlockBottom = this.scene.blockSystem.hasBlockAt(
+      this.currentPosition.x,
+      this.currentPosition.y + BLOCK_SIZE.height
+    );
 
     if (!this.isGrounded) this.currentPlayer.setDrillDirection('idle');
     else if (down && canDrillBlockBottom) this.currentPlayer.setDrillDirection('down');

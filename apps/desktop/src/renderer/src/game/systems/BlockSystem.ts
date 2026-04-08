@@ -20,8 +20,8 @@ export class BlockSystem {
     return `${col}_${row}`;
   }
 
-  public hasBlockAt(col: number, row: number): boolean {
-    return !!this.blocks[this.getBlockIndex(col, row)];
+  public hasBlockAt(x: number, y: number): boolean {
+    return !!this.blocks[this.getBlockIndex(x, y)];
   }
 
   public handleBlockAdded: RoomEventCallbacks['onBlockAdded'] = (block, $) => {
