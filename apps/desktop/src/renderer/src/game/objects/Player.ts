@@ -41,7 +41,7 @@ export class Player {
       fontFamily: 'Tiny5',
       fontSize: 12,
     })
-      .setOrigin(0.5, 2.75)
+      .setOrigin(0.5, 3)
       .setDepth(101);
 
     this.punchSfx = scene.sound.add(SOUND.PUNCH);
