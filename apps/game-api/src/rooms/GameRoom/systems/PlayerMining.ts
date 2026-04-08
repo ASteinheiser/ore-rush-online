@@ -19,41 +19,35 @@ export class PlayerMining {
     // if the player is mid-drill, don't process any more inputs
     if (isInDrillFrame) {
       return;
-    } // TODO: cleanup this logic - DRY
-    else if (input.down && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.DOWN)) {
-      player.lastDrillTime = currentTime;
-      player.drillDirection = DRILL_DIRECTIONS.DOWN;
-    } else if (input.left && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.LEFT)) {
-      player.lastDrillTime = currentTime;
-      player.drillDirection = DRILL_DIRECTIONS.LEFT;
-    } else if (input.right && this.checkForBlockToDrill(player, DRILL_DIRECTIONS.RIGHT)) {
-      player.lastDrillTime = currentTime;
-      player.drillDirection = DRILL_DIRECTIONS.RIGHT;
-    } else {
-      player.drillDirection = DRILL_DIRECTIONS.IDLE;
-    }
+    } // handle inputs by checking for blocks and applying damage
+    else if (input.down) this.attemptToDrillBlock(player, DRILL_DIRECTIONS.DOWN, currentTime);
+    else if (input.left) this.attemptToDrillBlock(player, DRILL_DIRECTIONS.LEFT, currentTime);
+    else if (input.right) this.attemptToDrillBlock(player, DRILL_DIRECTIONS.RIGHT, currentTime);
+    else player.drillDirection = DRILL_DIRECTIONS.IDLE;
   }
 
-  /** Check if the player is able to drill a block. Also, updates the state for blocks and player inventory */
-  private checkForBlockToDrill(player: Player, direction: DRILL_DIRECTION) {
+  /** Check if the player is able to drill a block. Updates the state for blocks as well as player drill and inventory */
+  private attemptToDrillBlock(player: Player, direction: DRILL_DIRECTION, currentTime: number) {
     // only allow drilling if the player is grounded
-    if (!player.isGrounded) return false;
+    if (!player.isGrounded) return;
 
     // start from the player's position (in grid coordinates - cols/rows)
     let targetCol = Math.floor(player.x / BLOCK_SIZE.width);
     let targetRow = Math.floor(player.y / BLOCK_SIZE.height);
 
-    if (direction === DRILL_DIRECTIONS.LEFT && player.isTouchingBlockLeft) {
+    if (direction === DRILL_DIRECTIONS.DOWN && player.isGrounded) {
+      targetRow++;
+    } else if (direction === DRILL_DIRECTIONS.LEFT && player.isTouchingBlockLeft) {
       targetCol--;
     } else if (direction === DRILL_DIRECTIONS.RIGHT && player.isTouchingBlockRight) {
       targetCol++;
-    } // TODO: ensure proper overlap, otherwise players can drill on blocks they barely stand on
-    else if (direction === DRILL_DIRECTIONS.DOWN && player.isGrounded) {
-      targetRow++;
     }
 
     const block = this.room.blockMap.getBlock(targetCol, targetRow);
-    if (!block) return false;
+    if (!block) return;
+
+    player.lastDrillTime = currentTime;
+    player.drillDirection = direction;
 
     block.hp--;
     if (block.hp <= 0) {
@@ -62,7 +56,5 @@ export class PlayerMining {
       }
       this.room.blockMap.deleteBlock(block.id);
     }
-
-    return true;
   }
 }
