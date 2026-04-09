@@ -45,13 +45,35 @@ export class Player {
       .setDepth(101);
 
     this.punchSfx = scene.sound.add(SOUND.PUNCH);
+
+    // create a secret key combo to toggle debug mode
+    const debugCombo = this.scene.input.keyboard?.createCombo(
+      [
+        Phaser.Input.Keyboard.KeyCodes.UP,
+        Phaser.Input.Keyboard.KeyCodes.UP,
+        Phaser.Input.Keyboard.KeyCodes.DOWN,
+        Phaser.Input.Keyboard.KeyCodes.DOWN,
+        Phaser.Input.Keyboard.KeyCodes.LEFT,
+        Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        Phaser.Input.Keyboard.KeyCodes.LEFT,
+        Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      ],
+      { resetOnWrongKey: true, maxKeyDelay: 250, resetOnMatch: true }
+    );
+
+    this.scene.input.keyboard?.on('keycombomatch', (combo: Phaser.Input.Keyboard.KeyCombo) => {
+      if (combo === debugCombo) {
+        this.debugBox?.setVisible(!this.debugBox.visible);
+      }
+    });
   }
 
   public createDebugBox() {
     this.debugBox = this.scene.add
       .rectangle(this.entity.x, this.entity.y, this.entity.width, this.entity.height)
       .setDepth(101)
-      .setStrokeStyle(1, 0xff0000);
+      .setStrokeStyle(1, 0xff0000)
+      .setVisible(false);
   }
 
   public destroy() {
