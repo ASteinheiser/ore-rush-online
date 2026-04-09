@@ -6,11 +6,18 @@ import {
   WS_CODE,
   WS_EVENT,
   WS_ROOM,
-  MAP_SIZE,
   INACTIVITY_TIMEOUT,
+  MAP_SIZE,
+  BLOCK_SIZE,
+  BLOCK_TYPES,
+  PLAYER_SIZE,
   PLAYER_VX_PER_TICK,
+  PLAYER_GRAVITY_VY_PER_TICK,
   PLAYER_VIEW_RADIUS,
   PLAYER_VIEW_LEVELS,
+  DRILL_COOLDOWN,
+  DRILL_DIRECTIONS,
+  EMPTY_MAP_ROWS,
   Player,
   type InputPayload,
 } from '@repo/core-game';
@@ -323,18 +330,19 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         left: false,
         right: true,
         up: false,
-        down: true,
+        down: false,
       } satisfies InputPayload);
       // ensure the input is processed
       await waitForConnectionCheck();
 
+      const expectedVY = oldPlayer.velocityY + PLAYER_GRAVITY_VY_PER_TICK;
       assertPlayerFieldsState({
         room,
         playerId: client.sessionId,
         expectedPlayer: {
           ...oldPlayer,
           x: oldPlayer.x + PLAYER_VX_PER_TICK,
-          y: oldPlayer.y + PLAYER_VX_PER_TICK,
+          y: oldPlayer.y + expectedVY,
         },
       });
     });
@@ -415,7 +423,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       const player = room.state.players.get(client.sessionId)!;
       const locations = [
-        { x: 0, y: 0, expectedBlocks: 36 }, // top-left corner
+        { x: 0, y: 0, expectedBlocks: 24 }, // top-left corner (top 2 rows are empty spawn area)
+        { x: 0, y: MAP_SIZE.height, expectedBlocks: 36 }, // bottom-left corner
         { x: 546, y: 546, expectedBlocks: 121 }, // top-left area
         { x: 2002, y: 2002, expectedBlocks: 121 }, // near center
         { x: 3454, y: 3454, expectedBlocks: 121 }, // bottom-right area
@@ -469,6 +478,282 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       await room.waitForNextSimulationTick();
       assert.strictEqual(observerClient.view.has(observedPlayer), true);
       assert.strictEqual(observerClient.view.hasTag(observedPlayer, PLAYER_VIEW_LEVELS.VIEW), false);
+    });
+  });
+
+  describe('movement', () => {
+    const noInput: InputPayload = { seq: 0, left: false, right: false, up: false, down: false };
+
+    it('should move a player right when right is pressed', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = room.state.players.get(client.sessionId)!;
+      const startX = player.x;
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, right: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.x, startX + PLAYER_VX_PER_TICK);
+    });
+
+    it('should move a player left when left is pressed', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = room.state.players.get(client.sessionId)!;
+      const startX = player.x;
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, left: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.x, startX - PLAYER_VX_PER_TICK);
+    });
+
+    it('should apply gravity when no input is pressed', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = room.state.players.get(client.sessionId)!;
+      const startY = player.y;
+      const startVY = player.velocityY;
+
+      client.send(WS_EVENT.PLAYER_INPUT, noInput);
+      await waitForConnectionCheck();
+
+      const expectedVY = startVY + PLAYER_GRAVITY_VY_PER_TICK;
+      assert.strictEqual(player.velocityY, expectedVY);
+      assert.strictEqual(player.y, startY + expectedVY);
+    });
+
+    it('should ground a player on top of a block', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = room.state.players.get(client.sessionId)!;
+
+      // position the player directly above the first row of blocks
+      const blockTopY = EMPTY_MAP_ROWS * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
+      player.x = BLOCK_SIZE.width / 2; // align with col 0
+      player.y = blockTopY - BLOCK_SIZE.height / 2 - PLAYER_SIZE.height / 2;
+      player.velocityY = 10; // falling downward
+
+      client.send(WS_EVENT.PLAYER_INPUT, noInput);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.isGrounded, true);
+      assert.strictEqual(player.velocityY, 0);
+    });
+  });
+
+  describe('drilling', () => {
+    const noInput: InputPayload = { seq: 0, left: false, right: false, up: false, down: false };
+
+    /** Positions a player on top of the first block row at the given column, grounded */
+    const positionPlayerOnBlock = (room: GameRoom, sessionId: string, col: number) => {
+      const player = room.state.players.get(sessionId)!;
+      player.x = col * BLOCK_SIZE.width + BLOCK_SIZE.width / 2;
+      player.y = EMPTY_MAP_ROWS * BLOCK_SIZE.height - PLAYER_SIZE.height / 2;
+      player.velocityY = 0;
+      player.isGrounded = true;
+      player.drillDirection = DRILL_DIRECTIONS.IDLE;
+      player.drillTargetCol = -1;
+      player.drillTargetRow = -1;
+      player.lastDrillTime = 0;
+      return player;
+    };
+
+    it('should start drilling down when grounded and down is pressed', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const blockColumn = 5;
+      const player = positionPlayerOnBlock(room, client.sessionId, blockColumn);
+
+      // confirm there is a block below
+      const blockBelow = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS);
+      assert.ok(blockBelow);
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.drillDirection, DRILL_DIRECTIONS.DOWN);
+      assert.strictEqual(player.drillTargetRow, EMPTY_MAP_ROWS);
+      assert.strictEqual(player.drillTargetCol, blockColumn);
+    });
+
+    it('should not drill when the player is airborne', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = room.state.players.get(client.sessionId)!;
+
+      // player is in the air (default spawn is in empty rows, not grounded)
+      player.isGrounded = false;
+      player.velocityY = 0;
+      player.lastDrillTime = 0;
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.drillDirection, DRILL_DIRECTIONS.IDLE);
+    });
+
+    it('should reduce block HP after the drill cooldown expires', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const blockColumn = 6;
+      positionPlayerOnBlock(room, client.sessionId, blockColumn);
+
+      const blockBelow = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS)!;
+      assert.ok(blockBelow);
+      const startHp = blockBelow.hp;
+
+      // first input: starts the drill
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(blockBelow.hp, startHp); // no damage yet
+
+      // wait for drill cooldown to expire
+      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
+
+      // second input after cooldown: completes the drill and deals damage
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(blockBelow.hp, startHp - 1);
+    });
+
+    it('should destroy a dirt block (1 HP) and not add to inventory', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const blockColumn = 7;
+      const player = positionPlayerOnBlock(room, client.sessionId, blockColumn);
+
+      // find a block and force it to be dirt with 1 HP
+      const block = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS)!;
+      assert.ok(block);
+      block.type = BLOCK_TYPES.DIRT;
+      block.hp = 1;
+      block.maxHp = 1;
+      const blockId = block.id;
+      const ironBefore = player.inventory.iron;
+      const goldBefore = player.inventory.gold;
+
+      // start drill
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
+
+      // complete drill
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      // block should be destroyed
+      assert.strictEqual(room.state.blocks.get(blockId), undefined);
+      // dirt does not add to inventory
+      assert.strictEqual(player.inventory.iron, ironBefore);
+      assert.strictEqual(player.inventory.gold, goldBefore);
+    });
+
+    it('should destroy an iron block and add iron to inventory', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const blockColumn = 8;
+      const player = positionPlayerOnBlock(room, client.sessionId, blockColumn);
+
+      const block = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS)!;
+      assert.ok(block);
+      block.type = BLOCK_TYPES.IRON;
+      block.hp = 1;
+      block.maxHp = 1;
+      const ironBefore = player.inventory.iron;
+      const goldBefore = player.inventory.gold;
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.inventory.iron, ironBefore + 1);
+      assert.strictEqual(player.inventory.gold, goldBefore);
+    });
+
+    it('should destroy a gold block and add gold to inventory', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const blockColumn = 9;
+      const player = positionPlayerOnBlock(room, client.sessionId, blockColumn);
+
+      const block = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS)!;
+      assert.ok(block);
+      block.type = BLOCK_TYPES.GOLD;
+      block.hp = 1;
+      block.maxHp = 1;
+      const ironBefore = player.inventory.iron;
+      const goldBefore = player.inventory.gold;
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
+
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.inventory.iron, ironBefore);
+      assert.strictEqual(player.inventory.gold, goldBefore + 1);
+    });
+
+    it('should stop drilling when the player releases the input', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const blockColumn = 10;
+      const player = positionPlayerOnBlock(room, client.sessionId, blockColumn);
+
+      const block = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS)!;
+      assert.ok(block);
+      const startHp = block.hp;
+
+      // start drilling
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
+      await waitForConnectionCheck();
+      assert.strictEqual(player.drillDirection, DRILL_DIRECTIONS.DOWN);
+
+      // release input before cooldown expires
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1 } satisfies InputPayload);
+      await waitForConnectionCheck();
+      assert.strictEqual(player.drillDirection, DRILL_DIRECTIONS.IDLE);
+
+      // wait for cooldown
+      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
+
+      // send another input — should not have dealt damage since we released
+      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 2 } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(block.hp, startHp);
+    });
+
+    it('should give down drilling priority over left/right', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const blockColumn = 11;
+      const player = positionPlayerOnBlock(room, client.sessionId, blockColumn);
+
+      const blockBelow = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS);
+      assert.ok(blockBelow);
+
+      client.send(WS_EVENT.PLAYER_INPUT, {
+        ...noInput,
+        down: true,
+        left: true,
+        right: true,
+      } satisfies InputPayload);
+      await waitForConnectionCheck();
+
+      assert.strictEqual(player.drillDirection, DRILL_DIRECTIONS.DOWN);
+      assert.strictEqual(player.drillTargetRow, EMPTY_MAP_ROWS);
+      assert.strictEqual(player.drillTargetCol, blockColumn);
     });
   });
 
@@ -677,6 +962,7 @@ interface PlayerSnapshot {
   username: string;
   x: number;
   y: number;
+  velocityY: number;
   inventory: {
     iron: number;
     gold: number;
@@ -691,6 +977,7 @@ const getPlayerSnapshot = (room: GameRoom, playerId: string): PlayerSnapshot => 
     username: p.username,
     x: p.x,
     y: p.y,
+    velocityY: p.velocityY,
     inventory: {
       iron: p.inventory.iron,
       gold: p.inventory.gold,
