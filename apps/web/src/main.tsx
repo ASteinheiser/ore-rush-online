@@ -1,12 +1,16 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
+import { ApolloProvider } from '@apollo/client/react';
+import ReactGA from 'react-ga4';
 import { Toaster } from '@repo/ui';
 import { SessionProvider } from '@repo/client-auth/provider';
-import { ApolloProvider } from '@apollo/client/react';
 import { client } from './graphql/client';
 import { router } from './router';
 import './theme.css';
+
+ReactGA.initialize('G-17CBJBV1L5');
+ReactGA.send({ hitType: 'pageview', page: '/', title: 'Ore Rush Online' });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <StrictMode>
