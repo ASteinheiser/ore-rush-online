@@ -46,7 +46,11 @@ export class Player {
 
     this.punchSfx = scene.sound.add(SOUND.PUNCH);
 
-    // create a secret key combo to toggle debug mode
+    this.setupDebugCombo();
+  }
+
+  /** Create a secret key combo to toggle debug mode */
+  private setupDebugCombo() {
     const debugCombo = this.scene.input.keyboard?.createCombo(
       [
         Phaser.Input.Keyboard.KeyCodes.UP,
