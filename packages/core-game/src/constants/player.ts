@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const PLAYER_SIZE = {
   width: 64,
   height: 64,
-};
+} as const;
 /** The radius of the player's view in pixels */
 export const PLAYER_VIEW_RADIUS = 300;
 

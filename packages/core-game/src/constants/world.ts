@@ -5,9 +5,9 @@ export const FIXED_TIME_STEP = 1000 / 64;
 
 /** The size of the map in pixels */
 export const MAP_SIZE = {
-  width: 4000,
-  height: 4000,
-};
+  width: BLOCK_SIZE.width * 64,
+  height: BLOCK_SIZE.height * 64,
+} as const;
 
 /** The size of the map in grid columns and rows */
 export const MAP_GRID_SIZE = {
