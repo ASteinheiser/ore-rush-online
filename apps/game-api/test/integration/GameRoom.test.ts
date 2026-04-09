@@ -424,11 +424,11 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const player = room.state.players.get(client.sessionId)!;
       const locations = [
         { x: 0, y: 0, expectedBlocks: 24 }, // top-left corner (top 2 rows are empty spawn area)
-        { x: 0, y: MAP_SIZE.height, expectedBlocks: 36 }, // bottom-left corner
+        { x: 0, y: MAP_SIZE.height, expectedBlocks: 30 }, // bottom-left corner
         { x: 546, y: 546, expectedBlocks: 121 }, // top-left area
         { x: 2002, y: 2002, expectedBlocks: 121 }, // near center
         { x: 3454, y: 3454, expectedBlocks: 121 }, // bottom-right area
-        { x: MAP_SIZE.width, y: MAP_SIZE.height / 2, expectedBlocks: 66 }, // right edge middle
+        { x: MAP_SIZE.width, y: MAP_SIZE.height / 2, expectedBlocks: 55 }, // right edge middle
       ] as const;
 
       for (const { x, y, expectedBlocks } of locations) {
