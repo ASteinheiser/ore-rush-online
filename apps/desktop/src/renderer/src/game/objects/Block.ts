@@ -8,19 +8,27 @@ const CRACK_COLOR = 0x1a1a1a;
 const MAX_CRACKS = 12;
 const CRACK_STROKE = 1.5;
 
+/** Deterministic pseudo-random in [0, 1] from a seed */
+const seeded = (seed: number): number => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+
 export class Block {
   private hitbox: Phaser.GameObjects.Rectangle;
+  private ore: Phaser.GameObjects.Graphics;
   private cracks: Phaser.GameObjects.Graphics;
 
   constructor(
     scene: Phaser.Scene,
-    private x: number,
-    private y: number,
+    public readonly x: number,
+    public readonly y: number,
     type: BLOCK_TYPE,
     hp: number,
     maxHp: number
   ) {
     this.hitbox = scene.add.rectangle(this.x, this.y, BLOCK_SIZE.width, BLOCK_SIZE.height);
+    this.ore = scene.add.graphics().setDepth(1);
     this.cracks = scene.add.graphics().setDepth(99);
 
     this.setColor(type);
@@ -29,6 +37,7 @@ export class Block {
 
   public destroy() {
     this.cracks.destroy();
+    this.ore.destroy();
     this.hitbox.destroy();
   }
 
@@ -38,20 +47,38 @@ export class Block {
   }
 
   private setColor(type: BLOCK_TYPE) {
+    this.hitbox.setStrokeStyle(1, DIRT_COLOR);
+    this.hitbox.setFillStyle(DIRT_COLOR);
+    this.ore.clear();
+
     switch (type) {
-      case BLOCK_TYPES.DIRT:
-        this.hitbox.setStrokeStyle(1, DIRT_COLOR);
-        this.hitbox.setFillStyle(DIRT_COLOR);
-        break;
       case BLOCK_TYPES.IRON:
-        this.hitbox.setStrokeStyle(1, IRON_COLOR);
-        this.hitbox.setFillStyle(IRON_COLOR);
+        this.drawOre(IRON_COLOR);
         break;
       case BLOCK_TYPES.GOLD:
-        this.hitbox.setStrokeStyle(1, GOLD_COLOR);
-        this.hitbox.setFillStyle(GOLD_COLOR);
+        this.drawOre(GOLD_COLOR);
         break;
-      default:
+    }
+  }
+
+  private drawOre(color: number) {
+    const w = BLOCK_SIZE.width;
+    const h = BLOCK_SIZE.height;
+    const left = this.x - w / 2;
+    const top = this.y - h / 2;
+    const seedBase = this.x * 11 + this.y * 17;
+
+    const count = 4 + Math.floor(seeded(seedBase) * 4); // 4-7 ore pieces
+    const pad = 4;
+
+    for (let i = 0; i < count; i++) {
+      const seed = seedBase + i * 37;
+      const px = left + pad + seeded(seed + 1) * (w - pad * 2);
+      const py = top + pad + seeded(seed + 2) * (h - pad * 2);
+      const size = 3 + seeded(seed + 3) * 5; // 3-8px
+
+      this.ore.fillStyle(color, 0.85);
+      this.ore.fillRect(px - size / 2, py - size / 2, size, size);
     }
   }
 
@@ -66,12 +93,6 @@ export class Block {
     const left = this.x - w / 2;
     const top = this.y - h / 2;
     const seedBase = this.x * 7 + this.y * 13;
-
-    /** Deterministic pseudo-random in [0, 1] from a seed */
-    const seeded = (seed: number): number => {
-      const x = Math.sin(seed * 9999) * 10000;
-      return x - Math.floor(x);
-    };
 
     for (let i = 0; i < count; i++) {
       const seed = seedBase + i * 31;

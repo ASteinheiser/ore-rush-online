@@ -50,9 +50,8 @@ export async function main(options: Options) {
         seq: player.lastProcessedInputSeq + 1,
         left: player.x > closestBlock.x,
         right: player.x < closestBlock.x,
-        up: player.y > closestBlock.y,
         down: player.y < closestBlock.y,
-        attack: true,
+        up: false,
       };
 
       room.send(WS_EVENT.PLAYER_INPUT, input);

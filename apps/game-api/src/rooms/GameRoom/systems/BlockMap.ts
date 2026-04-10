@@ -1,10 +1,18 @@
 import type { Client } from 'colyseus';
-import { Block, type Player, MAP_SIZE, BLOCK_SIZE, BLOCK_TYPES, PLAYER_VIEW_RADIUS } from '@repo/core-game';
+import {
+  Block,
+  BLOCK_SIZE,
+  BLOCK_TYPES,
+  type Player,
+  PLAYER_VIEW_RADIUS,
+  MAP_GRID_SIZE,
+  EMPTY_MAP_ROWS,
+} from '@repo/core-game';
 import type { GameRoom } from '../index';
 
 export class BlockMap {
-  private cols: number;
-  private rows: number;
+  private cols = MAP_GRID_SIZE.cols;
+  private rows = MAP_GRID_SIZE.rows;
   /** 2D grid initialized with each cell containing empty string (no blockId) */
   private blockGrid: string[][];
   /** the number of cells to search in each direction for visibility */
@@ -12,8 +20,6 @@ export class BlockMap {
   private clientVisibleBlocks = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {
-    this.cols = Math.ceil(MAP_SIZE.width / BLOCK_SIZE.width);
-    this.rows = Math.ceil(MAP_SIZE.height / BLOCK_SIZE.height);
     this.viewRadiusCells = Math.ceil(PLAYER_VIEW_RADIUS / BLOCK_SIZE.width);
 
     this.blockGrid = Array.from({ length: this.rows }, () => Array.from({ length: this.cols }, () => ''));
@@ -22,6 +28,17 @@ export class BlockMap {
 
   public cleanupPlayer(sessionId: string) {
     this.clientVisibleBlocks.delete(sessionId);
+  }
+
+  public getBlock(col: number, row: number) {
+    if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) {
+      return undefined;
+    }
+
+    const blockId = this.blockGrid[row][col];
+    if (blockId === '') return undefined;
+
+    return this.room.state.blocks.get(blockId);
   }
 
   public deleteBlock(blockId: string) {
@@ -34,7 +51,7 @@ export class BlockMap {
     this.room.state.blocks.delete(blockId);
   }
 
-  /** Returns blocks in the 3×3 grid around the player (blocks the player could be touching) */
+  /** Returns blocks in the 3×3 grid around the player (matches client `BlockSystem.getNearbyBlocks`) */
   public getNearbyBlocks(player: Player): Block[] {
     const playerCol = Math.floor(player.x / BLOCK_SIZE.width);
     const playerRow = Math.floor(player.y / BLOCK_SIZE.height);
@@ -101,21 +118,24 @@ export class BlockMap {
       const col = i % this.cols;
       const row = Math.floor(i / this.cols);
 
+      // leave rows at the top of the map empty for players to spawn
+      if (row < EMPTY_MAP_ROWS) continue;
+
       const block = new Block();
       block.id = `${i}`;
       block.x = col * BLOCK_SIZE.width + BLOCK_SIZE.width / 2;
       block.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
 
       const randomBlockTypeSeed = Math.random();
-      if (randomBlockTypeSeed < 0.5) {
+      if (randomBlockTypeSeed < 0.6) {
         block.type = BLOCK_TYPES.DIRT;
-        block.maxHp = 1;
-      } else if (randomBlockTypeSeed < 0.8) {
+        block.maxHp = 2;
+      } else if (randomBlockTypeSeed < 0.85) {
+        block.type = BLOCK_TYPES.IRON;
+        block.maxHp = 3;
+      } else {
         block.type = BLOCK_TYPES.GOLD;
         block.maxHp = 4;
-      } else {
-        block.type = BLOCK_TYPES.IRON;
-        block.maxHp = 2;
       }
       block.hp = block.maxHp;
 

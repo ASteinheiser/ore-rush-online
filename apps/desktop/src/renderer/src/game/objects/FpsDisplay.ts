@@ -64,7 +64,8 @@ export class FpsDisplay {
     const bgHeight = this.fpsText.displayHeight + PADDING * 2;
     const bgX = this.fpsText.x - bgWidth + PADDING;
     const bgY = this.fpsText.y - PADDING;
+
     this.background.clear();
-    this.background.fillStyle(0x000000, 0.5).fillRoundedRect(bgX, bgY, bgWidth, bgHeight, CORNER_RADIUS);
+    this.background.fillStyle(0xffffff, 0.15).fillRoundedRect(bgX, bgY, bgWidth, bgHeight, CORNER_RADIUS);
   }
 }

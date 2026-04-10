@@ -36,7 +36,6 @@ export class InputSystem {
       right: this.cursorKeys.right.isDown,
       up: this.cursorKeys.up.isDown,
       down: this.cursorKeys.down.isDown,
-      attack: this.cursorKeys.space.isDown,
     };
     // send the input to the server
     this.scene.roomSystem.room?.send(WS_EVENT.PLAYER_INPUT, inputPayload);

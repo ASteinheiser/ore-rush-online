@@ -1,12 +1,12 @@
 import {
   calculateMovement,
+  BLOCK_SIZE,
   PLAYER_SIZE,
   FIXED_TIME_STEP,
   type InputPayload,
   type Player as ServerPlayer,
 } from '@repo/core-game';
 import { Player } from '../objects/Player';
-import { PunchBox } from '../objects/PunchBox';
 import type { Game } from '../scenes/Game';
 import type { RoomEventCallbacks } from './RoomSystem';
 
@@ -15,10 +15,15 @@ export class PlayerSystem {
   /** Position at start of last fixed tick, used for interpolation */
   private previousPosition = { x: 0, y: 0 };
   private currentPosition = { x: 0, y: 0 };
+  /** Used for client-side prediction of flight and drill animations */
+  private velocityY = 0;
+  private isGrounded = true;
   /** The last input sequence acknowledged by the server */
   private serverAckSeq = 0;
   /** The inputs being predicted by the client */
   private pendingInputs: Array<InputPayload> = [];
+  /** Queued server state for deferred reconciliation (processed on next `fixedTick`) */
+  private pendingReconciliation?: ServerPlayer;
 
   constructor(private scene: Game) {}
 
@@ -36,16 +41,44 @@ export class PlayerSystem {
     // store inputs to be processed by the server reconciliation
     this.pendingInputs.push(inputPayload);
 
-    const { attack, left, right, up, down } = inputPayload;
-
-    if (attack) this.currentPlayer.punch();
+    const { left, right, up, down } = inputPayload;
 
     this.previousPosition.x = this.currentPosition.x;
     this.previousPosition.y = this.currentPosition.y;
 
-    const newPosition = calculateMovement({ ...this.currentPosition, ...PLAYER_SIZE, left, right, up, down });
-    this.currentPosition.x = newPosition.x;
-    this.currentPosition.y = newPosition.y;
+    const playerRectangle = {
+      x: this.currentPosition.x,
+      y: this.currentPosition.y,
+      width: PLAYER_SIZE.width,
+      height: PLAYER_SIZE.height,
+    };
+    const nearbyBlocks = this.scene.blockSystem.getNearbyBlocks(playerRectangle);
+
+    const result = calculateMovement({
+      ...playerRectangle,
+      velocityY: this.velocityY,
+      blocks: nearbyBlocks,
+      left,
+      right,
+      up,
+    });
+    this.currentPosition.x = result.x;
+    this.currentPosition.y = result.y;
+    this.velocityY = result.velocityY;
+    this.isGrounded = result.isGrounded;
+
+    // check if there is a drillable block below the player
+    // since x is centered, must be at least half way over the block (different than isGrounded)
+    const canDrillBlockBottom = this.scene.blockSystem.hasBlockAt(
+      this.currentPosition.x,
+      this.currentPosition.y + BLOCK_SIZE.height
+    );
+
+    if (!this.isGrounded) this.currentPlayer.setDrillDirection('idle');
+    else if (down && canDrillBlockBottom) this.currentPlayer.setDrillDirection('down');
+    else if (left && result.isTouchingBlockLeft) this.currentPlayer.setDrillDirection('left');
+    else if (right && result.isTouchingBlockRight) this.currentPlayer.setDrillDirection('right');
+    else this.currentPlayer.setDrillDirection('idle');
   }
 
   /** Interpolate local player between fixed ticks */
@@ -65,13 +98,15 @@ export class PlayerSystem {
      * representing the percentage of the current tick that has elapsed. */
     const alpha = interpolationDeltaThreshold ? 1 : Math.min(1, elapsedTime / FIXED_TIME_STEP);
 
-    this.currentPlayer.move(
-      {
-        x: Phaser.Math.Linear(this.previousPosition.x, this.currentPosition.x, alpha),
-        y: Phaser.Math.Linear(this.previousPosition.y, this.currentPosition.y, alpha),
-      },
-      { delta, isMoving, isMovingX, isMovingY }
-    );
+    this.currentPlayer.move({
+      x: Phaser.Math.Linear(this.previousPosition.x, this.currentPosition.x, alpha),
+      y: Phaser.Math.Linear(this.previousPosition.y, this.currentPosition.y, alpha),
+      delta,
+      isMoving,
+      isMovingX,
+      isMovingY,
+      isGrounded: this.isGrounded,
+    });
   }
 
   public handleCurrentPlayerAdded: RoomEventCallbacks['onPlayerAdded'] = (
@@ -86,6 +121,7 @@ export class PlayerSystem {
     this.currentPlayer = new Player(this.scene, player.username, player.x, player.y);
     this.previousPosition = { x: player.x, y: player.y };
     this.currentPosition = { x: player.x, y: player.y };
+    this.velocityY = player.velocityY;
     // ensure the camera is following the current player
     this.scene.cameras.main.startFollow(this.currentPlayer.entity, true, 0.1, 0.1);
     this.currentPlayer.createDebugBox();
@@ -93,7 +129,7 @@ export class PlayerSystem {
     $(player).onChange(() => {
       updateInventory?.(player.inventory);
       this.handleDebugFieldsUpdated(player);
-      this.handleServerReconciliation(player);
+      this.pendingReconciliation = player;
     });
   };
 
@@ -102,9 +138,13 @@ export class PlayerSystem {
 
     this.currentPlayer.debugBox.x = player.x;
     this.currentPlayer.debugBox.y = player.y;
+  }
 
-    if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
-      new PunchBox(this.scene, player.attackDamageFrameX, player.attackDamageFrameY, 0x0000ff);
+  /** Process queued server reconciliation before predicting the next input */
+  public processReconciliation() {
+    if (this.pendingReconciliation) {
+      this.handleServerReconciliation(this.pendingReconciliation);
+      this.pendingReconciliation = undefined;
     }
   }
 
@@ -125,29 +165,42 @@ export class PlayerSystem {
 
     // Determine the target position we expect given remaining inputs
     // Start from authoritative server position
-    let targetPosition = { x: player.x, y: player.y };
-    for (const { left, right, up, down } of this.pendingInputs) {
-      targetPosition = calculateMovement({
-        x: targetPosition.x,
-        y: targetPosition.y,
-        ...PLAYER_SIZE,
+    let targetX = player.x;
+    let targetY = player.y;
+    let velocityY = player.velocityY;
+
+    for (const { left, right, up } of this.pendingInputs) {
+      const playerRectangle = {
+        x: targetX,
+        y: targetY,
+        width: PLAYER_SIZE.width,
+        height: PLAYER_SIZE.height,
+      };
+      const nearbyBlocks = this.scene.blockSystem.getNearbyBlocks(playerRectangle);
+
+      const result = calculateMovement({
+        ...playerRectangle,
+        velocityY,
+        blocks: nearbyBlocks,
         left,
         right,
         up,
-        down,
       });
+      targetX = result.x;
+      targetY = result.y;
+      velocityY = result.velocityY;
     }
 
     // if our CSP is out of sync with the server state, sync client state with server state
     if (
-      this.currentPlayer.entity.x !== targetPosition.x ||
-      this.currentPlayer.entity.y !== targetPosition.y
+      this.currentPosition.x !== targetX ||
+      this.currentPosition.y !== targetY ||
+      this.velocityY !== velocityY
     ) {
-      this.previousPosition.x = targetPosition.x;
-      this.previousPosition.y = targetPosition.y;
-      this.currentPosition.x = targetPosition.x;
-      this.currentPosition.y = targetPosition.y;
-      this.currentPlayer.forceMove(targetPosition);
+      this.currentPosition.x = targetX;
+      this.currentPosition.y = targetY;
+      this.velocityY = velocityY;
+      this.currentPlayer.forceMove({ x: targetX, y: targetY });
     }
   }
 }

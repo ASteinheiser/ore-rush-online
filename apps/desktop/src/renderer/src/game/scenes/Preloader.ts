@@ -1,5 +1,5 @@
 import { PLAYER_FRAME_RATE, PLAYER_SIZE } from '@repo/core-game';
-import player from '../../assets/muscle-duck-sprite.png';
+import player from '../../assets/ship-sprite.png';
 import punch from '../../assets/punch.mp3';
 import { PLAYER_ANIM } from '../objects/Player';
 import { ASSET, SCENE, SOUND } from '../constants';
@@ -60,18 +60,34 @@ export class Preloader extends Phaser.Scene {
       repeat: 0,
     });
     this.anims.create({
-      key: PLAYER_ANIM.WALK,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [2, 3, 4, 1] }),
+      key: PLAYER_ANIM.ROLL,
+      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [0, 0, 5, 5] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,
     });
-    // total animation length is 0.625s (5 frames at 8fps)
-    // actual punch frame is 0.375s after start of animation (frame 3 / 5)
     this.anims.create({
-      key: PLAYER_ANIM.PUNCH,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [5, 6, 7, 8, 5] }),
+      key: PLAYER_ANIM.FLY,
+      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [0, 1, 2, 3, 4, 3, 2, 1] }),
       frameRate: PLAYER_FRAME_RATE,
-      repeat: 0,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: PLAYER_ANIM.DRILL_RIGHT,
+      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [6, 7, 8] }),
+      frameRate: PLAYER_FRAME_RATE,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: PLAYER_ANIM.DRILL_LEFT,
+      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [9, 10, 11] }),
+      frameRate: PLAYER_FRAME_RATE,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: PLAYER_ANIM.DRILL_DOWN,
+      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [12, 13, 14] }),
+      frameRate: PLAYER_FRAME_RATE,
+      repeat: -1,
     });
 
     //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.

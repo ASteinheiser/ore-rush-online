@@ -1,491 +1,490 @@
 import { describe, it, expect } from 'vitest';
 import { calculateMovement } from '../src/calculate-movement';
-import { MAP_SIZE, PLAYER_MOVE_SPEED } from '../src/constants';
+import {
+  MAP_SIZE,
+  EDGE_COLLISION_TOLERANCE,
+  PLAYER_VX_PER_TICK,
+  PLAYER_GRAVITY_VY_PER_TICK,
+  PLAYER_THRUST_VY_PER_TICK,
+  PLAYER_GRAVITY_VY_MAX,
+  PLAYER_THRUST_VY_MAX,
+} from '../src/constants';
 
 describe('calculateMovement', () => {
-  const noEntitySize = {
-    width: 0,
-    height: 0,
-  };
-  const noMovementArgs = {
-    left: false,
-    right: false,
-    up: false,
-    down: false,
-  };
+  const noInput = { left: false, right: false, up: false };
+  const noBlocks = { blocks: [] };
+  const noSize = { width: 0, height: 0 };
+  const center = { x: MAP_SIZE.width / 2, y: MAP_SIZE.height / 2 };
 
-  describe('when the entity is not moving', () => {
-    describe('and the entity is in bounds', () => {
-      it('should return the same position', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width / 2,
-          y: MAP_SIZE.height / 2,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
+  describe('when no walls exist', () => {
+    describe('gravity', () => {
+      it('should apply downward acceleration each tick', () => {
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          velocityY: 0,
         });
 
-        const expectedPosition = {
-          x: entityPosition.x,
-          y: entityPosition.y,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
+        expect(result).toEqual({
+          x: center.x,
+          y: center.y + PLAYER_GRAVITY_VY_PER_TICK,
+          velocityY: PLAYER_GRAVITY_VY_PER_TICK,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
       });
-    });
-    describe('and the entity is out of bounds (y < 0 and x < 0)', () => {
-      it('should return the entity to [0,0]', () => {
-        const entityPosition = {
-          x: -100,
-          y: -100,
-        };
 
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
+      it('should accumulate with existing downward velocity', () => {
+        const velocityY = 5;
+        const expectedVY = velocityY + PLAYER_GRAVITY_VY_PER_TICK;
+
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          velocityY,
         });
 
-        const expectedPosition = {
-          x: 0,
-          y: 0,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
+        expect(result).toEqual({
+          x: center.x,
+          y: center.y + expectedVY,
+          velocityY: expectedVY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
       });
-    });
-    describe('and the entity is out of bounds (y > MAP_HEIGHT and x > MAP_WIDTH)', () => {
-      it('should return the entity to [MAP_WIDTH, MAP_HEIGHT]', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width + 100,
-          y: MAP_SIZE.height + 100,
-        };
 
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
+      it('should clamp at terminal downward velocity', () => {
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          velocityY: PLAYER_GRAVITY_VY_MAX,
         });
 
-        const expectedPosition = {
-          x: MAP_SIZE.width,
-          y: MAP_SIZE.height,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
+        expect(result).toEqual({
+          x: center.x,
+          y: center.y + PLAYER_GRAVITY_VY_MAX,
+          velocityY: PLAYER_GRAVITY_VY_MAX,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
       });
     });
-  });
 
-  describe('when the entity is moving left', () => {
-    it('should return the entity to the left', () => {
-      const entityPosition = {
-        x: MAP_SIZE.width / 2,
-        y: MAP_SIZE.height / 2,
-      };
+    describe('thrust', () => {
+      it('should oppose gravity when up is pressed', () => {
+        const expectedVY = PLAYER_GRAVITY_VY_PER_TICK - PLAYER_THRUST_VY_PER_TICK;
 
-      const newPosition = calculateMovement({
-        ...entityPosition,
-        ...noEntitySize,
-        ...noMovementArgs,
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          up: true,
+          velocityY: 0,
+        });
+
+        expect(result).toEqual({
+          x: center.x,
+          y: center.y + expectedVY,
+          velocityY: expectedVY,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
+      });
+
+      it('should clamp at terminal upward velocity', () => {
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          up: true,
+          velocityY: -PLAYER_THRUST_VY_MAX,
+        });
+
+        expect(result).toEqual({
+          x: center.x,
+          y: center.y - PLAYER_THRUST_VY_MAX,
+          velocityY: -PLAYER_THRUST_VY_MAX,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
+      });
+    });
+
+    describe('horizontal movement', () => {
+      it('should move left', () => {
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          left: true,
+          velocityY: 0,
+        });
+
+        expect(result.x).toBe(center.x - PLAYER_VX_PER_TICK);
+      });
+
+      it('should move right', () => {
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          right: true,
+          velocityY: 0,
+        });
+
+        expect(result.x).toBe(center.x + PLAYER_VX_PER_TICK);
+      });
+
+      it('should cancel when both left and right are pressed', () => {
+        const result = calculateMovement({
+          ...center,
+          ...noSize,
+          ...noInput,
+          ...noBlocks,
+          left: true,
+          right: true,
+          velocityY: 0,
+        });
+
+        expect(result.x).toBe(center.x);
+      });
+    });
+
+    it('should apply horizontal and vertical movement independently', () => {
+      const expectedVY = PLAYER_GRAVITY_VY_PER_TICK - PLAYER_THRUST_VY_PER_TICK;
+
+      const result = calculateMovement({
+        ...center,
+        ...noSize,
+        ...noInput,
+        ...noBlocks,
         left: true,
-      });
-
-      const expectedPosition = {
-        x: entityPosition.x - PLAYER_MOVE_SPEED,
-        y: entityPosition.y,
-      };
-
-      expect(newPosition).toEqual(expectedPosition);
-    });
-
-    describe('and the entity is at the edge of the map (x = 0)', () => {
-      it('should return the entity to [0, y]', () => {
-        const entityPosition = {
-          x: 0,
-          y: MAP_SIZE.height / 2,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          left: true,
-        });
-
-        const expectedPosition = {
-          x: 0,
-          y: entityPosition.y,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
-      });
-    });
-    describe('and the entity is moving right', () => {
-      it('should not move the entity', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width / 2,
-          y: MAP_SIZE.height / 2,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          left: true,
-          right: true,
-        });
-
-        const expectedPosition = {
-          x: entityPosition.x,
-          y: entityPosition.y,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
-      });
-    });
-    describe('and the entity is moving up', () => {
-      it('should move the entity up and left', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width / 2,
-          y: MAP_SIZE.height / 2,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          left: true,
-          up: true,
-        });
-
-        const expectedPosition = {
-          x: entityPosition.x - PLAYER_MOVE_SPEED,
-          y: entityPosition.y - PLAYER_MOVE_SPEED,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
-      });
-    });
-  });
-
-  describe('when the entity is moving down', () => {
-    it('should move the entity down', () => {
-      const entityPosition = {
-        x: MAP_SIZE.width / 2,
-        y: MAP_SIZE.height / 2,
-      };
-
-      const newPosition = calculateMovement({
-        ...entityPosition,
-        ...noEntitySize,
-        ...noMovementArgs,
-        down: true,
-      });
-
-      const expectedPosition = {
-        x: entityPosition.x,
-        y: entityPosition.y + PLAYER_MOVE_SPEED,
-      };
-
-      expect(newPosition).toEqual(expectedPosition);
-    });
-
-    describe('and the entity is at the edge of the map (y = MAP_HEIGHT)', () => {
-      it('should return the entity to [x, MAP_HEIGHT]', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width / 2,
-          y: MAP_SIZE.height,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          down: true,
-        });
-
-        const expectedPosition = {
-          x: entityPosition.x,
-          y: MAP_SIZE.height,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
-      });
-    });
-
-    describe('and the entity is moving up', () => {
-      it('should not move the entity', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width / 2,
-          y: MAP_SIZE.height / 2,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          down: true,
-          up: true,
-        });
-
-        const expectedPosition = {
-          x: entityPosition.x,
-          y: entityPosition.y,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
-      });
-    });
-    describe('and the entity is moving right', () => {
-      it('should move the entity down and right', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width / 2,
-          y: MAP_SIZE.height / 2,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          down: true,
-          right: true,
-        });
-
-        const expectedPosition = {
-          x: entityPosition.x + PLAYER_MOVE_SPEED,
-          y: entityPosition.y + PLAYER_MOVE_SPEED,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
-      });
-    });
-  });
-
-  describe('when the entity is moving right', () => {
-    it('should move the entity right', () => {
-      const entityPosition = {
-        x: MAP_SIZE.width / 2,
-        y: MAP_SIZE.height / 2,
-      };
-
-      const newPosition = calculateMovement({
-        ...entityPosition,
-        ...noEntitySize,
-        ...noMovementArgs,
-        right: true,
-      });
-
-      const expectedPosition = {
-        x: entityPosition.x + PLAYER_MOVE_SPEED,
-        y: entityPosition.y,
-      };
-
-      expect(newPosition).toEqual(expectedPosition);
-    });
-
-    describe('and the entity is at the edge of the map (x = MAP_WIDTH)', () => {
-      it('should return the entity to [MAP_WIDTH, y]', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width,
-          y: MAP_SIZE.height / 2,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          right: true,
-        });
-
-        const expectedPosition = {
-          x: MAP_SIZE.width,
-          y: entityPosition.y,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
-      });
-    });
-  });
-
-  describe('when the entity is moving up', () => {
-    it('should move the entity up', () => {
-      const entityPosition = {
-        x: MAP_SIZE.width / 2,
-        y: MAP_SIZE.height / 2,
-      };
-
-      const newPosition = calculateMovement({
-        ...entityPosition,
-        ...noEntitySize,
-        ...noMovementArgs,
         up: true,
+        velocityY: 0,
       });
 
-      const expectedPosition = {
-        x: entityPosition.x,
-        y: entityPosition.y - PLAYER_MOVE_SPEED,
-      };
-
-      expect(newPosition).toEqual(expectedPosition);
-    });
-
-    describe('and the entity is at the edge of the map (y = 0)', () => {
-      it('should return the entity to [x, 0]', () => {
-        const entityPosition = {
-          x: MAP_SIZE.width / 2,
-          y: 0,
-        };
-
-        const newPosition = calculateMovement({
-          ...entityPosition,
-          ...noEntitySize,
-          ...noMovementArgs,
-          up: true,
-        });
-
-        const expectedPosition = {
-          x: entityPosition.x,
-          y: 0,
-        };
-
-        expect(newPosition).toEqual(expectedPosition);
+      expect(result).toEqual({
+        x: center.x - PLAYER_VX_PER_TICK,
+        y: center.y + expectedVY,
+        velocityY: expectedVY,
+        isGrounded: false,
+        isTouchingBlockLeft: false,
+        isTouchingBlockRight: false,
       });
     });
   });
 
-  describe('when the entity is moving in all directions', () => {
-    it('should not move the entity', () => {
-      const entityPosition = {
-        x: MAP_SIZE.width / 2,
-        y: MAP_SIZE.height / 2,
-      };
+  describe('when walls exist', () => {
+    const entitySize = { width: 64, height: 64 };
+    const block = { ...center, ...entitySize };
+    const halfBlock = block.width / 2;
+    const halfEntity = entitySize.width / 2;
 
-      const newPosition = calculateMovement({
-        ...entityPosition,
-        ...noEntitySize,
+    describe('vertical collisions', () => {
+      it('should stay grounded when sitting on top of a block', () => {
+        const standingY = block.y - halfBlock - halfEntity;
+
+        const result = calculateMovement({
+          x: block.x,
+          y: standingY,
+          ...entitySize,
+          ...noInput,
+          velocityY: 0,
+          blocks: [block],
+        });
+
+        expect(result).toEqual({
+          x: block.x,
+          y: standingY,
+          velocityY: 0,
+          isGrounded: true,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
+      });
+
+      it('should snap to the top of a block when falling onto it', () => {
+        const startY = block.y - halfBlock - halfEntity - 5;
+        const landingY = block.y - halfBlock - halfEntity;
+
+        const result = calculateMovement({
+          x: block.x,
+          y: startY,
+          ...entitySize,
+          ...noInput,
+          velocityY: 10,
+          blocks: [block],
+        });
+
+        expect(result).toEqual({
+          x: block.x,
+          y: landingY,
+          velocityY: 0,
+          isGrounded: true,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
+      });
+
+      it('should stop upward velocity when hitting a block from below', () => {
+        const startY = block.y + halfBlock + halfEntity;
+
+        const result = calculateMovement({
+          x: block.x,
+          y: startY,
+          ...entitySize,
+          ...noInput,
+          up: true,
+          velocityY: -5,
+          blocks: [block],
+        });
+
+        expect(result).toEqual({
+          x: block.x,
+          y: startY,
+          velocityY: 0,
+          isGrounded: false,
+          isTouchingBlockLeft: false,
+          isTouchingBlockRight: false,
+        });
+      });
+    });
+
+    describe('horizontal collisions', () => {
+      it('should stop and report isTouchingBlockRight when moving into a block on the right', () => {
+        const startX = block.x - halfBlock - halfEntity;
+
+        const result = calculateMovement({
+          x: startX,
+          y: block.y,
+          ...entitySize,
+          ...noInput,
+          right: true,
+          velocityY: 0,
+          blocks: [block],
+        });
+
+        expect(result.x).toBe(startX);
+        expect(result.isTouchingBlockRight).toBe(true);
+        expect(result.isTouchingBlockLeft).toBe(false);
+      });
+
+      it('should stop and report isTouchingBlockLeft when moving into a block on the left', () => {
+        const startX = block.x + halfBlock + halfEntity;
+
+        const result = calculateMovement({
+          x: startX,
+          y: block.y,
+          ...entitySize,
+          ...noInput,
+          left: true,
+          velocityY: 0,
+          blocks: [block],
+        });
+
+        expect(result.x).toBe(startX);
+        expect(result.isTouchingBlockLeft).toBe(true);
+        expect(result.isTouchingBlockRight).toBe(false);
+      });
+    });
+
+    describe('edge correction', () => {
+      it('should nudge vertically to slide past a block corner during horizontal movement', () => {
+        // 4px vertical overlap with the top of the block while moving right with upward velocity.
+        // The horizontal pass nudges the entity up to clear the corner instead of stopping it.
+        const entityY = block.y - halfBlock - halfEntity + EDGE_COLLISION_TOLERANCE / 2;
+        // Close enough to the block that moving right creates a horizontal overlap
+        const approachX = block.x - halfBlock - halfEntity + EDGE_COLLISION_TOLERANCE / 2;
+
+        const result = calculateMovement({
+          x: approachX,
+          y: entityY,
+          ...entitySize,
+          ...noInput,
+          right: true,
+          velocityY: -2,
+          blocks: [block],
+        });
+
+        expect(result.x).toBeGreaterThan(approachX);
+        expect(result.isTouchingBlockRight).toBe(false);
+        expect(result.isTouchingBlockLeft).toBe(false);
+      });
+
+      it('should nudge horizontally to slide past a block corner during vertical movement', () => {
+        // 4px horizontal overlap with the right side of the block while falling.
+        // The vertical pass nudges the entity right to avoid landing on the block.
+        const entityX = block.x + halfBlock + halfEntity - EDGE_COLLISION_TOLERANCE / 2;
+        // Above the block so the horizontal pass misses, but close enough that falling brings it into range
+        const approachY = block.y - halfBlock - halfEntity - EDGE_COLLISION_TOLERANCE / 2;
+
+        const result = calculateMovement({
+          x: entityX,
+          y: approachY,
+          ...entitySize,
+          ...noInput,
+          velocityY: 10,
+          blocks: [block],
+        });
+
+        expect(result.x).toBeGreaterThan(entityX);
+        expect(result.isGrounded).toBe(false);
+        expect(result.isTouchingBlockLeft).toBe(false);
+        expect(result.isTouchingBlockRight).toBe(false);
+      });
+    });
+  });
+
+  describe('when entity is at the edge of the map', () => {
+    it('should clamp to minimum bounds when far out of bounds', () => {
+      const result = calculateMovement({
+        x: -100,
+        y: -100,
+        ...noSize,
+        ...noInput,
+        ...noBlocks,
+        velocityY: 0,
+      });
+
+      expect(result.x).toBe(0);
+      expect(result.y).toBe(0);
+      expect(result.velocityY).toBe(0);
+      expect(result.isGrounded).toBe(false);
+    });
+
+    it('should clamp to maximum bounds and set isGrounded when far out of bounds', () => {
+      const result = calculateMovement({
+        x: MAP_SIZE.width + 100,
+        y: MAP_SIZE.height + 100,
+        ...noSize,
+        ...noInput,
+        ...noBlocks,
+        velocityY: 0,
+      });
+
+      expect(result.x).toBe(MAP_SIZE.width);
+      expect(result.y).toBe(MAP_SIZE.height);
+      expect(result.velocityY).toBe(0);
+      expect(result.isGrounded).toBe(true);
+    });
+
+    it('should reset velocityY without setting isGrounded when hitting the top boundary', () => {
+      const result = calculateMovement({
+        x: center.x,
+        y: 0,
+        ...noSize,
+        ...noInput,
+        ...noBlocks,
+        velocityY: -PLAYER_THRUST_VY_MAX,
+      });
+
+      expect(result.y).toBe(0);
+      expect(result.velocityY).toBe(0);
+      expect(result.isGrounded).toBe(false);
+    });
+
+    it('should prevent movement beyond the left boundary', () => {
+      const result = calculateMovement({
+        x: 0,
+        y: center.y,
+        ...noSize,
+        ...noInput,
+        ...noBlocks,
         left: true,
+        velocityY: 0,
+      });
+
+      expect(result.x).toBe(0);
+    });
+
+    it('should prevent movement beyond the right boundary', () => {
+      const result = calculateMovement({
+        x: MAP_SIZE.width,
+        y: center.y,
+        ...noSize,
+        ...noInput,
+        ...noBlocks,
         right: true,
-        up: true,
-        down: true,
+        velocityY: 0,
       });
 
-      const expectedPosition = {
-        x: entityPosition.x,
-        y: entityPosition.y,
-      };
-
-      expect(newPosition).toEqual(expectedPosition);
-    });
-  });
-
-  describe('when the entity is at the edge of the map', () => {
-    describe('and the entity size is 50 x 50', () => {
-      const entitySize = {
-        width: 50,
-        height: 50,
-      };
-      describe('and the entity is moving down and right', () => {
-        it('should move the entity back to the edge of the map according to the entity size', () => {
-          const entityPosition = {
-            x: MAP_SIZE.width,
-            y: MAP_SIZE.height,
-          };
-
-          const newPosition = calculateMovement({
-            ...entityPosition,
-            ...entitySize,
-            ...noMovementArgs,
-            down: true,
-            right: true,
-          });
-
-          const expectedPosition = {
-            x: MAP_SIZE.width - entitySize.width / 2,
-            y: MAP_SIZE.height - entitySize.height / 2,
-          };
-
-          expect(newPosition).toEqual(expectedPosition);
-        });
-      });
-      describe('and the entity is moving up and left', () => {
-        it('should move the entity back to the edge of the map according to the entity size', () => {
-          const entityPosition = {
-            x: 0,
-            y: 0,
-          };
-
-          const newPosition = calculateMovement({
-            ...entityPosition,
-            ...entitySize,
-            ...noMovementArgs,
-            up: true,
-            left: true,
-          });
-
-          const expectedPosition = {
-            x: entitySize.width / 2,
-            y: entitySize.height / 2,
-          };
-
-          expect(newPosition).toEqual(expectedPosition);
-        });
-      });
+      expect(result.x).toBe(MAP_SIZE.width);
     });
 
-    describe('and the entity size is 37 x 96', () => {
-      const entitySize = {
-        width: 37,
-        height: 96,
-      };
-      describe('and the entity is moving down and right', () => {
-        it('should move the entity back to the edge of the map according to the entity size', () => {
-          const entityPosition = {
-            x: MAP_SIZE.width,
-            y: MAP_SIZE.height,
-          };
+    describe('with a sized entity', () => {
+      it('should offset boundaries by half the entity size (50x50)', () => {
+        const size = { width: 50, height: 50 };
 
-          const newPosition = calculateMovement({
-            ...entityPosition,
-            ...entitySize,
-            ...noMovementArgs,
-            down: true,
-            right: true,
-          });
-
-          const expectedPosition = {
-            x: MAP_SIZE.width - entitySize.width / 2,
-            y: MAP_SIZE.height - entitySize.height / 2,
-          };
-
-          expect(newPosition).toEqual(expectedPosition);
+        const bottomRight = calculateMovement({
+          x: MAP_SIZE.width,
+          y: MAP_SIZE.height,
+          ...size,
+          ...noInput,
+          ...noBlocks,
+          velocityY: 0,
         });
+        expect(bottomRight.x).toBe(MAP_SIZE.width - 25);
+        expect(bottomRight.y).toBe(MAP_SIZE.height - 25);
+        expect(bottomRight.velocityY).toBe(0);
+        expect(bottomRight.isGrounded).toBe(true);
+
+        const topLeft = calculateMovement({
+          x: 0,
+          y: 0,
+          ...size,
+          ...noInput,
+          ...noBlocks,
+          velocityY: 0,
+        });
+        expect(topLeft.x).toBe(25);
+        expect(topLeft.y).toBe(25);
+        expect(topLeft.velocityY).toBe(0);
+        expect(topLeft.isGrounded).toBe(false);
       });
-      describe('and the entity is moving up and left', () => {
-        it('should move the entity back to the edge of the map according to the entity size', () => {
-          const entityPosition = {
-            x: 0,
-            y: 0,
-          };
 
-          const newPosition = calculateMovement({
-            ...entityPosition,
-            ...entitySize,
-            ...noMovementArgs,
-            up: true,
-            left: true,
-          });
+      it('should offset boundaries by half the entity size (37x96)', () => {
+        const size = { width: 37, height: 96 };
 
-          const expectedPosition = {
-            x: entitySize.width / 2,
-            y: entitySize.height / 2,
-          };
-
-          expect(newPosition).toEqual(expectedPosition);
+        const bottomRight = calculateMovement({
+          x: MAP_SIZE.width,
+          y: MAP_SIZE.height,
+          ...size,
+          ...noInput,
+          ...noBlocks,
+          velocityY: 0,
         });
+        expect(bottomRight.x).toBe(MAP_SIZE.width - 18.5);
+        expect(bottomRight.y).toBe(MAP_SIZE.height - 48);
+        expect(bottomRight.velocityY).toBe(0);
+        expect(bottomRight.isGrounded).toBe(true);
+
+        const topLeft = calculateMovement({
+          x: 0,
+          y: 0,
+          ...size,
+          ...noInput,
+          ...noBlocks,
+          velocityY: 0,
+        });
+        expect(topLeft.x).toBe(18.5);
+        expect(topLeft.y).toBe(48);
+        expect(topLeft.velocityY).toBe(0);
+        expect(topLeft.isGrounded).toBe(false);
       });
     });
   });

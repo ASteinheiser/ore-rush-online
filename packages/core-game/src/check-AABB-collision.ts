@@ -1,16 +1,15 @@
 import type { Rectangle } from './types';
 
-/** Check if two rectangles are colliding. Assumes the rectangles are centered on their x and y coordinates. */
-export const checkAABBCollision = (rect1: Rectangle, rect2: Rectangle) => {
-  const halfWidth1 = rect1.width / 2;
-  const halfWidth2 = rect2.width / 2;
-  const halfHeight1 = rect1.height / 2;
-  const halfHeight2 = rect2.height / 2;
+interface AABBOverlap {
+  overlapX: number;
+  overlapY: number;
+}
 
-  return (
-    rect1.x - halfWidth1 < rect2.x + halfWidth2 &&
-    rect1.x + halfWidth1 > rect2.x - halfWidth2 &&
-    rect1.y - halfHeight1 < rect2.y + halfHeight2 &&
-    rect1.y + halfHeight1 > rect2.y - halfHeight2
-  );
+/** Returns axis overlap depths if colliding, or null if not. Assumes rectangles are centered on their x/y. */
+export const checkAABBCollision = (rect1: Rectangle, rect2: Rectangle): AABBOverlap | null => {
+  const overlapX = rect1.width / 2 + rect2.width / 2 - Math.abs(rect1.x - rect2.x);
+  const overlapY = rect1.height / 2 + rect2.height / 2 - Math.abs(rect1.y - rect2.y);
+
+  if (overlapX <= 0 || overlapY <= 0) return null;
+  return { overlapX, overlapY };
 };

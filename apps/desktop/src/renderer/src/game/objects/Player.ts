@@ -1,18 +1,22 @@
-import { ATTACK_DAMAGE__DELAY, type EntityPosition } from '@repo/core-game';
+import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '@repo/core-game';
 import { ASSET, SOUND } from '../constants';
 import { CustomText } from './CustomText';
 
-interface MoveIntent {
+interface MoveIntent extends EntityPosition {
   delta: number;
   isMoving: boolean;
   isMovingX: boolean;
   isMovingY: boolean;
+  isGrounded: boolean;
 }
 
 export const PLAYER_ANIM = {
   IDLE: 'playerIdle',
-  WALK: 'playerWalk',
-  PUNCH: 'playerPunch',
+  ROLL: 'playerRoll',
+  FLY: 'playerFly',
+  DRILL_LEFT: 'playerDrillLeft',
+  DRILL_RIGHT: 'playerDrillRight',
+  DRILL_DOWN: 'playerDrillDown',
 };
 
 export class Player {
@@ -37,17 +41,43 @@ export class Player {
       fontFamily: 'Tiny5',
       fontSize: 12,
     })
-      .setOrigin(0.5, 2.75)
+      .setOrigin(0.5, 3.1)
       .setDepth(101);
 
     this.punchSfx = scene.sound.add(SOUND.PUNCH);
+
+    this.setupDebugCombo();
+  }
+
+  /** Create a secret key combo to toggle debug mode */
+  private setupDebugCombo() {
+    const debugCombo = this.scene.input.keyboard?.createCombo(
+      [
+        Phaser.Input.Keyboard.KeyCodes.UP,
+        Phaser.Input.Keyboard.KeyCodes.UP,
+        Phaser.Input.Keyboard.KeyCodes.DOWN,
+        Phaser.Input.Keyboard.KeyCodes.DOWN,
+        Phaser.Input.Keyboard.KeyCodes.LEFT,
+        Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        Phaser.Input.Keyboard.KeyCodes.LEFT,
+        Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      ],
+      { resetOnWrongKey: true, maxKeyDelay: 250, resetOnMatch: true }
+    );
+
+    this.scene.input.keyboard?.on('keycombomatch', (combo: Phaser.Input.Keyboard.KeyCombo) => {
+      if (combo === debugCombo) {
+        this.debugBox?.setVisible(!this.debugBox.visible);
+      }
+    });
   }
 
   public createDebugBox() {
     this.debugBox = this.scene.add
       .rectangle(this.entity.x, this.entity.y, this.entity.width, this.entity.height)
       .setDepth(101)
-      .setStrokeStyle(1, 0xff0000);
+      .setStrokeStyle(1, 0xff0000)
+      .setVisible(false);
   }
 
   public destroy() {
@@ -57,7 +87,7 @@ export class Player {
     this.debugBox?.destroy();
   }
 
-  /** Force the player to move to a specific position, skips animations, interpolation, etc. */
+  /** Force the player to move to a specific position (skips animations) */
   public forceMove({ x, y }: EntityPosition) {
     this.entity.x = x;
     this.entity.y = y;
@@ -65,8 +95,8 @@ export class Player {
     this.nameText.y = y;
   }
 
-  public move({ x, y }: EntityPosition, { delta, isMoving, isMovingX }: MoveIntent) {
-    // Asymmetric buffer: switch to WALK immediately, delay switching to IDLE
+  public move({ x, y, delta, isMoving, isGrounded }: MoveIntent) {
+    // Asymmetric buffer: switch to ROLL/FLY immediately, delay switching to IDLE
     if (isMoving) {
       this.idleAccumulator = 0;
       this.displayedMoving = true;
@@ -78,40 +108,63 @@ export class Player {
       }
     }
 
-    if (isMovingX) {
-      this.entity.setFlipX(this.entity.x > x);
-    }
-
     this.entity.x = x;
     this.entity.y = y;
     this.nameText.x = x;
     this.nameText.y = y;
 
-    if (!this.displayedMoving && !this.isPunching()) {
+    if (!this.displayedMoving && isGrounded && !this.isDrilling()) {
       this.entity.play(PLAYER_ANIM.IDLE);
     }
-    if (this.displayedMoving && !(this.isPunching() || this.isWalking())) {
-      this.entity.play(PLAYER_ANIM.WALK);
+    if (this.displayedMoving && isGrounded && !(this.isRolling() || this.isDrilling())) {
+      this.entity.play(PLAYER_ANIM.ROLL);
+    }
+    if (!isGrounded && !this.isFlying()) {
+      this.entity.play(PLAYER_ANIM.FLY);
     }
   }
 
-  public punch() {
-    if (this.isPunching()) return;
-
-    this.entity.anims.play(PLAYER_ANIM.PUNCH);
-    this.punchSfx.play('', { delay: ATTACK_DAMAGE__DELAY / 1000 });
+  public setDrillDirection(direction: DRILL_DIRECTION) {
+    switch (direction) {
+      case DRILL_DIRECTIONS.LEFT:
+        if (this.isDrillingLeft()) return;
+        this.entity.anims.play(PLAYER_ANIM.DRILL_LEFT);
+        break;
+      case DRILL_DIRECTIONS.RIGHT:
+        if (this.isDrillingRight()) return;
+        this.entity.anims.play(PLAYER_ANIM.DRILL_RIGHT);
+        break;
+      case DRILL_DIRECTIONS.DOWN:
+        if (this.isDrillingDown()) return;
+        this.entity.anims.play(PLAYER_ANIM.DRILL_DOWN);
+        break;
+      case DRILL_DIRECTIONS.IDLE:
+      default:
+        if (this.isDrilling()) this.entity.anims.stop();
+    }
   }
 
-  public stopPunch() {
-    if (!this.isPunching()) return;
-    this.entity.anims.stop();
+  private isRolling() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.ROLL;
   }
 
-  private isPunching() {
-    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.PUNCH;
+  private isFlying() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.FLY;
   }
 
-  private isWalking() {
-    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.WALK;
+  private isDrilling() {
+    return this.isDrillingLeft() || this.isDrillingRight() || this.isDrillingDown();
+  }
+
+  private isDrillingLeft() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_LEFT;
+  }
+
+  private isDrillingRight() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_RIGHT;
+  }
+
+  private isDrillingDown() {
+    return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_DOWN;
   }
 }

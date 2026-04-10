@@ -1,12 +1,8 @@
 import {
-  ATTACK_SIZE,
-  ATTACK_OFFSET_X,
-  ATTACK_OFFSET_Y,
-  ATTACK_COOLDOWN,
-  ATTACK_DAMAGE__DELAY,
-  ATTACK_DAMAGE__FRAME_TIME,
   BLOCK_SIZE,
-  checkAABBCollision,
+  DRILL_COOLDOWN,
+  DRILL_DIRECTIONS,
+  type DRILL_DIRECTION,
   type InputPayload,
   type Player,
 } from '@repo/core-game';
@@ -17,78 +13,92 @@ export class PlayerMining {
 
   public handleInput(player: Player, input: InputPayload) {
     const currentTime = Date.now();
-    const timeSinceLastAttack = currentTime - player.lastAttackTime;
+    const timeSinceLastDrill = currentTime - player.lastDrillTime;
+    const isInDrillFrame = timeSinceLastDrill < DRILL_COOLDOWN;
 
-    if (this.isInDamageFrame(timeSinceLastAttack)) {
-      this.setDamageFrame(player);
-      this.checkForBlockHits(player);
-    } else {
-      player.attackDamageFrameX = undefined;
-      player.attackDamageFrameY = undefined;
-      player.blocksHit = [];
-    }
-
-    const isInAttackFrame = timeSinceLastAttack < ATTACK_COOLDOWN;
-    // if the player is mid-attack, don't process any more inputs
-    if (isInAttackFrame) {
+    if (isInDrillFrame) {
+      if (!this.isStillHoldingDrill(player, input) || !this.isTargetUnchanged(player)) {
+        this.stopDrill(player);
+      }
       return;
-    } else if (input.attack) {
-      player.isAttacking = true;
-      player.attackCount++;
-      player.lastAttackTime = currentTime;
-    } else {
-      player.isAttacking = false;
     }
+
+    // Cooldown just expired: apply damage, update inventory, etc.
+    if (this.isTargetUnchanged(player)) {
+      this.completeDrill(player);
+    }
+
+    // Try to start a new drill
+    if (input.down) this.startDrill(player, DRILL_DIRECTIONS.DOWN, currentTime);
+    else if (input.left) this.startDrill(player, DRILL_DIRECTIONS.LEFT, currentTime);
+    else if (input.right) this.startDrill(player, DRILL_DIRECTIONS.RIGHT, currentTime);
+    else this.stopDrill(player);
   }
 
-  /** Check if the player is in the damage frame of the attack animation */
-  private isInDamageFrame(timeSinceLastAttack: number) {
+  private isStillHoldingDrill(player: Player, input: InputPayload): boolean {
+    if (!player.isGrounded) return false;
+    if (input.down) return player.drillDirection === DRILL_DIRECTIONS.DOWN;
     return (
-      timeSinceLastAttack >= ATTACK_DAMAGE__DELAY &&
-      timeSinceLastAttack < ATTACK_DAMAGE__DELAY + ATTACK_DAMAGE__FRAME_TIME
+      (player.drillDirection === DRILL_DIRECTIONS.LEFT && input.left) ||
+      (player.drillDirection === DRILL_DIRECTIONS.RIGHT && input.right)
     );
   }
 
-  /** Calculate and set the damage frame */
-  private setDamageFrame(player: Player) {
-    player.attackDamageFrameX = player.isFacingRight
-      ? player.x + ATTACK_OFFSET_X
-      : player.x - ATTACK_OFFSET_X;
-    player.attackDamageFrameY = player.y - ATTACK_OFFSET_Y;
+  private isTargetUnchanged(player: Player): boolean {
+    // skip check if no target (col/row are -1)
+    if (player.drillTargetCol < 0 || player.drillTargetRow < 0) {
+      return true;
+    }
+    const { col, row } = this.getTargetCell(player, player.drillDirection);
+    return col === player.drillTargetCol && row === player.drillTargetRow;
   }
 
-  /** Check if the damage frame hit a block and, if needed, update the state for blocks and player inventory */
-  private checkForBlockHits(player: Player) {
-    const nearbyBlocks = this.room.blockMap.getNearbyBlocks(player);
+  private stopDrill(player: Player) {
+    player.drillDirection = DRILL_DIRECTIONS.IDLE;
+    player.drillTargetCol = -1;
+    player.drillTargetRow = -1;
+  }
 
-    for (const block of nearbyBlocks) {
-      if (
-        !player.blocksHit.includes(block.id) &&
-        player.attackDamageFrameX &&
-        player.attackDamageFrameY &&
-        checkAABBCollision(
-          {
-            x: block.x,
-            y: block.y,
-            ...BLOCK_SIZE,
-          },
-          {
-            x: player.attackDamageFrameX,
-            y: player.attackDamageFrameY,
-            ...ATTACK_SIZE,
-          }
-        )
-      ) {
-        player.blocksHit.push(block.id);
+  /** Record drill intent and start cooldown, but don't deal damage yet */
+  private startDrill(player: Player, direction: DRILL_DIRECTION, currentTime: number) {
+    // only allow drilling if the player is grounded
+    if (!player.isGrounded) return;
 
-        block.hp--;
-        if (block.hp <= 0) {
-          if (block.type === 'iron' || block.type === 'gold') {
-            player.inventory[block.type]++;
-          }
-          this.room.blockMap.deleteBlock(block.id);
+    const { col, row } = this.getTargetCell(player, direction);
+    const block = this.room.blockMap.getBlock(col, row);
+    if (!block) return;
+
+    player.lastDrillTime = currentTime;
+    player.drillDirection = direction;
+    player.drillTargetCol = col;
+    player.drillTargetRow = row;
+  }
+
+  /** Apply damage after cooldown completes */
+  private completeDrill(player: Player) {
+    const block = this.room.blockMap.getBlock(player.drillTargetCol, player.drillTargetRow);
+    if (block) {
+      block.hp--;
+      if (block.hp <= 0) {
+        if (block.type === 'iron' || block.type === 'gold') {
+          player.inventory[block.type]++;
         }
+        this.room.blockMap.deleteBlock(block.id);
       }
     }
+
+    player.drillTargetCol = -1;
+    player.drillTargetRow = -1;
+  }
+
+  private getTargetCell(player: Player, direction: DRILL_DIRECTION) {
+    let col = Math.floor(player.x / BLOCK_SIZE.width);
+    let row = Math.floor(player.y / BLOCK_SIZE.height);
+
+    if (direction === DRILL_DIRECTIONS.DOWN && player.isGrounded) row++;
+    else if (direction === DRILL_DIRECTIONS.LEFT && player.isTouchingBlockLeft) col--;
+    else if (direction === DRILL_DIRECTIONS.RIGHT && player.isTouchingBlockRight) col++;
+
+    return { col, row };
   }
 }

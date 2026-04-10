@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PLAYER_MOVE_SPEED, PLAYER_SIZE, FIXED_TIME_STEP, MAP_SIZE } from '../src/constants';
+import { PLAYER_SIZE, FIXED_TIME_STEP, MAP_SIZE } from '../src/constants';
 
 describe('constants', () => {
   describe('world', () => {
@@ -26,11 +26,6 @@ describe('constants', () => {
   });
 
   describe('player', () => {
-    describe('PLAYER_MOVE_SPEED', () => {
-      it('should be a number', () => {
-        expect(typeof PLAYER_MOVE_SPEED).toBe('number');
-      });
-    });
     describe('PLAYER_SIZE', () => {
       it('should be an object', () => {
         expect(typeof PLAYER_SIZE).toBe('object');

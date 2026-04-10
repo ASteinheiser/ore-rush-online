@@ -1,6 +1,5 @@
-import type { Player as ServerPlayer } from '@repo/core-game';
+import type { Player as ServerPlayer, DRILL_DIRECTION } from '@repo/core-game';
 import { Player } from '../objects/Player';
-import { PunchBox } from '../objects/PunchBox';
 import type { Game } from '../scenes/Game';
 import type { RoomEventCallbacks } from './RoomSystem';
 
@@ -10,10 +9,11 @@ const MOVEMENT_THRESHOLD = 0.5;
 const LERP_SPEED = 15;
 
 interface RemotePlayer extends Player {
+  serverUsername?: string;
   serverX?: number;
   serverY?: number;
-  serverAttack?: boolean;
-  serverUsername?: string;
+  serverIsGrounded?: boolean;
+  serverDrillDirection?: DRILL_DIRECTION;
 }
 
 export class RemotePlayerSystem {
@@ -54,19 +54,13 @@ export class RemotePlayerSystem {
       remotePlayer.serverUsername = player.username;
       remotePlayer.serverX = player.x;
       remotePlayer.serverY = player.y;
-      remotePlayer.serverAttack = player.isAttacking;
+      remotePlayer.serverIsGrounded = player.isGrounded;
+      remotePlayer.serverDrillDirection = player.drillDirection;
 
       // if the player was not visible before, force move them (prevents weird interpolation)
       if (!remotePlayer.entity.visible || !remotePlayer.nameText.visible) {
         remotePlayer.forceMove({ x: player.x, y: player.y });
-        remotePlayer.entity.setFlipX(!player.isFacingRight);
       }
-
-      // #region FOR DEBUGGING PURPOSES
-      if (player.attackDamageFrameX !== undefined && player.attackDamageFrameY !== undefined) {
-        new PunchBox(this.scene, player.attackDamageFrameX, player.attackDamageFrameY, 0xff0000);
-      }
-      // #endregion FOR DEBUGGING PURPOSES
     }
 
     remotePlayer.entity.setVisible(inView);
@@ -80,31 +74,35 @@ export class RemotePlayerSystem {
 
       // interpolate all other player entities from the server
       const remotePlayer = this.playerEntities[sessionId];
-      const { serverX, serverY, serverAttack, serverUsername } = remotePlayer;
-      if (!remotePlayer.entity.visible || !serverUsername || serverX === undefined || serverY === undefined) {
+      const { serverX, serverY, serverUsername, serverDrillDirection, serverIsGrounded } = remotePlayer;
+      if (
+        !remotePlayer.entity.visible ||
+        !serverUsername ||
+        serverX === undefined ||
+        serverY === undefined ||
+        serverIsGrounded === undefined ||
+        !serverDrillDirection
+      ) {
         continue; // skip player if not visible
       }
 
       remotePlayer.nameText.setText(serverUsername);
-
-      if (serverAttack) {
-        remotePlayer.punch();
-      } else {
-        remotePlayer.stopPunch();
-      }
+      remotePlayer.setDrillDirection(serverDrillDirection);
 
       const isMovingX = Math.abs(remotePlayer.entity.x - serverX) > MOVEMENT_THRESHOLD;
       const isMovingY = Math.abs(remotePlayer.entity.y - serverY) > MOVEMENT_THRESHOLD;
       const isMoving = isMovingX || isMovingY;
 
       const alpha = Math.min(1, (LERP_SPEED * delta) / 1000);
-      remotePlayer.move(
-        {
-          x: Phaser.Math.Linear(remotePlayer.entity.x, serverX, alpha),
-          y: Phaser.Math.Linear(remotePlayer.entity.y, serverY, alpha),
-        },
-        { delta, isMoving, isMovingX, isMovingY }
-      );
+      remotePlayer.move({
+        x: Phaser.Math.Linear(remotePlayer.entity.x, serverX, alpha),
+        y: Phaser.Math.Linear(remotePlayer.entity.y, serverY, alpha),
+        delta,
+        isMoving,
+        isMovingX,
+        isMovingY,
+        isGrounded: serverIsGrounded,
+      });
     }
   }
 }
