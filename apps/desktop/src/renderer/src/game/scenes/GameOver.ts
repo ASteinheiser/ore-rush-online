@@ -1,3 +1,4 @@
+import * as Phaser from 'phaser';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { CustomText } from '../objects/CustomText';
 import { ASSET, SCENE } from '../constants';

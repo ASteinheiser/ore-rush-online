@@ -1,3 +1,4 @@
+import * as Phaser from 'phaser';
 import { PLAYER_FRAME_RATE, PLAYER_SIZE } from '@repo/core-game';
 import player from '../../assets/ship-sprite.png';
 import punch from '../../assets/punch.mp3';

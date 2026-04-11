@@ -1,3 +1,4 @@
+import * as Phaser from 'phaser';
 import type { Player as ServerPlayer, DRILL_DIRECTION } from '@repo/core-game';
 import { Player } from '../objects/Player';
 import type { Game } from '../scenes/Game';

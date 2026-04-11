@@ -1,3 +1,4 @@
+import * as Phaser from 'phaser';
 import { MAP_SIZE, type Inventory } from '@repo/core-game';
 import { CustomText } from '../objects/CustomText';
 import { FogOverlay } from '../objects/FogOverlay';

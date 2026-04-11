@@ -1,3 +1,4 @@
+import * as Phaser from 'phaser';
 import { BLOCK_SIZE, BLOCK_TYPES, type BLOCK_TYPE } from '@repo/core-game';
 
 const DIRT_COLOR = 0x8b4513;

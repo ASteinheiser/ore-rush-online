@@ -1,3 +1,4 @@
+import type * as Phaser from 'phaser';
 import { type EntityPosition, MAP_SIZE, PLAYER_VIEW_RADIUS } from '@repo/core-game';
 
 export class FogOverlay {

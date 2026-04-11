@@ -1,3 +1,4 @@
+import * as Phaser from 'phaser';
 import { FIXED_TIME_STEP, type AuthPayload } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { SCENE } from '../constants';
