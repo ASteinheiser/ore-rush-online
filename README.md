@@ -268,6 +268,25 @@ The cheapest Droplet was having issues with available memory given the number of
 
 **NOTE:** When trying to run 100 players in a room, you will get a buffer overflow at ~25 players now.
 
+### v0.0.3 Snapshot
+
+This snapshot was created on `2026-04-10`. All tests were run for 3 minutes against the 2nd cheapest DigitalOcean Droplet:
+- 1GB RAM
+- 1 vCPU
+- 10GB SSD
+- Ubuntu 24.04 LTS
+- US West - San Francisco
+
+| Room Size | Players | CPU Peak | Memory Peak |
+|---------|-----------|----------|-------------|
+| - | - (idle) | 2% | 51% (145 mb) |
+| 10 | 10 | 14% | 51% (173 mb) |
+| 10 | 30 | 33% | 53% (210 mb) |
+| 10 | 100 | 73% | 62% (289 mb) |
+| 10 | 200 | 94% | 73% (385 mb) |
+
+**NOTE:** With 200 players on the server at once, I was seeing my ping fluctuate between 40-90ms
+
 ## Available Commands
 
 | Command | Description |
