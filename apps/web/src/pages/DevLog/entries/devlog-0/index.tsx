@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { DevLogEntry } from '../../../components/DevLogEntry';
+import { DevLogEntry } from '../../../../components/DevLogEntry';
 
 export const DevLogEntry0 = () => {
   return (
