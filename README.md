@@ -287,6 +287,21 @@ This snapshot was created on `2026-04-10`. All tests were run for 3 minutes agai
 
 **NOTE:** With 200 players on the server at once, I was seeing my ping fluctuate between 40-90ms
 
+### v0.0.4 Snapshot
+
+This snapshot was created on `2026-04-19`. All tests were run for 3 minutes against the 2nd cheapest DigitalOcean Droplet:
+- 1GB RAM
+- 1 vCPU
+- 10GB SSD
+- Ubuntu 24.04 LTS
+- US West - San Francisco
+
+| Room Size | Players | CPU Peak | Memory Peak |
+|---------|-----------|----------|-------------|
+| - | - (idle) | 1% | 47% (160 mb) |
+| 10 | 100 | 76% | 60% (267 mb) |
+| 10 | 200 | 94% | 67% (344 mb) |
+
 ## Available Commands
 
 | Command | Description |
