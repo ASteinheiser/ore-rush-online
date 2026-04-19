@@ -8,11 +8,9 @@ export default defineConfig({
     target: 'node22',
     sourcemap: true,
     rolldownOptions: {
-      output: { format: 'esm' },
       external: [
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
-        '@colyseus/bun-websockets',
         '@pm2/io',
         'bufferutil',
         'utf-8-validate',

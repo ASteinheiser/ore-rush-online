@@ -28,9 +28,6 @@ export async function main(options: Options) {
   const room = await client.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM);
   console.log('joined room successfully!');
 
-  // add this listener otherwise colyseus will show a warning
-  room.onMessage(WS_EVENT.PLAYGROUND_MESSAGE_TYPES, () => {});
-
   room.onStateChange((state) => {
     const player = state.players.get(room.sessionId)!;
 
