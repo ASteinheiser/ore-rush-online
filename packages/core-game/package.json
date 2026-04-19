@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "postinstall": "npm run build",
+    "postinstall": "pnpm build",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "test": "vitest",
