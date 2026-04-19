@@ -5,8 +5,6 @@ export * from './world';
 /** The routes for the API server */
 export const API_ROUTES = {
   GRAPHQL: '/graphql',
-  MONITOR: '/monitor',
-  PLAYGROUND: '/',
 } as const;
 /** The websocket rooms available */
 export const WS_ROOM = {
@@ -19,8 +17,6 @@ export const WS_EVENT = {
   LEAVE_ROOM: 'leaveRoom',
   PLAYER_INPUT: 'playerInput',
   REFRESH_TOKEN: 'refreshToken',
-  /** This comes from Colyseus, register this to handle playground messages */
-  PLAYGROUND_MESSAGE_TYPES: '__playground_message_types',
 } as const;
 /** The websocket message codes available */
 export const WS_CODE = {

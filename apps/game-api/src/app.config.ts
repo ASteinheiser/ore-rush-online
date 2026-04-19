@@ -1,7 +1,5 @@
 import { defineServer, defineRoom } from 'colyseus';
 import { WebSocketTransport } from '@colyseus/ws-transport';
-import { monitor } from '@colyseus/monitor';
-import { playground } from '@colyseus/playground';
 import { expressMiddleware } from '@as-integrations/express5';
 import express from 'express';
 import cors from 'cors';
@@ -11,8 +9,6 @@ import { server as GQLServer } from './graphql';
 import { GameRoom } from './rooms/GameRoom';
 import { createContext } from './graphql/context';
 import type { PrismaClient } from './repo/prisma-client/client';
-
-const isProduction = process.env.NODE_ENV === 'production';
 
 interface MakeAppArgs {
   authClient: GoTrueAdminApi;
@@ -49,21 +45,6 @@ export const makeApp = ({
           },
         })
       );
-
-      /**
-       * Use @colyseus/playground
-       * (It is not recommended to expose this route in a production environment)
-       */
-      if (!isProduction) {
-        app.use(API_ROUTES.PLAYGROUND, playground());
-
-        /**
-         * Use @colyseus/monitor
-         * In production, it is recommended to protect this route with a password
-         * Read more: https://docs.colyseus.io/tools/monitor/#restrict-access-to-the-panel-using-a-password
-         */
-        app.use(API_ROUTES.MONITOR, monitor());
-      }
     },
 
     beforeListen: () => {

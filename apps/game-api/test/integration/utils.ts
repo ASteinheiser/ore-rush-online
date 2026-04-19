@@ -2,7 +2,7 @@ import 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import type { ColyseusTestServer } from '@colyseus/testing';
 import type { GraphQLResponse } from '@apollo/server';
-import { WS_ROOM, WS_EVENT, type GameRoomState } from '@repo/core-game';
+import { WS_ROOM, type GameRoomState } from '@repo/core-game';
 import type { PrismaClient } from '../../src/repo/prisma-client/client';
 import type { DecodedToken, User } from '../../src/auth/jwt';
 
@@ -61,9 +61,6 @@ export const joinTestRoom = async ({ server, token }: JoinTestRoomArgs) => {
   server.sdk.auth.token = token;
   const client = await server.sdk.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM);
 
-  // register onMessage handler otherwise colyseus throws a warning
-  client.onMessage(WS_EVENT.PLAYGROUND_MESSAGE_TYPES, () => {});
-
   return client;
 };
 
@@ -74,9 +71,6 @@ interface ReconnectTestRoomArgs {
 /** reconnect to a room on a test server */
 export const reconnectTestRoom = async ({ server, reconnectionToken }: ReconnectTestRoomArgs) => {
   const client = await server.sdk.reconnect(reconnectionToken);
-
-  // register onMessage handler otherwise colyseus throws a warning
-  client.onMessage(WS_EVENT.PLAYGROUND_MESSAGE_TYPES, () => {});
 
   return client;
 };
