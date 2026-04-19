@@ -1,5 +1,4 @@
 import { Schema, type, view } from '@colyseus/schema';
-import { BLOCK_TYPES } from '../constants/block';
 import { type InputPayload, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '../constants/player';
 
 /** adding a player to the view without a view level will only show the username */
@@ -9,8 +8,8 @@ export const PLAYER_VIEW_LEVELS = {
 } as const;
 
 export class Inventory extends Schema {
-  @type('number') [BLOCK_TYPES.IRON]: number = 0;
-  @type('number') [BLOCK_TYPES.GOLD]: number = 0;
+  @type('number') iron: number = 0;
+  @type('number') gold: number = 0;
 }
 
 export class Player extends Schema {
