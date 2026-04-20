@@ -8,8 +8,9 @@ export const PLAYER_VIEW_LEVELS = {
 } as const;
 
 export class Inventory extends Schema {
+  @type('number') coal: number = 0;
   @type('number') iron: number = 0;
-  @type('number') gold: number = 0;
+  @type('number') copper: number = 0;
 }
 
 export class Player extends Schema {

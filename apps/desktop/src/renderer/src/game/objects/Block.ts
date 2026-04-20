@@ -2,8 +2,9 @@ import * as Phaser from 'phaser';
 import { BLOCK_SIZE, BLOCK_TYPES, type BLOCK_TYPE } from '@repo/core-game';
 
 const DIRT_COLOR = 0x8b4513;
+const COAL_COLOR = 0x1c1c1c;
 const IRON_COLOR = 0xa19d94;
-const GOLD_COLOR = 0xffd700;
+const COPPER_COLOR = 0xcd7f32;
 
 const CRACK_COLOR = 0x1a1a1a;
 const MAX_CRACKS = 12;
@@ -53,11 +54,14 @@ export class Block {
     this.ore.clear();
 
     switch (type) {
+      case BLOCK_TYPES.COAL:
+        this.drawOre(COAL_COLOR);
+        break;
       case BLOCK_TYPES.IRON:
         this.drawOre(IRON_COLOR);
         break;
-      case BLOCK_TYPES.GOLD:
-        this.drawOre(GOLD_COLOR);
+      case BLOCK_TYPES.COPPER:
+        this.drawOre(COPPER_COLOR);
         break;
     }
   }

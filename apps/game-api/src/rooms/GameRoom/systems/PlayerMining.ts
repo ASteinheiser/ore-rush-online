@@ -1,5 +1,6 @@
 import {
   BLOCK_SIZE,
+  BLOCK_TYPES,
   DRILL_COOLDOWN,
   DRILL_DIRECTIONS,
   type DRILL_DIRECTION,
@@ -80,7 +81,11 @@ export class PlayerMining {
     if (block) {
       block.hp--;
       if (block.hp <= 0) {
-        if (block.type === 'iron' || block.type === 'gold') {
+        if (
+          block.type === BLOCK_TYPES.COAL ||
+          block.type === BLOCK_TYPES.IRON ||
+          block.type === BLOCK_TYPES.COPPER
+        ) {
           player.inventory[block.type]++;
         }
         this.room.blockMap.deleteBlock(block.id);

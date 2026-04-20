@@ -165,12 +165,12 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       const room = getRoom(client.roomId);
       room.state.players.get(client.sessionId)!.inventory.iron = 100;
-      room.state.players.get(client.sessionId)!.inventory.gold = 50;
+      room.state.players.get(client.sessionId)!.inventory.copper = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
       expect(oldPlayer.inventory.iron).toBe(100);
-      expect(oldPlayer.inventory.gold).toBe(50);
+      expect(oldPlayer.inventory.copper).toBe(50);
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       await client.leave(false);
@@ -232,12 +232,12 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const room = getRoom(client.roomId);
 
       room.state.players.get(client.sessionId)!.inventory.iron = 100;
-      room.state.players.get(client.sessionId)!.inventory.gold = 50;
+      room.state.players.get(client.sessionId)!.inventory.copper = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
       expect(oldPlayer.inventory.iron).toBe(100);
-      expect(oldPlayer.inventory.gold).toBe(50);
+      expect(oldPlayer.inventory.copper).toBe(50);
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       const newClient = await joinTestRoom({ server, token: generateTestJWT({}) });
@@ -264,13 +264,13 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       orphanedPlayer.userId = TEST_USERS[1].id;
       orphanedPlayer.username = TEST_USERS[1].userName;
       orphanedPlayer.inventory.iron = 100;
-      orphanedPlayer.inventory.gold = 50;
+      orphanedPlayer.inventory.copper = 50;
       room.state.players.set(badSessionId, orphanedPlayer);
 
       const playerSnapshot = getPlayerSnapshot(room, badSessionId);
 
       expect(playerSnapshot.inventory.iron).toBe(100);
-      expect(playerSnapshot.inventory.gold).toBe(50);
+      expect(playerSnapshot.inventory.copper).toBe(50);
       assertExtraPlayerState({
         room,
         clientIds: [keepAliveClient.sessionId],
@@ -313,7 +313,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const room = getRoom(client.roomId);
 
       room.state.players.get(client.sessionId)!.inventory.iron = 100;
-      room.state.players.get(client.sessionId)!.inventory.gold = 50;
+      room.state.players.get(client.sessionId)!.inventory.copper = 50;
 
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
@@ -323,7 +323,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       expect(typeof oldPlayer.x).toBe('number');
       expect(typeof oldPlayer.y).toBe('number');
       expect(oldPlayer.inventory.iron).toBe(100);
-      expect(oldPlayer.inventory.gold).toBe(50);
+      expect(oldPlayer.inventory.copper).toBe(50);
 
       client.send(WS_EVENT.PLAYER_INPUT, {
         seq: 0,
@@ -633,7 +633,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       block.maxHp = 1;
       const blockId = block.id;
       const ironBefore = player.inventory.iron;
-      const goldBefore = player.inventory.gold;
+      const copperBefore = player.inventory.copper;
 
       // start drill
       client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
@@ -649,7 +649,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       expect(room.state.blocks.get(blockId)).toBe(undefined);
       // dirt does not add to inventory
       expect(player.inventory.iron).toBe(ironBefore);
-      expect(player.inventory.gold).toBe(goldBefore);
+      expect(player.inventory.copper).toBe(copperBefore);
     });
 
     it('should destroy an iron block and add iron to inventory', async () => {
@@ -664,7 +664,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       block.hp = 1;
       block.maxHp = 1;
       const ironBefore = player.inventory.iron;
-      const goldBefore = player.inventory.gold;
+      const copperBefore = player.inventory.copper;
 
       client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
       await waitForConnectionCheck();
@@ -675,10 +675,10 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       await waitForConnectionCheck();
 
       expect(player.inventory.iron).toBe(ironBefore + 1);
-      expect(player.inventory.gold).toBe(goldBefore);
+      expect(player.inventory.copper).toBe(copperBefore);
     });
 
-    it('should destroy a gold block and add gold to inventory', async () => {
+    it('should destroy a copper block and add copper to inventory', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
       const blockColumn = 9;
@@ -686,11 +686,11 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       const block = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS)!;
       expect(block).toBeTruthy();
-      block.type = BLOCK_TYPES.GOLD;
+      block.type = BLOCK_TYPES.COPPER;
       block.hp = 1;
       block.maxHp = 1;
       const ironBefore = player.inventory.iron;
-      const goldBefore = player.inventory.gold;
+      const copperBefore = player.inventory.copper;
 
       client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
       await waitForConnectionCheck();
@@ -701,7 +701,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       await waitForConnectionCheck();
 
       expect(player.inventory.iron).toBe(ironBefore);
-      expect(player.inventory.gold).toBe(goldBefore + 1);
+      expect(player.inventory.copper).toBe(copperBefore + 1);
     });
 
     it('should stop drilling when the player releases the input', async () => {
@@ -965,7 +965,7 @@ interface PlayerSnapshot {
   velocityY: number;
   inventory: {
     iron: number;
-    gold: number;
+    copper: number;
   };
   lastActivityTime: number;
 }
@@ -980,7 +980,7 @@ const getPlayerSnapshot = (room: GameRoom, playerId: string): PlayerSnapshot => 
     velocityY: p.velocityY,
     inventory: {
       iron: p.inventory.iron,
-      gold: p.inventory.gold,
+      copper: p.inventory.copper,
     },
     lastActivityTime: p.lastActivityTime,
   };
@@ -1000,7 +1000,7 @@ const assertPlayerFieldsState = ({ room, playerId, expectedPlayer }: AssertPlaye
   expect(actualPlayer.userId).toBe(expectedPlayer.userId);
   expect(actualPlayer.username).toBe(expectedPlayer.username);
   expect(actualPlayer.inventory.iron).toBe(expectedPlayer.inventory.iron);
-  expect(actualPlayer.inventory.gold).toBe(expectedPlayer.inventory.gold);
+  expect(actualPlayer.inventory.copper).toBe(expectedPlayer.inventory.copper);
   // ensure that the new player state is not simply a reference to the old player state
   // by checking that the lastActivityTime is updated, since all joins/reconnects should update this
   expect(actualPlayer.lastActivityTime > expectedPlayer.lastActivityTime).toBe(true);

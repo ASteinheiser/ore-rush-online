@@ -14,8 +14,9 @@ export class UISystem {
   private mapBorder: Phaser.GameObjects.Rectangle;
   private mapBackground: Phaser.GameObjects.Image;
   private leaveText: CustomText;
+  private coalCountText: CustomText;
   private ironCountText: CustomText;
-  private goldCountText: CustomText;
+  private copperCountText: CustomText;
 
   constructor(private scene: Game) {
     // set the camera bounds to the map size
@@ -41,12 +42,17 @@ export class UISystem {
       fontSize: 20,
     }).setScrollFactor(0);
 
+    this.coalCountText = new CustomText(this.scene, 0, 0, 'Coal: 0', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+    }).setScrollFactor(0);
+
     this.ironCountText = new CustomText(this.scene, 0, 0, 'Iron: 0', {
       fontFamily: 'Tiny5',
       fontSize: 20,
     }).setScrollFactor(0);
 
-    this.goldCountText = new CustomText(this.scene, 0, 0, 'Gold: 0', {
+    this.copperCountText = new CustomText(this.scene, 0, 0, 'Copper: 0', {
       fontFamily: 'Tiny5',
       fontSize: 20,
     }).setScrollFactor(0);
@@ -54,8 +60,9 @@ export class UISystem {
     const layout = () => {
       const { width } = this.scene.scale;
       this.leaveText?.setPosition((width - this.leaveText.width) / 2, 20);
-      this.ironCountText?.setPosition(20, 20);
-      this.goldCountText?.setPosition(20, 40);
+      this.coalCountText?.setPosition(20, 20);
+      this.ironCountText?.setPosition(20, 40);
+      this.copperCountText?.setPosition(20, 60);
     };
 
     layout();
@@ -76,12 +83,14 @@ export class UISystem {
     this.mapBorder.destroy();
     this.mapBackground.destroy();
     this.leaveText.destroy();
+    this.coalCountText.destroy();
     this.ironCountText.destroy();
-    this.goldCountText.destroy();
+    this.copperCountText.destroy();
   }
 
   public updateInventory(inventory: Inventory) {
+    this.coalCountText.setText(`Coal: ${inventory.coal}`);
     this.ironCountText.setText(`Iron: ${inventory.iron}`);
-    this.goldCountText.setText(`Gold: ${inventory.gold}`);
+    this.copperCountText.setText(`Copper: ${inventory.copper}`);
   }
 }
