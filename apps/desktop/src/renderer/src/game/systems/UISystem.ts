@@ -17,6 +17,7 @@ export class UISystem {
   private coalCountText: CustomText;
   private ironCountText: CustomText;
   private copperCountText: CustomText;
+  private playerSignalsText: CustomText;
 
   constructor(private scene: Game) {
     // set the camera bounds to the map size
@@ -57,12 +58,21 @@ export class UISystem {
       fontSize: 20,
     }).setScrollFactor(0);
 
+    this.playerSignalsText = new CustomText(this.scene, 0, 0, 'no signals detected', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+      align: 'right',
+    })
+      .setOrigin(1, 0)
+      .setScrollFactor(0);
+
     const layout = () => {
       const { width } = this.scene.scale;
       this.leaveText?.setPosition((width - this.leaveText.width) / 2, 20);
       this.coalCountText?.setPosition(20, 20);
       this.ironCountText?.setPosition(20, 40);
       this.copperCountText?.setPosition(20, 60);
+      this.playerSignalsText?.setPosition(width - 16, 100);
     };
 
     layout();
@@ -86,11 +96,21 @@ export class UISystem {
     this.coalCountText.destroy();
     this.ironCountText.destroy();
     this.copperCountText.destroy();
+    this.playerSignalsText.destroy();
   }
 
   public updateInventory(inventory: Inventory) {
     this.coalCountText.setText(`Coal: ${inventory.coal}`);
     this.ironCountText.setText(`Iron: ${inventory.iron}`);
     this.copperCountText.setText(`Copper: ${inventory.copper}`);
+  }
+
+  public updatePlayerSignals(usernames: string[]) {
+    if (usernames.length === 0) {
+      this.playerSignalsText.setText(['no signals detected', 'you are alone...']);
+      return;
+    }
+
+    this.playerSignalsText.setText(['active signals:', ...usernames]);
   }
 }

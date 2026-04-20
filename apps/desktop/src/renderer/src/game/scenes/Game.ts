@@ -50,8 +50,12 @@ export class Game extends Phaser.Scene {
           this.uiSystem?.updateInventory(inventory)
         );
         this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId, $);
+        this.updatePlayerSignals();
       },
-      onPlayerRemoved: this.remotePlayerSystem.handleRemotePlayerRemoved,
+      onPlayerRemoved: (sessionId) => {
+        this.remotePlayerSystem.handleRemotePlayerRemoved(sessionId);
+        this.updatePlayerSignals();
+      },
       onBlockAdded: this.blockSystem.handleBlockAdded,
       onBlockRemoved: this.blockSystem.handleBlockRemoved,
     });
@@ -101,5 +105,18 @@ export class Game extends Phaser.Scene {
     this.roomSystem.cleanupRoom();
     this.cleanupScene();
     this.scene.start(SCENE.GAME_OVER);
+  }
+
+  private updatePlayerSignals() {
+    const room = this.roomSystem.room;
+    if (!room || !this.uiSystem) return;
+
+    const usernames: string[] = [];
+    room.state.players.forEach((player, sessionId) => {
+      if (sessionId === room.sessionId) return;
+      usernames.push(player.username);
+    });
+
+    this.uiSystem.updatePlayerSignals(usernames);
   }
 }
