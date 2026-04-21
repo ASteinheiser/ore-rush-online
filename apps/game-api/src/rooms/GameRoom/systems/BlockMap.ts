@@ -127,13 +127,13 @@ export class BlockMap {
       block.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
 
       const randomBlockTypeSeed = Math.random();
-      if (randomBlockTypeSeed < 0.55) {
+      if (randomBlockTypeSeed < 0.7) {
         block.type = BLOCK_TYPES.DIRT;
         block.maxHp = 2;
-      } else if (randomBlockTypeSeed < 0.75) {
+      } else if (randomBlockTypeSeed < 0.85) {
         block.type = BLOCK_TYPES.COAL;
         block.maxHp = 3;
-      } else if (randomBlockTypeSeed < 0.9) {
+      } else if (randomBlockTypeSeed < 0.95) {
         block.type = BLOCK_TYPES.IRON;
         block.maxHp = 3;
       } else {
