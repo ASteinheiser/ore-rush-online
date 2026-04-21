@@ -50,7 +50,7 @@ export class UISystem {
       fontSize: 20,
     }).setScrollFactor(0);
 
-    this.capacityText = new CustomText(this.scene, 0, 0, 'Capacity: -%', {
+    this.capacityText = new CustomText(this.scene, 0, 0, 'Weight: -%', {
       fontFamily: 'Tiny5',
       fontSize: 20,
     }).setScrollFactor(0);
@@ -118,14 +118,31 @@ export class UISystem {
   public updateInventory(inventory: Inventory) {
     const usedCapacity = inventory.coal + inventory.iron + inventory.copper;
     const capacityPercent = calculatePercentage(usedCapacity, inventory.capacity);
-    this.capacityText.setText(`Capacity: ${capacityPercent}%`);
+    if (capacityPercent > 70) {
+      this.capacityText.setColor('#ef4444');
+    } else if (capacityPercent > 30) {
+      this.capacityText.setColor('#eab308');
+    } else {
+      this.capacityText.setColor('#22c55e');
+    }
+
+    this.capacityText.setText(`Weight: ${capacityPercent}%`);
     this.coalCountText.setText(`Coal: ${inventory.coal}`);
     this.ironCountText.setText(`Iron: ${inventory.iron}`);
     this.copperCountText.setText(`Copper: ${inventory.copper}`);
   }
 
   public updateFuel(current: number, total: number) {
-    this.fuelText.setText(`Fuel: ${calculatePercentage(current, total)}%`);
+    const fuelPercent = calculatePercentage(current, total);
+    if (fuelPercent > 70) {
+      this.fuelText.setColor('#22c55e');
+    } else if (fuelPercent > 30) {
+      this.fuelText.setColor('#eab308');
+    } else {
+      this.fuelText.setColor('#ef4444');
+    }
+
+    this.fuelText.setText(`Fuel: ${fuelPercent}%`);
   }
 
   public updateRemotePlayerList() {
