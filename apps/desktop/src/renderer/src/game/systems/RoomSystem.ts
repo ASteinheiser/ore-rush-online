@@ -7,7 +7,6 @@ import {
   type GameRoomState,
   type Player as ServerPlayer,
   type Block as ServerBlock,
-  type Inventory,
 } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import type { Game } from '../scenes/Game';
@@ -31,7 +30,7 @@ export interface RoomEventCallbacks {
     player: ServerPlayer,
     sessionId: string,
     $: ServerCallback,
-    updateInventory?: (inventory: Inventory) => void
+    onPlayerUpdated?: (player: ServerPlayer) => void
   ) => void;
   onPlayerRemoved: (sessionId: string) => void;
   onBlockAdded: (block: ServerBlock, $: ServerCallback) => void;

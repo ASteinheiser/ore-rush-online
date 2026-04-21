@@ -114,7 +114,7 @@ export class PlayerSystem {
     player,
     sessionId,
     $,
-    updateInventory
+    onPlayerUpdated
   ) => {
     // skip remote players, only handle the current player here
     if (sessionId !== this.scene.roomSystem.room?.sessionId) return;
@@ -128,7 +128,7 @@ export class PlayerSystem {
     this.currentPlayer.createDebugBox();
 
     $(player).onChange(() => {
-      updateInventory?.(player.inventory);
+      onPlayerUpdated?.(player);
       this.handleDebugFieldsUpdated(player);
       this.pendingReconciliation = player;
     });

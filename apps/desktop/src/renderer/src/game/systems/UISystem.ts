@@ -14,6 +14,8 @@ export class UISystem {
   private mapBorder: Phaser.GameObjects.Rectangle;
   private mapBackground: Phaser.GameObjects.Image;
   private leaveText: CustomText;
+  private fuelText: CustomText;
+  private capacityText: CustomText;
   private coalCountText: CustomText;
   private ironCountText: CustomText;
   private copperCountText: CustomText;
@@ -39,6 +41,16 @@ export class UISystem {
       .setDisplaySize(MAP_SIZE.width, MAP_SIZE.height);
 
     this.leaveText = new CustomText(this.scene, 0, 0, 'Press Shift to leave the game', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+    }).setScrollFactor(0);
+
+    this.fuelText = new CustomText(this.scene, 0, 0, 'Fuel: 0/0', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+    }).setScrollFactor(0);
+
+    this.capacityText = new CustomText(this.scene, 0, 0, 'Capacity: 0/0', {
       fontFamily: 'Tiny5',
       fontSize: 20,
     }).setScrollFactor(0);
@@ -69,9 +81,11 @@ export class UISystem {
     const layout = () => {
       const { width } = this.scene.scale;
       this.leaveText?.setPosition((width - this.leaveText.width) / 2, 20);
-      this.coalCountText?.setPosition(20, 20);
-      this.ironCountText?.setPosition(20, 40);
-      this.copperCountText?.setPosition(20, 60);
+      this.fuelText?.setPosition(20, 10);
+      this.capacityText?.setPosition(20, 30);
+      this.coalCountText?.setPosition(20, 60);
+      this.ironCountText?.setPosition(20, 80);
+      this.copperCountText?.setPosition(20, 100);
       this.playerSignalsText?.setPosition(width - 16, 100);
     };
 
@@ -93,6 +107,8 @@ export class UISystem {
     this.mapBorder.destroy();
     this.mapBackground.destroy();
     this.leaveText.destroy();
+    this.fuelText.destroy();
+    this.capacityText.destroy();
     this.coalCountText.destroy();
     this.ironCountText.destroy();
     this.copperCountText.destroy();
@@ -100,9 +116,15 @@ export class UISystem {
   }
 
   public updateInventory(inventory: Inventory) {
+    const usedCapacity = inventory.coal + inventory.iron + inventory.copper;
+    this.capacityText.setText(`Capacity: ${usedCapacity}/${inventory.capacity}`);
     this.coalCountText.setText(`Coal: ${inventory.coal}`);
     this.ironCountText.setText(`Iron: ${inventory.iron}`);
     this.copperCountText.setText(`Copper: ${inventory.copper}`);
+  }
+
+  public updateFuel(current: number, total: number) {
+    this.fuelText.setText(`Fuel: ${current}/${total}`);
   }
 
   public updatePlayerSignals(usernames: string[]) {
