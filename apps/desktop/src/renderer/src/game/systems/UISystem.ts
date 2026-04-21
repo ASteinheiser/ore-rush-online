@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { MAP_SIZE, type Inventory } from '@repo/core-game';
+import { calculatePercentage, MAP_SIZE, type Inventory } from '@repo/core-game';
 import { CustomText } from '../objects/CustomText';
 import { FogOverlay } from '../objects/FogOverlay';
 import { FpsDisplay } from '../objects/FpsDisplay';
@@ -45,12 +45,12 @@ export class UISystem {
       fontSize: 20,
     }).setScrollFactor(0);
 
-    this.fuelText = new CustomText(this.scene, 0, 0, 'Fuel: 0/0', {
+    this.fuelText = new CustomText(this.scene, 0, 0, 'Fuel: -%', {
       fontFamily: 'Tiny5',
       fontSize: 20,
     }).setScrollFactor(0);
 
-    this.capacityText = new CustomText(this.scene, 0, 0, 'Capacity: 0/0', {
+    this.capacityText = new CustomText(this.scene, 0, 0, 'Capacity: -%', {
       fontFamily: 'Tiny5',
       fontSize: 20,
     }).setScrollFactor(0);
@@ -117,14 +117,15 @@ export class UISystem {
 
   public updateInventory(inventory: Inventory) {
     const usedCapacity = inventory.coal + inventory.iron + inventory.copper;
-    this.capacityText.setText(`Capacity: ${usedCapacity}/${inventory.capacity}`);
+    const capacityPercent = calculatePercentage(usedCapacity, inventory.capacity);
+    this.capacityText.setText(`Capacity: ${capacityPercent}%`);
     this.coalCountText.setText(`Coal: ${inventory.coal}`);
     this.ironCountText.setText(`Iron: ${inventory.iron}`);
     this.copperCountText.setText(`Copper: ${inventory.copper}`);
   }
 
   public updateFuel(current: number, total: number) {
-    this.fuelText.setText(`Fuel: ${current}/${total}`);
+    this.fuelText.setText(`Fuel: ${calculatePercentage(current, total)}%`);
   }
 
   public updateRemotePlayerList() {
