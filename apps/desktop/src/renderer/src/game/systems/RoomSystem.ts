@@ -23,17 +23,13 @@ const RECONNECT_BACKOFF_MS = 1000;
 /** The timeout for the connection to be considered alive (in ms) */
 const CONNECTION_IS_ALIVE_TIMEOUT = 5000;
 
-type ServerCallback = ReturnType<typeof getStateCallbacks<GameRoomState>>;
 export interface RoomEventCallbacks {
   setupStateListeners: () => void;
-  onPlayerAdded: (
-    player: ServerPlayer,
-    sessionId: string,
-    $: ServerCallback,
-    onPlayerUpdated?: (player: ServerPlayer) => void
-  ) => void;
+  onPlayerAdded: (player: ServerPlayer, sessionId: string) => void;
+  onPlayerUpdated: (player: ServerPlayer, sessionId: string) => void;
   onPlayerRemoved: (sessionId: string) => void;
-  onBlockAdded: (block: ServerBlock, $: ServerCallback) => void;
+  onBlockAdded: (block: ServerBlock) => void;
+  onBlockUpdated: (block: ServerBlock) => void;
   onBlockRemoved: (block: ServerBlock) => void;
 }
 
@@ -131,7 +127,11 @@ export class RoomSystem {
     const $ = getStateCallbacks(this.room);
 
     $(this.room.state).players.onAdd((player, sessionId) => {
-      callbacks.onPlayerAdded(player, sessionId, $);
+      callbacks.onPlayerAdded(player, sessionId);
+
+      $(player).onChange(() => {
+        callbacks.onPlayerUpdated(player, sessionId);
+      });
     });
 
     $(this.room.state).players.onRemove((_, sessionId) => {
@@ -139,7 +139,11 @@ export class RoomSystem {
     });
 
     $(this.room.state).blocks.onAdd((block) => {
-      callbacks.onBlockAdded(block, $);
+      callbacks.onBlockAdded(block);
+
+      $(block).onChange(() => {
+        callbacks.onBlockUpdated(block);
+      });
     });
 
     $(this.room.state).blocks.onRemove((block) => {

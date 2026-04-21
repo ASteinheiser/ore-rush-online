@@ -45,19 +45,26 @@ export class Game extends Phaser.Scene {
 
     this.roomSystem.setupRoomEventListeners({
       setupStateListeners: () => this.setupStateListeners(),
-      onPlayerAdded: (player, sessionId, $) => {
-        this.playerSystem.handleCurrentPlayerAdded(player, sessionId, $, (p) => {
-          this.uiSystem?.updateInventory(p.inventory);
-          this.uiSystem?.updateFuel(p.fuelRemaining, p.fuelCapacity);
-        });
-        this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId, $);
-        this.updatePlayerSignals();
+      onPlayerAdded: (player, sessionId) => {
+        this.playerSystem.handleCurrentPlayerAdded(player, sessionId);
+        this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId);
+        this.uiSystem?.updateRemotePlayerList();
+      },
+      onPlayerUpdated: (player, sessionId) => {
+        this.playerSystem.handleCurrentPlayerUpdated(player, sessionId);
+        this.remotePlayerSystem.handleRemotePlayerUpdated(player, sessionId);
+        // update UI for the current player
+        if (sessionId === this.roomSystem.room?.sessionId) {
+          this.uiSystem?.updateInventory(player.inventory);
+          this.uiSystem?.updateFuel(player.fuelRemaining, player.fuelCapacity);
+        }
       },
       onPlayerRemoved: (sessionId) => {
         this.remotePlayerSystem.handleRemotePlayerRemoved(sessionId);
-        this.updatePlayerSignals();
+        this.uiSystem?.updateRemotePlayerList();
       },
       onBlockAdded: this.blockSystem.handleBlockAdded,
+      onBlockUpdated: this.blockSystem.handleBlockUpdated,
       onBlockRemoved: this.blockSystem.handleBlockRemoved,
     });
   }
@@ -106,18 +113,5 @@ export class Game extends Phaser.Scene {
     this.roomSystem.cleanupRoom();
     this.cleanupScene();
     this.scene.start(SCENE.GAME_OVER);
-  }
-
-  private updatePlayerSignals() {
-    const room = this.roomSystem.room;
-    if (!room || !this.uiSystem) return;
-
-    const usernames: string[] = [];
-    room.state.players.forEach((player, sessionId) => {
-      if (sessionId === room.sessionId) return;
-      usernames.push(player.username);
-    });
-
-    this.uiSystem.updatePlayerSignals(usernames);
   }
 }

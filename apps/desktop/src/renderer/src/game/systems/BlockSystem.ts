@@ -24,15 +24,19 @@ export class BlockSystem {
     return !!this.blocks[this.getBlockIndex(x, y)];
   }
 
-  public handleBlockAdded: RoomEventCallbacks['onBlockAdded'] = (block, $) => {
+  public handleBlockAdded: RoomEventCallbacks['onBlockAdded'] = (block) => {
     const entity = new Block(this.scene, block.x, block.y, block.type, block.hp, block.maxHp);
 
     const blockId = this.getBlockIndex(block.x, block.y);
     this.blocks[blockId] = entity;
+  };
 
-    $(block).onChange(() => {
-      entity.update(block.hp, block.maxHp, block.type);
-    });
+  public handleBlockUpdated: RoomEventCallbacks['onBlockUpdated'] = (block) => {
+    const blockId = this.getBlockIndex(block.x, block.y);
+    const foundBlock = this.blocks[blockId];
+    if (!foundBlock) return;
+
+    foundBlock.update(block.hp, block.maxHp, block.type);
   };
 
   public handleBlockRemoved: RoomEventCallbacks['onBlockRemoved'] = (block) => {

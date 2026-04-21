@@ -19,7 +19,7 @@ export class UISystem {
   private coalCountText: CustomText;
   private ironCountText: CustomText;
   private copperCountText: CustomText;
-  private playerSignalsText: CustomText;
+  private remotePlayerList: CustomText;
 
   constructor(private scene: Game) {
     // set the camera bounds to the map size
@@ -70,7 +70,7 @@ export class UISystem {
       fontSize: 20,
     }).setScrollFactor(0);
 
-    this.playerSignalsText = new CustomText(this.scene, 0, 0, 'no signals detected', {
+    this.remotePlayerList = new CustomText(this.scene, 0, 0, 'no signals detected', {
       fontFamily: 'Tiny5',
       fontSize: 20,
       align: 'right',
@@ -86,7 +86,7 @@ export class UISystem {
       this.coalCountText?.setPosition(20, 60);
       this.ironCountText?.setPosition(20, 80);
       this.copperCountText?.setPosition(20, 100);
-      this.playerSignalsText?.setPosition(width - 16, 100);
+      this.remotePlayerList?.setPosition(width - 16, 100);
     };
 
     layout();
@@ -112,7 +112,7 @@ export class UISystem {
     this.coalCountText.destroy();
     this.ironCountText.destroy();
     this.copperCountText.destroy();
-    this.playerSignalsText.destroy();
+    this.remotePlayerList.destroy();
   }
 
   public updateInventory(inventory: Inventory) {
@@ -127,12 +127,21 @@ export class UISystem {
     this.fuelText.setText(`Fuel: ${current}/${total}`);
   }
 
-  public updatePlayerSignals(usernames: string[]) {
+  public updateRemotePlayerList() {
+    const room = this.scene.roomSystem.room;
+    if (!room) return;
+
+    const usernames: string[] = [];
+    room.state.players.forEach((player, sessionId) => {
+      if (sessionId === room.sessionId) return;
+      usernames.push(player.username);
+    });
+
     if (usernames.length === 0) {
-      this.playerSignalsText.setText(['no signals detected', 'you are alone...']);
+      this.remotePlayerList.setText(['no signals detected', 'you are alone...']);
       return;
     }
 
-    this.playerSignalsText.setText(['active signals:', ...usernames]);
+    this.remotePlayerList.setText(['active signals:', ...usernames]);
   }
 }
