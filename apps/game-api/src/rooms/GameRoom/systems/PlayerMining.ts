@@ -96,9 +96,7 @@ export class PlayerMining {
       }
     }
 
-    player.drillTargetCol = -1;
-    player.drillTargetRow = -1;
-    player.drillDirection = DRILL_DIRECTIONS.IDLE;
+    this.stopDrill(player);
   }
 
   private getTargetCell(player: Player, direction: DRILL_DIRECTION) {
