@@ -28,6 +28,13 @@ export class PlayerInput {
     while ((input = player.inputQueue.shift())) {
       // acknowledge the input to the client (updates will be batched, so we can call this first)
       player.lastProcessedInputSeq = input.seq;
+      // disable inputs if the player has no fuel
+      if (player.fuelRemaining <= 0) {
+        input.left = false;
+        input.right = false;
+        input.up = false;
+        input.down = false;
+      }
       // allow the input to be processed by whatever systems
       processFunction(input);
     }

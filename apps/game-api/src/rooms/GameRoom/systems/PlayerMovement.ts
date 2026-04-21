@@ -56,7 +56,7 @@ export class PlayerMovement {
 
     // consume fuel if the player moved horizontally OR applied vertical thrust
     if (player.x !== newPosition.x || input.up) {
-      player.fuelRemaining -= PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT;
+      player.fuelRemaining = Math.max(0, player.fuelRemaining - PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT);
     }
 
     player.x = newPosition.x;

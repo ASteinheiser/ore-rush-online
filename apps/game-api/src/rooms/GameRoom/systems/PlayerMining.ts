@@ -78,9 +78,6 @@ export class PlayerMining {
 
   /** Apply damage after cooldown completes */
   private completeDrill(player: Player) {
-    // consume fuel once one "drill action" has completed
-    player.fuelRemaining -= PLAYER_FUEL_CONSUMPTION_RATE_DRILL;
-
     const block = this.room.blockMap.getBlock(player.drillTargetCol, player.drillTargetRow);
     if (block) {
       block.hp--;
@@ -90,11 +87,18 @@ export class PlayerMining {
           block.type === BLOCK_TYPES.IRON ||
           block.type === BLOCK_TYPES.COPPER
         ) {
-          player.inventory[block.type]++;
+          // If player inventory has capacity, add the block to the inventory. Otherwise, the ore will be "lost"
+          const usedCapacity = player.inventory.coal + player.inventory.iron + player.inventory.copper;
+          if (usedCapacity < player.inventory.capacity) {
+            player.inventory[block.type]++;
+          }
         }
         this.room.blockMap.deleteBlock(block.id);
       }
     }
+
+    // consume fuel once one "drill action" has completed
+    player.fuelRemaining = Math.max(0, player.fuelRemaining - PLAYER_FUEL_CONSUMPTION_RATE_DRILL);
 
     this.stopDrill(player);
   }

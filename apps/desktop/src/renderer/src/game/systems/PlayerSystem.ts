@@ -19,6 +19,7 @@ export class PlayerSystem {
   /** Used for client-side prediction of flight and drill animations */
   private velocityY = 0;
   private isGrounded = true;
+  private fuelRemaining = 0;
   /** The last input sequence acknowledged by the server */
   private serverAckSeq = 0;
   /** The inputs being predicted by the client */
@@ -39,10 +40,17 @@ export class PlayerSystem {
     // skip if no input payload or current player
     if (!inputPayload || !this.currentPlayer?.entity) return;
 
-    // store inputs to be processed by the server reconciliation
-    this.pendingInputs.push(inputPayload);
+    let { left, right, up, down } = inputPayload;
+    // disable inputs if the player has no fuel
+    if (this.fuelRemaining <= 0) {
+      left = false;
+      right = false;
+      up = false;
+      down = false;
+    }
 
-    const { left, right, up, down } = inputPayload;
+    // store inputs to be processed by the server reconciliation
+    this.pendingInputs.push({ ...inputPayload, left, right, up, down });
 
     this.previousPosition.x = this.currentPosition.x;
     this.previousPosition.y = this.currentPosition.y;
@@ -128,6 +136,7 @@ export class PlayerSystem {
     if (sessionId !== this.scene.roomSystem.room?.sessionId) return;
 
     this.handleDebugFieldsUpdated(player);
+    this.fuelRemaining = player.fuelRemaining;
     this.pendingReconciliation = player;
   };
 
