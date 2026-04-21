@@ -3,6 +3,7 @@ import {
   EMPTY_MAP_ROWS,
   BLOCK_SIZE,
   PLAYER_SIZE,
+  PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT,
   calculateMovement,
   type InputPayload,
   type Player,
@@ -52,6 +53,11 @@ export class PlayerMovement {
       right: input.right,
       up: input.up,
     });
+
+    // consume fuel if the player moved horizontally OR applied vertical thrust
+    if (player.x !== newPosition.x || input.up) {
+      player.fuelRemaining -= PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT;
+    }
 
     player.x = newPosition.x;
     player.y = newPosition.y;

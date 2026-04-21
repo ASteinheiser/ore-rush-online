@@ -1,6 +1,7 @@
 import {
   BLOCK_SIZE,
   BLOCK_TYPES,
+  PLAYER_FUEL_CONSUMPTION_RATE_DRILL,
   DRILL_COOLDOWN,
   DRILL_DIRECTIONS,
   type DRILL_DIRECTION,
@@ -25,7 +26,7 @@ export class PlayerMining {
     }
 
     // Cooldown just expired: apply damage, update inventory, etc.
-    if (this.isTargetUnchanged(player)) {
+    if (this.isTargetUnchanged(player) && player.drillDirection !== DRILL_DIRECTIONS.IDLE) {
       this.completeDrill(player);
     }
 
@@ -77,6 +78,9 @@ export class PlayerMining {
 
   /** Apply damage after cooldown completes */
   private completeDrill(player: Player) {
+    // consume fuel once one "drill action" has completed
+    player.fuelRemaining -= PLAYER_FUEL_CONSUMPTION_RATE_DRILL;
+
     const block = this.room.blockMap.getBlock(player.drillTargetCol, player.drillTargetRow);
     if (block) {
       block.hp--;

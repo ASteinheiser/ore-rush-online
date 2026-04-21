@@ -36,9 +36,9 @@ export type DRILL_DIRECTION = (typeof DRILL_DIRECTIONS)[keyof typeof DRILL_DIREC
 export const PLAYER_INVENTORY_CAPACITY = 50;
 
 /** The fuel capacity of the player in "units" */
-export const PLAYER_FUEL_CAPACITY = 1000;
+export const PLAYER_FUEL_CAPACITY = 10000;
 /** The fuel consumption rate of the player in "units" per movement action */
-export const PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT = 0.1;
+export const PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT = 1;
 /** The fuel consumption rate of the player in "units" per drill action */
 export const PLAYER_FUEL_CONSUMPTION_RATE_DRILL = 10;
 
