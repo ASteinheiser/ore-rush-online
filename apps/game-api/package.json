@@ -19,7 +19,7 @@
     "test:watch": "pnpm test:env vitest --watch --coverage",
     "test:load": "TERM=screen pnpm test:env tsx test/load/test.ts --numClients 3 --endpoint localhost:4204 --room",
     "test:load:prod": "TERM=screen NODE_ENV=production tsx test/load/test.ts --numClients 3 --endpoint api.ore-rush.online --room",
-    "dev": "tsx watch src/index.ts",
+    "dev": "vite",
     "build": "vite build && pnpm copy-files",
     "copy-files": "cp src/graphql/schema.graphql dist/schema.graphql",
     "start": "node dist/index.js",
@@ -58,7 +58,7 @@
   "dependencies": {
     "@apollo/server": "catalog:",
     "@as-integrations/express5": "^1.1.2",
-    "@colyseus/core": "^0.17.41",
+    "@colyseus/core": "^0.17.42",
     "@colyseus/schema": "catalog:",
     "@colyseus/tools": "^0.17.19",
     "@colyseus/ws-transport": "^0.17.13",
