@@ -40,8 +40,11 @@ export class Player extends Schema {
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') fuelRemaining: number = PLAYER_FUEL_CAPACITY;
   /** Latest input sequence processed by the server (used for client reconciliation) */
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') lastProcessedInputSeq: number = 0;
-  /** Input fields */
+  /** Server-side input fields */
+  lastProcessedInput?: InputPayload;
   inputQueue: Array<InputPayload> = [];
+  /** Highest `seq` the server has accepted from the client, used to reject duplicate/old/spoofed inputs */
+  lastReceivedSeq: number = -1;
   lastActivityTime: number = Date.now();
   lastDrillTime: number = 0;
   drillTargetCol: number = -1;
