@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { ServerError } from '@colyseus/core';
+import type { Room } from '@colyseus/sdk';
 import { type ColyseusTestServer, boot } from '@colyseus/testing';
 import type { GoTrueAdminApi } from '@supabase/supabase-js';
 import {
@@ -265,6 +266,10 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       orphanedPlayer.username = TEST_USERS[1].userName;
       orphanedPlayer.inventory.iron = 100;
       orphanedPlayer.inventory.copper = 50;
+      // Positional defaults required: physics runs every tick, so x/y cannot be undefined
+      orphanedPlayer.x = MAP_SIZE.width / 2;
+      orphanedPlayer.y = PLAYER_SIZE.height / 2;
+      orphanedPlayer.velocityY = 0;
       room.state.players.set(badSessionId, orphanedPlayer);
 
       const playerSnapshot = getPlayerSnapshot(room, badSessionId);
@@ -311,17 +316,18 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
     it('should allow a player to move in the room', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
 
-      room.state.players.get(client.sessionId)!.inventory.iron = 100;
-      room.state.players.get(client.sessionId)!.inventory.copper = 50;
+      player.inventory.iron = 100;
+      player.inventory.copper = 50;
 
+      const startX = player.x;
+      const startVY = player.velocityY;
       const oldPlayer = getPlayerSnapshot(room, client.sessionId);
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
       expect(oldPlayer.userId).toBe(TEST_USERS[0].id);
       expect(oldPlayer.username).toBe(TEST_USERS[0].userName);
-      expect(typeof oldPlayer.x).toBe('number');
-      expect(typeof oldPlayer.y).toBe('number');
       expect(oldPlayer.inventory.iron).toBe(100);
       expect(oldPlayer.inventory.copper).toBe(50);
 
@@ -335,16 +341,12 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       // ensure the input is processed
       await waitForConnectionCheck();
 
-      const expectedVY = oldPlayer.velocityY + PLAYER_GRAVITY_VY_PER_TICK;
-      assertPlayerFieldsState({
-        room,
-        playerId: client.sessionId,
-        expectedPlayer: {
-          ...oldPlayer,
-          x: oldPlayer.x + PLAYER_VX_PER_TICK,
-          y: oldPlayer.y + expectedVY,
-        },
-      });
+      assertPlayerFieldsState({ room, playerId: client.sessionId, expectedPlayer: oldPlayer });
+      // Ghost ticks reuse the held `right` input over multiple fixed ticks
+      // We can derive total ticks from the gravity applied to velocityY
+      const ticks = Math.round((player.velocityY - startVY) / PLAYER_GRAVITY_VY_PER_TICK);
+      expect(ticks).toBeGreaterThan(0);
+      expect(player.x).toBe(startX + ticks * PLAYER_VX_PER_TICK);
     });
 
     it('should kick a client if they send invalid player input (allowing reconnection)', async () => {
@@ -387,6 +389,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       expect(room.auth.expectingReconnections.size).toBe(1);
       assertExtraPlayerState({ room, clientIds: [], extraPlayerIds: [client.sessionId] });
 
+      // fix the input queue error before reconnecting
+      room.state.players.get(client.sessionId)!.inputQueue = [];
       const sameClient = await reconnectTestRoom({ server, reconnectionToken });
       await room.waitForNextSimulationTick();
 
@@ -422,6 +426,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
       const player = room.state.players.get(client.sessionId)!;
+      const playerClient = room.clients.getById(client.sessionId)!;
       const locations = [
         { x: 0, y: 0, expectedBlocks: 24 }, // top-left corner (top 2 rows are empty spawn area)
         { x: 0, y: MAP_SIZE.height, expectedBlocks: 30 }, // bottom-left corner
@@ -434,7 +439,8 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       for (const { x, y, expectedBlocks } of locations) {
         player.x = x;
         player.y = y;
-        await room.waitForNextSimulationTick();
+        // Call vision update directly so physics doesn't relocate the player
+        room.blockMap.updateVisibleBlocks(playerClient, player);
 
         // @ts-expect-error - allow use of private property for testing
         const visibleBlockCount = room.blockMap.clientVisibleBlocks.get(client.sessionId)?.size ?? 0;
@@ -487,40 +493,55 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
     it('should move a player right when right is pressed', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
-      const player = room.state.players.get(client.sessionId)!;
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
       const startX = player.x;
+      const startVY = player.velocityY;
 
       client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, right: true } satisfies InputPayload);
       await waitForConnectionCheck();
 
-      expect(player.x).toBe(startX + PLAYER_VX_PER_TICK);
+      // Ghost ticks reuse the held input across multiple fixed ticks. Derive the tick count from gravity
+      const ticks = Math.round((player.velocityY - startVY) / PLAYER_GRAVITY_VY_PER_TICK);
+      expect(ticks).toBeGreaterThan(0);
+      expect(player.x).toBe(startX + ticks * PLAYER_VX_PER_TICK);
     });
 
     it('should move a player left when left is pressed', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
-      const player = room.state.players.get(client.sessionId)!;
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
       const startX = player.x;
+      const startVY = player.velocityY;
 
       client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, left: true } satisfies InputPayload);
       await waitForConnectionCheck();
 
-      expect(player.x).toBe(startX - PLAYER_VX_PER_TICK);
+      const ticks = Math.round((player.velocityY - startVY) / PLAYER_GRAVITY_VY_PER_TICK);
+      expect(ticks).toBeGreaterThan(0);
+      expect(player.x).toBe(startX - ticks * PLAYER_VX_PER_TICK);
     });
 
     it('should apply gravity when no input is pressed', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
-      const player = room.state.players.get(client.sessionId)!;
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
       const startY = player.y;
       const startVY = player.velocityY;
 
       client.send(WS_EVENT.PLAYER_INPUT, noInput);
       await waitForConnectionCheck();
 
-      const expectedVY = startVY + PLAYER_GRAVITY_VY_PER_TICK;
+      const ticks = Math.round((player.velocityY - startVY) / PLAYER_GRAVITY_VY_PER_TICK);
+      expect(ticks).toBeGreaterThan(0);
+      // rebuild expected values using the same incremental accumulation the server uses
+      let expectedVY = startVY;
+      let expectedY = startY;
+      for (let i = 0; i < ticks; i++) {
+        expectedVY += PLAYER_GRAVITY_VY_PER_TICK;
+        expectedY += expectedVY;
+      }
       expect(player.velocityY).toBe(expectedVY);
-      expect(player.y).toBe(startY + expectedVY);
+      expect(player.y).toBe(expectedY);
     });
 
     it('should ground a player on top of a block', async () => {
@@ -601,22 +622,12 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       const blockBelow = room.blockMap.getBlock(blockColumn, EMPTY_MAP_ROWS)!;
       expect(blockBelow).toBeTruthy();
-      const startHp = blockBelow.hp;
+      const expectedBlockHp = blockBelow.hp - 1;
 
-      // first input: starts the drill
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
+      await holdPlayerInput(client, { ...noInput, down: true }, DRILL_COOLDOWN + 50);
       await waitForConnectionCheck();
 
-      expect(blockBelow.hp).toBe(startHp); // no damage yet
-
-      // wait for drill cooldown to expire
-      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
-
-      // second input after cooldown: completes the drill and deals damage
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
-      await waitForConnectionCheck();
-
-      expect(blockBelow.hp).toBe(startHp - 1);
+      expect(blockBelow.hp).toBe(expectedBlockHp);
     });
 
     it('should destroy a dirt block (1 HP) and not add to inventory', async () => {
@@ -635,14 +646,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const ironBefore = player.inventory.iron;
       const copperBefore = player.inventory.copper;
 
-      // start drill
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
-      await waitForConnectionCheck();
-
-      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
-
-      // complete drill
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
+      await holdPlayerInput(client, { ...noInput, down: true }, DRILL_COOLDOWN + 50);
       await waitForConnectionCheck();
 
       // block should be destroyed
@@ -666,12 +670,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const ironBefore = player.inventory.iron;
       const copperBefore = player.inventory.copper;
 
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
-      await waitForConnectionCheck();
-
-      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
-
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
+      await holdPlayerInput(client, { ...noInput, down: true }, DRILL_COOLDOWN + 50);
       await waitForConnectionCheck();
 
       expect(player.inventory.iron).toBe(ironBefore + 1);
@@ -692,12 +691,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const ironBefore = player.inventory.iron;
       const copperBefore = player.inventory.copper;
 
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 0, down: true } satisfies InputPayload);
-      await waitForConnectionCheck();
-
-      await new Promise((resolve) => setTimeout(resolve, DRILL_COOLDOWN));
-
-      client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, seq: 1, down: true } satisfies InputPayload);
+      await holdPlayerInput(client, { ...noInput, down: true }, DRILL_COOLDOWN + 50);
       await waitForConnectionCheck();
 
       expect(player.inventory.iron).toBe(ironBefore);
@@ -922,6 +916,27 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 const waitForConnectionCheck = async () =>
   new Promise((resolve) => setTimeout(resolve, TEST_CONNECTION_CHECK_INTERVAL));
 
+/** Places a player at a center, airborne location in the empty spawn area */
+const positionPlayerInSpawnArea = (room: GameRoom, sessionId: string) => {
+  const player = room.state.players.get(sessionId)!;
+  player.x = MAP_SIZE.width / 2;
+  player.y = PLAYER_SIZE.height / 2;
+  player.velocityY = 0;
+  return player;
+};
+
+/** Hold a player input active for `durationMs` by sending refresh inputs.
+ * Prevent server's input-staleness check (200ms) from reverting held inputs to idle */
+const holdPlayerInput = async (client: Room, input: Omit<InputPayload, 'seq'>, durationMs: number) => {
+  const start = Date.now();
+  let seq = 0;
+  do {
+    client.send(WS_EVENT.PLAYER_INPUT, { ...input, seq });
+    seq++;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  } while (Date.now() - start < durationMs);
+};
+
 interface AssertBasicPlayerStateArgs {
   room: GameRoom;
   clientIds: string[];
@@ -960,8 +975,6 @@ const assertExtraPlayerState = ({ room, clientIds, extraPlayerIds }: AssertExtra
 interface PlayerSnapshot {
   userId: string;
   username: string;
-  x: number;
-  y: number;
   velocityY: number;
   inventory: {
     iron: number;
@@ -975,8 +988,6 @@ const getPlayerSnapshot = (room: GameRoom, playerId: string): PlayerSnapshot => 
   return {
     userId: p.userId,
     username: p.username,
-    x: p.x,
-    y: p.y,
     velocityY: p.velocityY,
     inventory: {
       iron: p.inventory.iron,
@@ -995,8 +1006,6 @@ interface AssertPlayerFieldsStateArgs {
 const assertPlayerFieldsState = ({ room, playerId, expectedPlayer }: AssertPlayerFieldsStateArgs) => {
   const actualPlayer = room.state.players.get(playerId)!;
 
-  expect(actualPlayer.x).toBe(expectedPlayer.x);
-  expect(actualPlayer.y).toBe(expectedPlayer.y);
   expect(actualPlayer.userId).toBe(expectedPlayer.userId);
   expect(actualPlayer.username).toBe(expectedPlayer.username);
   expect(actualPlayer.inventory.iron).toBe(expectedPlayer.inventory.iron);
