@@ -30,9 +30,16 @@ export class PlayerSystem {
   constructor(private scene: Game) {}
 
   public destroy() {
-    this.pendingInputs = [];
     this.currentPlayer?.destroy();
-    delete this.currentPlayer;
+    this.currentPlayer = undefined;
+    this.previousPosition = { x: 0, y: 0 };
+    this.currentPosition = { x: 0, y: 0 };
+    this.velocityY = 0;
+    this.isGrounded = true;
+    this.fuelRemaining = 0;
+    this.serverAckSeq = 0;
+    this.pendingInputs = [];
+    this.pendingReconciliation = undefined;
   }
 
   /** Predict and update local player state per fixed tick */
@@ -126,6 +133,9 @@ export class PlayerSystem {
     this.previousPosition = { x: player.x, y: player.y };
     this.currentPosition = { x: player.x, y: player.y };
     this.velocityY = player.velocityY;
+    this.serverAckSeq = 0;
+    this.pendingInputs = [];
+    this.pendingReconciliation = undefined;
     // ensure the camera is following the current player
     this.scene.cameras.main.startFollow(this.currentPlayer.entity, true, 0.1, 0.1);
     this.currentPlayer.createDebugBox();

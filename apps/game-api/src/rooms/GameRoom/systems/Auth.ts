@@ -34,6 +34,7 @@ export class Auth {
    * own input `seq` without tripping the sequence jump checks in `PlayerInput` */
   private cleanupInputState(player: Player) {
     player.lastReceivedSeq = -1;
+    player.lastProcessedInputSeq = 0;
     player.inputQueue = [];
     player.lastProcessedInput = undefined;
   }
