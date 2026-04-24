@@ -45,14 +45,26 @@ export class Game extends Phaser.Scene {
 
     this.roomSystem.setupRoomEventListeners({
       setupStateListeners: () => this.setupStateListeners(),
-      onPlayerAdded: (player, sessionId, $) => {
-        this.playerSystem.handleCurrentPlayerAdded(player, sessionId, $, (inventory) =>
-          this.uiSystem?.updateInventory(inventory)
-        );
-        this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId, $);
+      onPlayerAdded: (player, sessionId) => {
+        this.playerSystem.handleCurrentPlayerAdded(player, sessionId);
+        this.remotePlayerSystem.handleRemotePlayerAdded(player, sessionId);
+        this.uiSystem?.updateRemotePlayerList();
       },
-      onPlayerRemoved: this.remotePlayerSystem.handleRemotePlayerRemoved,
+      onPlayerUpdated: (player, sessionId) => {
+        this.playerSystem.handleCurrentPlayerUpdated(player, sessionId);
+        this.remotePlayerSystem.handleRemotePlayerUpdated(player, sessionId);
+        // update UI for the current player
+        if (sessionId === this.roomSystem.room?.sessionId) {
+          this.uiSystem?.updateInventory(player.inventory);
+          this.uiSystem?.updateFuel(player.fuelRemaining, player.fuelCapacity);
+        }
+      },
+      onPlayerRemoved: (sessionId) => {
+        this.remotePlayerSystem.handleRemotePlayerRemoved(sessionId);
+        this.uiSystem?.updateRemotePlayerList();
+      },
       onBlockAdded: this.blockSystem.handleBlockAdded,
+      onBlockUpdated: this.blockSystem.handleBlockUpdated,
       onBlockRemoved: this.blockSystem.handleBlockRemoved,
     });
   }

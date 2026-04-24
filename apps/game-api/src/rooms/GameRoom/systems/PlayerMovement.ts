@@ -3,6 +3,7 @@ import {
   EMPTY_MAP_ROWS,
   BLOCK_SIZE,
   PLAYER_SIZE,
+  PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT,
   calculateMovement,
   type InputPayload,
   type Player,
@@ -19,11 +20,8 @@ export class PlayerMovement {
       data: { roomId: this.room.roomId, clientId, userName: player.username },
     });
 
-    if (isExistingPlayer) {
-      // players should have inputs cleared on reconnection
-      player.inputQueue = [];
-      // existing players already have a position, so we don't need to spawn them
-    } else {
+    // existing players already have a position, so we don't need to spawn them
+    if (!isExistingPlayer) {
       player.x = Math.random() * MAP_SIZE.width;
       // ensure the player spawns in the empty map rows
       player.y =
@@ -52,6 +50,11 @@ export class PlayerMovement {
       right: input.right,
       up: input.up,
     });
+
+    // consume fuel if the player moved horizontally OR applied vertical thrust
+    if (player.x !== newPosition.x || input.up) {
+      player.fuelRemaining = Math.max(0, player.fuelRemaining - PLAYER_FUEL_CONSUMPTION_RATE_MOVEMENT);
+    }
 
     player.x = newPosition.x;
     player.y = newPosition.y;

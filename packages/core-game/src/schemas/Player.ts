@@ -1,5 +1,11 @@
 import { Schema, type, view } from '@colyseus/schema';
-import { type InputPayload, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '../constants/player';
+import {
+  type InputPayload,
+  type DRILL_DIRECTION,
+  DRILL_DIRECTIONS,
+  PLAYER_INVENTORY_CAPACITY,
+  PLAYER_FUEL_CAPACITY,
+} from '../constants/player';
 
 /** adding a player to the view without a view level will only show the username */
 export const PLAYER_VIEW_LEVELS = {
@@ -8,8 +14,10 @@ export const PLAYER_VIEW_LEVELS = {
 } as const;
 
 export class Inventory extends Schema {
+  @type('number') capacity: number = PLAYER_INVENTORY_CAPACITY;
+  @type('number') coal: number = 0;
   @type('number') iron: number = 0;
-  @type('number') gold: number = 0;
+  @type('number') copper: number = 0;
 }
 
 export class Player extends Schema {
@@ -28,10 +36,15 @@ export class Player extends Schema {
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('float64') velocityY: number = 0;
   /** Private player information for active player */
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type(Inventory) inventory: Inventory = new Inventory();
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') fuelCapacity: number = PLAYER_FUEL_CAPACITY;
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') fuelRemaining: number = PLAYER_FUEL_CAPACITY;
   /** Latest input sequence processed by the server (used for client reconciliation) */
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') lastProcessedInputSeq: number = 0;
-  /** Input fields */
+  /** Server-side input fields */
+  lastProcessedInput?: InputPayload;
   inputQueue: Array<InputPayload> = [];
+  /** Highest `seq` the server has accepted from the client, used to reject duplicate/old/spoofed inputs */
+  lastReceivedSeq: number = -1;
   lastActivityTime: number = Date.now();
   lastDrillTime: number = 0;
   drillTargetCol: number = -1;

@@ -1,5 +1,7 @@
 import {
   BLOCK_SIZE,
+  BLOCK_TYPES,
+  PLAYER_FUEL_CONSUMPTION_RATE_DRILL,
   DRILL_COOLDOWN,
   DRILL_DIRECTIONS,
   type DRILL_DIRECTION,
@@ -24,7 +26,7 @@ export class PlayerMining {
     }
 
     // Cooldown just expired: apply damage, update inventory, etc.
-    if (this.isTargetUnchanged(player)) {
+    if (this.isTargetUnchanged(player) && player.drillDirection !== DRILL_DIRECTIONS.IDLE) {
       this.completeDrill(player);
     }
 
@@ -80,15 +82,25 @@ export class PlayerMining {
     if (block) {
       block.hp--;
       if (block.hp <= 0) {
-        if (block.type === 'iron' || block.type === 'gold') {
-          player.inventory[block.type]++;
+        if (
+          block.type === BLOCK_TYPES.COAL ||
+          block.type === BLOCK_TYPES.IRON ||
+          block.type === BLOCK_TYPES.COPPER
+        ) {
+          // If player inventory has capacity, add the block to the inventory. Otherwise, the ore will be "lost"
+          const usedCapacity = player.inventory.coal + player.inventory.iron + player.inventory.copper;
+          if (usedCapacity < player.inventory.capacity) {
+            player.inventory[block.type]++;
+          }
         }
         this.room.blockMap.deleteBlock(block.id);
       }
     }
 
-    player.drillTargetCol = -1;
-    player.drillTargetRow = -1;
+    // consume fuel once one "drill action" has completed
+    player.fuelRemaining = Math.max(0, player.fuelRemaining - PLAYER_FUEL_CONSUMPTION_RATE_DRILL);
+
+    this.stopDrill(player);
   }
 
   private getTargetCell(player: Player, direction: DRILL_DIRECTION) {

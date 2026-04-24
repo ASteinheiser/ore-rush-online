@@ -3,6 +3,10 @@ import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '@re
 import { ASSET, SOUND } from '../constants';
 import { CustomText } from './CustomText';
 
+const DEBUG_BOX_COLOR = 0x00ff00; // green
+const DEBUG_BOX_FLASH_COLOR = 0xff0000; // red
+const DEBUG_BOX_FLASH_MS = 500;
+
 interface MoveIntent extends EntityPosition {
   delta: number;
   isMoving: boolean;
@@ -24,6 +28,7 @@ export class Player {
   public entity: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   public nameText: CustomText;
   public debugBox?: Phaser.GameObjects.Rectangle;
+  private debugFlashTimer?: Phaser.Time.TimerEvent;
   private punchSfx: Phaser.Sound.BaseSound;
   /** Handles delaying the idle animation to prevent flickering on high FPS */
   private idleAccumulator = 0;
@@ -77,7 +82,7 @@ export class Player {
     this.debugBox = this.scene.add
       .rectangle(this.entity.x, this.entity.y, this.entity.width, this.entity.height)
       .setDepth(101)
-      .setStrokeStyle(1, 0xff0000)
+      .setStrokeStyle(1, DEBUG_BOX_COLOR)
       .setVisible(false);
   }
 
@@ -86,6 +91,7 @@ export class Player {
     this.nameText.destroy();
     this.punchSfx.destroy();
     this.debugBox?.destroy();
+    this.debugFlashTimer?.remove(false);
   }
 
   /** Force the player to move to a specific position (skips animations) */
@@ -94,6 +100,13 @@ export class Player {
     this.entity.y = y;
     this.nameText.x = x;
     this.nameText.y = y;
+
+    if (!this.debugBox) return;
+    this.debugBox.setStrokeStyle(1, DEBUG_BOX_FLASH_COLOR);
+    this.debugFlashTimer?.remove(false);
+    this.debugFlashTimer = this.scene.time.delayedCall(DEBUG_BOX_FLASH_MS, () => {
+      this.debugBox?.setStrokeStyle(1, DEBUG_BOX_COLOR);
+    });
   }
 
   public move({ x, y, delta, isMoving, isGrounded }: MoveIntent) {

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import type { Player as ServerPlayer, DRILL_DIRECTION } from '@repo/core-game';
+import type { DRILL_DIRECTION } from '@repo/core-game';
 import { Player } from '../objects/Player';
 import type { Game } from '../scenes/Game';
 import type { RoomEventCallbacks } from './RoomSystem';
@@ -27,15 +27,11 @@ export class RemotePlayerSystem {
     this.playerEntities = {};
   }
 
-  public handleRemotePlayerAdded: RoomEventCallbacks['onPlayerAdded'] = (player, sessionId, $) => {
+  public handleRemotePlayerAdded: RoomEventCallbacks['onPlayerAdded'] = (player, sessionId) => {
     // skip the current player since we are handling via PlayerSystem
     if (sessionId === this.scene.roomSystem.room?.sessionId) return;
 
     this.playerEntities[sessionId] = new Player(this.scene, player.username, player.x, player.y);
-
-    $(player).onChange(() => {
-      this.handleRemotePlayerUpdated(player, sessionId);
-    });
   };
 
   public handleRemotePlayerRemoved: RoomEventCallbacks['onPlayerRemoved'] = (sessionId) => {
@@ -46,7 +42,10 @@ export class RemotePlayerSystem {
     }
   };
 
-  private handleRemotePlayerUpdated(player: ServerPlayer, sessionId: string) {
+  public handleRemotePlayerUpdated: RoomEventCallbacks['onPlayerUpdated'] = (player, sessionId) => {
+    // skip the current player since we are handling via PlayerSystem
+    if (sessionId === this.scene.roomSystem.room?.sessionId) return;
+
     const remotePlayer = this.playerEntities[sessionId];
     if (!remotePlayer) return;
 
@@ -66,7 +65,7 @@ export class RemotePlayerSystem {
 
     remotePlayer.entity.setVisible(inView);
     remotePlayer.nameText.setVisible(inView);
-  }
+  };
 
   public interpolateRemotePlayers(delta: number) {
     for (const sessionId in this.playerEntities) {

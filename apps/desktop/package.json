@@ -1,7 +1,7 @@
 {
   "name": "ore-rush-online",
   "description": "Desktop app for Ore Rush Online",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "repository": "https://github.com/asteinheiser/ore-rush-online",
   "homepage": "https://ore-rush.online",
   "author": "Andrew Steinheiser <me@iamandrew.io>",
