@@ -302,6 +302,23 @@ This snapshot was created on `2026-04-19`. All tests were run for 3 minutes agai
 | 10 | 100 | 76% | 60% (267 mb) |
 | 10 | 200 | 94% | 67% (344 mb) |
 
+### v0.0.5 Snapshot
+
+This snapshot was created on `2026-04-24`. All tests were run for 3 minutes against the 2nd cheapest DigitalOcean Droplet:
+- 1GB RAM
+- 1 vCPU
+- 10GB SSD
+- Ubuntu 24.04 LTS
+- US West - San Francisco
+
+| Room Size | Players | CPU Peak | Memory Peak |
+|---------|-----------|----------|-------------|
+| - | - (idle) | 1% | 47% (176 mb) |
+| 10 | 100 | 85% | 60% (270 mb) |
+| 10 | 200 | 100% | 80% (444 mb) |
+
+**NOTE:** With 200 players on the server at once, I was seeing my ping fluctuate between 50-200ms, which was borderline unplayable
+
 ## Available Commands
 
 | Command | Description |
