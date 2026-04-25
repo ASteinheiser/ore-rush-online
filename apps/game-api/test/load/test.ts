@@ -36,7 +36,7 @@ export async function main(options: Options) {
 
     state.blocks.forEach((block) => {
       const distanceSquared = (player.x - block.x) ** 2 + (player.y - block.y) ** 2;
-      if (distanceSquared < closestDistanceSquared) {
+      if (distanceSquared < closestDistanceSquared && player.y <= block.y) {
         closestDistanceSquared = distanceSquared;
         closestBlock = block;
       }
