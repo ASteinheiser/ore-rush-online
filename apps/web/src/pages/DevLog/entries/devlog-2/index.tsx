@@ -26,7 +26,7 @@ export const DevLogEntry2 = () => {
         main menu that is more of a hub (where you can use your ore).
       </p>
 
-      <p> Stay tuned for more updates!</p>
+      <p>Stay tuned for more updates!</p>
     </DevLogEntry>
   );
 };
