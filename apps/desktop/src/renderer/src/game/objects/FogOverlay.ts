@@ -1,6 +1,10 @@
 import type * as Phaser from 'phaser';
 import { type EntityPosition, MAP_SIZE, PLAYER_VIEW_RADIUS } from '@repo/core-game';
 
+// FOG_RADIUS should be slightly smaller than the actual view radius to account for the server sending updated block state
+// this isn't a silver bullet, players with bad ping will still experience laggy block rendering
+const FOG_RADIUS = PLAYER_VIEW_RADIUS - 50;
+
 export class FogOverlay {
   private fogOverlay: Phaser.GameObjects.Graphics;
 
@@ -13,9 +17,9 @@ export class FogOverlay {
   }
 
   public update({ x, y }: EntityPosition): void {
-    const innerX = x - PLAYER_VIEW_RADIUS;
-    const innerY = y - PLAYER_VIEW_RADIUS;
-    const holeSize = PLAYER_VIEW_RADIUS * 2;
+    const innerX = x - FOG_RADIUS;
+    const innerY = y - FOG_RADIUS;
+    const holeSize = FOG_RADIUS * 2;
 
     this.fogOverlay.clear();
     this.fogOverlay.fillStyle(0x000000, 1);
