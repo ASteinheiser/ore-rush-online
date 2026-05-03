@@ -15,9 +15,9 @@ export const PLAYER_GRAVITY_VY_PER_TICK = 0.35;
 /** Upward thrust per tick while `up` is held (opposes gravity; enables flight) */
 export const PLAYER_THRUST_VY_PER_TICK = 0.5;
 /** Maximum downward speed per tick */
-export const PLAYER_GRAVITY_VY_MAX = 24;
+export const PLAYER_GRAVITY_VY_MAX = 16;
 /** Maximum upward speed per tick */
-export const PLAYER_THRUST_VY_MAX = 24;
+export const PLAYER_THRUST_VY_MAX = 16;
 
 /** The number of frames per second the player animates at (8fps) */
 export const PLAYER_FRAME_RATE = 8;
