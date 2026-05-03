@@ -17,7 +17,8 @@ export class BlockMap {
   private blockGrid: string[][];
   /** the number of cells to search in each direction for visibility */
   private viewRadiusCells: number;
-  private clientVisibleBlocks = new Map<string, Set<string>>();
+  private lastVisibleBlocks = new Map<string, Set<string>>();
+  private stagingVisibleBlocks = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {
     this.viewRadiusCells = Math.ceil(PLAYER_VIEW_RADIUS / BLOCK_SIZE.width);
@@ -27,7 +28,8 @@ export class BlockMap {
   }
 
   public cleanupPlayer(sessionId: string) {
-    this.clientVisibleBlocks.delete(sessionId);
+    this.lastVisibleBlocks.delete(sessionId);
+    this.stagingVisibleBlocks.delete(sessionId);
   }
 
   public getBlock(col: number, row: number) {
@@ -75,8 +77,19 @@ export class BlockMap {
   }
 
   public updateVisibleBlocks(client: Client, player: Player) {
-    const currentlyVisibleBlocks = this.clientVisibleBlocks.get(client.sessionId) ?? new Set();
-    const nowVisible = new Set<string>();
+    let currentlyVisibleBlocks = this.lastVisibleBlocks.get(client.sessionId);
+    let nowVisible = this.stagingVisibleBlocks.get(client.sessionId);
+    // ensure sets are initialized once per client
+    if (!currentlyVisibleBlocks) {
+      currentlyVisibleBlocks = new Set();
+      this.lastVisibleBlocks.set(client.sessionId, currentlyVisibleBlocks);
+    }
+    if (!nowVisible) {
+      nowVisible = new Set();
+      this.stagingVisibleBlocks.set(client.sessionId, nowVisible);
+    }
+    // clear the staging set before calculating new visible blocks
+    nowVisible.clear();
 
     const playerCol = Math.floor(player.x / BLOCK_SIZE.width);
     const playerRow = Math.floor(player.y / BLOCK_SIZE.height);
@@ -108,7 +121,8 @@ export class BlockMap {
       }
     }
 
-    this.clientVisibleBlocks.set(client.sessionId, nowVisible);
+    this.lastVisibleBlocks.set(client.sessionId, nowVisible);
+    this.stagingVisibleBlocks.set(client.sessionId, currentlyVisibleBlocks);
   }
 
   private generateBlockMap() {
