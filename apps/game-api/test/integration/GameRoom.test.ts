@@ -576,7 +576,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       player.drillDirection = DRILL_DIRECTIONS.IDLE;
       player.drillTargetCol = -1;
       player.drillTargetRow = -1;
-      player.lastDrillTime = 0;
+      player.drillCooldownRemainingMs = 0;
       return player;
     };
 
@@ -601,15 +601,11 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
     it('should not drill when the player is airborne', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
-      const player = room.state.players.get(client.sessionId)!;
-
-      // player is in the air (default spawn is in empty rows, not grounded)
-      player.isGrounded = false;
-      player.velocityY = 0;
-      player.lastDrillTime = 0;
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
+      player.drillCooldownRemainingMs = 0;
 
       client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, down: true } satisfies InputPayload);
-      await waitForConnectionCheck();
+      await room.waitForNextSimulationTick();
 
       expect(player.drillDirection).toBe(DRILL_DIRECTIONS.IDLE);
     });

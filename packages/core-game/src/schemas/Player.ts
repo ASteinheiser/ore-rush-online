@@ -46,7 +46,8 @@ export class Player extends Schema {
   /** Highest `seq` the server has accepted from the client, used to reject duplicate/old/spoofed inputs */
   lastReceivedSeq: number = -1;
   lastActivityTime: number = Date.now();
-  lastDrillTime: number = 0;
+  /** Time remaining before the drill action completes (in ms) */
+  drillCooldownRemainingMs: number = 0;
   drillTargetCol: number = -1;
   drillTargetRow: number = -1;
 }
