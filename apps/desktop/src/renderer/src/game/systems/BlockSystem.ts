@@ -20,6 +20,10 @@ export class BlockSystem {
     return `${col}_${row}`;
   }
 
+  public getBlockByCell(col: number, row: number) {
+    return this.blocks[`${col}_${row}`];
+  }
+
   public hasBlockAt(x: number, y: number): boolean {
     return !!this.blocks[this.getBlockIndex(x, y)];
   }

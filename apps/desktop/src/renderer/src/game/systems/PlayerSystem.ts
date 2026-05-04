@@ -1,9 +1,11 @@
 import * as Phaser from 'phaser';
 import {
+  advanceDrill,
   calculateMovement,
-  BLOCK_SIZE,
+  DRILL_DIRECTIONS,
   PLAYER_SIZE,
   FIXED_TIME_STEP,
+  type DRILL_DIRECTION,
   type InputPayload,
   type Player as ServerPlayer,
 } from '@repo/core-game';
@@ -20,6 +22,11 @@ export class PlayerSystem {
   private velocityY = 0;
   private isGrounded = true;
   private fuelRemaining = 0;
+  /** Client-side tracking of drill fields (mimics server) so `advanceDrill` can run each tick */
+  private drillDirection: DRILL_DIRECTION = DRILL_DIRECTIONS.IDLE;
+  private drillTargetCol = -1;
+  private drillTargetRow = -1;
+  private drillCooldownRemainingMs = 0;
   /** The last input sequence acknowledged by the server */
   private serverAckSeq = 0;
   /** The inputs being predicted by the client */
@@ -37,6 +44,10 @@ export class PlayerSystem {
     this.velocityY = 0;
     this.isGrounded = true;
     this.fuelRemaining = 0;
+    this.drillDirection = DRILL_DIRECTIONS.IDLE;
+    this.drillTargetCol = -1;
+    this.drillTargetRow = -1;
+    this.drillCooldownRemainingMs = 0;
     this.serverAckSeq = 0;
     this.pendingInputs = [];
     this.pendingReconciliation = undefined;
@@ -83,18 +94,27 @@ export class PlayerSystem {
     this.velocityY = result.velocityY;
     this.isGrounded = result.isGrounded;
 
-    // check if there is a drillable block below the player
-    // since x is centered, must be at least half way over the block (different than isGrounded)
-    const canDrillBlockBottom = this.scene.blockSystem.hasBlockAt(
-      this.currentPosition.x,
-      this.currentPosition.y + BLOCK_SIZE.height
-    );
+    const drillResult = advanceDrill({
+      input: { down, left, right },
+      state: {
+        x: this.currentPosition.x,
+        y: this.currentPosition.y,
+        isGrounded: this.isGrounded,
+        isTouchingBlockLeft: result.isTouchingBlockLeft,
+        isTouchingBlockRight: result.isTouchingBlockRight,
+        drillDirection: this.drillDirection,
+        drillTargetCol: this.drillTargetCol,
+        drillTargetRow: this.drillTargetRow,
+        drillCooldownRemainingMs: this.drillCooldownRemainingMs,
+      },
+      getBlockAt: this.scene.blockSystem.getBlockByCell.bind(this.scene.blockSystem),
+    });
 
-    if (!this.isGrounded) this.currentPlayer.setDrillDirection('idle');
-    else if (down && canDrillBlockBottom) this.currentPlayer.setDrillDirection('down');
-    else if (left && result.isTouchingBlockLeft) this.currentPlayer.setDrillDirection('left');
-    else if (right && result.isTouchingBlockRight) this.currentPlayer.setDrillDirection('right');
-    else this.currentPlayer.setDrillDirection('idle');
+    this.drillCooldownRemainingMs = drillResult.drillState.drillCooldownRemainingMs;
+    this.drillTargetCol = drillResult.drillState.drillTargetCol;
+    this.drillTargetRow = drillResult.drillState.drillTargetRow;
+    this.drillDirection = drillResult.drillState.drillDirection;
+    this.currentPlayer.setDrillDirection(drillResult.drillState.drillDirection);
   }
 
   /** Interpolate local player between fixed ticks */

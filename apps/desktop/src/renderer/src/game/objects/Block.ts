@@ -17,6 +17,7 @@ const seeded = (seed: number): number => {
 };
 
 export class Block {
+  private currentHp: number;
   private hitbox: Phaser.GameObjects.Rectangle;
   private ore: Phaser.GameObjects.Graphics;
   private cracks: Phaser.GameObjects.Graphics;
@@ -29,6 +30,7 @@ export class Block {
     hp: number,
     maxHp: number
   ) {
+    this.currentHp = hp;
     this.hitbox = scene.add.rectangle(this.x, this.y, BLOCK_SIZE.width, BLOCK_SIZE.height);
     this.ore = scene.add.graphics().setDepth(1);
     this.cracks = scene.add.graphics().setDepth(99);
@@ -43,7 +45,12 @@ export class Block {
     this.hitbox.destroy();
   }
 
+  get hp() {
+    return this.currentHp;
+  }
+
   public update(hp: number, maxHp: number, type: BLOCK_TYPE) {
+    this.currentHp = hp;
     this.setColor(type);
     this.drawCracks(hp, maxHp);
   }
