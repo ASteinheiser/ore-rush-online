@@ -443,7 +443,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         room.blockMap.updateVisibleBlocks(playerClient, player);
 
         // @ts-expect-error - allow use of private property for testing
-        const visibleBlockCount = room.blockMap.clientVisibleBlocks.get(client.sessionId)?.size ?? 0;
+        const visibleBlockCount = room.blockMap.lastVisibleBlocks.get(client.sessionId)?.size ?? 0;
         expect(visibleBlockCount).toBe(expectedBlocks);
       }
     });
