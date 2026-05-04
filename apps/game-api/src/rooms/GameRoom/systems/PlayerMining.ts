@@ -14,7 +14,7 @@ export class PlayerMining {
     const result = advanceDrill({
       input,
       state: player,
-      getBlockAt: (col, row) => this.room.blockMap.getBlock(col, row),
+      getBlockAt: this.room.blockMap.getBlock.bind(this.room.blockMap),
     });
 
     player.drillDirection = result.drillState.drillDirection;
