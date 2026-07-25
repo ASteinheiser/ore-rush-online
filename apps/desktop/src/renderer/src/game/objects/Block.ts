@@ -21,6 +21,8 @@ export class Block {
   private hitbox: Phaser.GameObjects.Rectangle;
   private ore: Phaser.GameObjects.Graphics;
   private cracks: Phaser.GameObjects.Graphics;
+  public readonly width = BLOCK_SIZE.width;
+  public readonly height = BLOCK_SIZE.height;
 
   constructor(
     scene: Phaser.Scene,

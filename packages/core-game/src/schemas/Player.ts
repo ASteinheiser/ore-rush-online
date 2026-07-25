@@ -47,7 +47,7 @@ export class Player extends Schema {
   lastReceivedSeq: number = -1;
   lastActivityTime: number = Date.now();
   /** Fixed simulation ticks remaining before the current drill action completes (`0` = idle) */
-  drillCooldownRemainingTicks: number = 0;
-  drillTargetCol: number = -1;
-  drillTargetRow: number = -1;
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillCooldownRemainingTicks: number = 0;
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillTargetCol: number = -1;
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillTargetRow: number = -1;
 }
