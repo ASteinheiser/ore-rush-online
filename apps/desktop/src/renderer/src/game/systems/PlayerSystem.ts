@@ -118,8 +118,10 @@ export class PlayerSystem {
     this.drillDirection = drillResult.drillState.drillDirection;
     this.currentPlayer.setDrillDirection(drillResult.drillState.drillDirection);
 
-    if (drillResult.drillCompletion && drillResult.drillCompletion.hpAfter <= 0) {
-      this.scene.blockSystem.deleteBlockByCell(this.drillTargetCol, this.drillTargetRow);
+    if (drillResult.drillCompletion) {
+      const { col, row, hpAfter } = drillResult.drillCompletion;
+
+      this.scene.blockSystem.updateClientBlockHpByCell(col, row, hpAfter);
     }
   }
 

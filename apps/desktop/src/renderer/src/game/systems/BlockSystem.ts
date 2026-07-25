@@ -70,12 +70,16 @@ export class BlockSystem {
     delete this.blocks[blockId];
   };
 
-  /** Optimistic CSP removal. Only modifies the client `blocks` state, leaving `serverBlocks` untouched */
-  public deleteBlockByCell(col: number, row: number) {
+  /** Optimistic CSP block damage/removal. Only modifies the client `blocks`, leaving `serverBlocks` untouched */
+  public updateClientBlockHpByCell(col: number, row: number, hpAfter: number) {
     const blockId = `${col}_${row}`;
 
-    this.blocks[blockId]?.destroy();
-    delete this.blocks[blockId];
+    if (hpAfter <= 0) {
+      this.blocks[blockId]?.destroy();
+      delete this.blocks[blockId];
+    } else {
+      this.blocks[blockId]?.updateHp(hpAfter);
+    }
   }
 
   /** Blocks in the 3×3 grid of cells around `searchEntity`'s center (matches server `BlockMap.getNearbyBlocks`) */
