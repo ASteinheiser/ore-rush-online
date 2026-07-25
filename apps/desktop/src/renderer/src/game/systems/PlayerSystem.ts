@@ -26,7 +26,7 @@ export class PlayerSystem {
   private drillDirection: DRILL_DIRECTION = DRILL_DIRECTIONS.IDLE;
   private drillTargetCol = -1;
   private drillTargetRow = -1;
-  private drillCooldownRemainingMs = 0;
+  private drillCooldownRemainingTicks = 0;
   /** The last input sequence acknowledged by the server */
   private serverAckSeq = 0;
   /** The inputs being predicted by the client */
@@ -47,7 +47,7 @@ export class PlayerSystem {
     this.drillDirection = DRILL_DIRECTIONS.IDLE;
     this.drillTargetCol = -1;
     this.drillTargetRow = -1;
-    this.drillCooldownRemainingMs = 0;
+    this.drillCooldownRemainingTicks = 0;
     this.serverAckSeq = 0;
     this.pendingInputs = [];
     this.pendingReconciliation = undefined;
@@ -105,12 +105,12 @@ export class PlayerSystem {
         drillDirection: this.drillDirection,
         drillTargetCol: this.drillTargetCol,
         drillTargetRow: this.drillTargetRow,
-        drillCooldownRemainingMs: this.drillCooldownRemainingMs,
+        drillCooldownRemainingTicks: this.drillCooldownRemainingTicks,
       },
       getBlockAt: this.scene.blockSystem.getBlockByCell.bind(this.scene.blockSystem),
     });
 
-    this.drillCooldownRemainingMs = drillResult.drillState.drillCooldownRemainingMs;
+    this.drillCooldownRemainingTicks = drillResult.drillState.drillCooldownRemainingTicks;
     this.drillTargetCol = drillResult.drillState.drillTargetCol;
     this.drillTargetRow = drillResult.drillState.drillTargetRow;
     this.drillDirection = drillResult.drillState.drillDirection;

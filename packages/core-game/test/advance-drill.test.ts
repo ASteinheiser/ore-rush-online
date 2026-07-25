@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { advanceDrill } from '../src/advance-drill';
-import { BLOCK_SIZE, DRILL_COOLDOWN, DRILL_DIRECTIONS, FIXED_TIME_STEP } from '../src/constants';
+import { BLOCK_SIZE, DRILL_COOLDOWN_TICKS, DRILL_DIRECTIONS } from '../src/constants';
 
 describe('advanceDrill', () => {
   const idleDrill = {
     drillDirection: DRILL_DIRECTIONS.IDLE,
     drillTargetCol: -1,
     drillTargetRow: -1,
-    drillCooldownRemainingMs: 0,
+    drillCooldownRemainingTicks: 0,
   } as const;
 
   /** Center of grid cell (5, 10) — down-drill targets (5, 11) when grounded */
@@ -40,7 +40,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.IDLE,
           drillTargetCol: -1,
           drillTargetRow: -1,
-          drillCooldownRemainingMs: 0,
+          drillCooldownRemainingTicks: 0,
         },
         drillCompletion: undefined,
       });
@@ -57,12 +57,12 @@ describe('advanceDrill', () => {
         drillDirection: DRILL_DIRECTIONS.IDLE,
         drillTargetCol: -1,
         drillTargetRow: -1,
-        drillCooldownRemainingMs: 0,
+        drillCooldownRemainingTicks: 0,
       });
       expect(result.drillCompletion).toBeUndefined();
     });
 
-    it('should start a downward drill with full cooldown when grounded and a block is below', () => {
+    it('should start a downward drill with full remaining ticks when grounded and a block is below', () => {
       const getBlockAt = (col: number, row: number) => (col === 5 && row === 11 ? { hp: 3 } : undefined);
 
       const result = advanceDrill({
@@ -76,7 +76,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.DOWN,
           drillTargetCol: 5,
           drillTargetRow: 11,
-          drillCooldownRemainingMs: DRILL_COOLDOWN,
+          drillCooldownRemainingTicks: DRILL_COOLDOWN_TICKS,
         },
         drillCompletion: undefined,
       });
@@ -127,7 +127,7 @@ describe('advanceDrill', () => {
         drillDirection: DRILL_DIRECTIONS.LEFT,
         drillTargetCol: 4,
         drillTargetRow: 10,
-        drillCooldownRemainingMs: DRILL_COOLDOWN,
+        drillCooldownRemainingTicks: DRILL_COOLDOWN_TICKS,
       });
       expect(result.drillCompletion).toBeUndefined();
     });
@@ -149,7 +149,7 @@ describe('advanceDrill', () => {
   });
 
   describe('while drill cooldown is active', () => {
-    it('should reduce cooldown by the fixed time step when still holding the same drill input', () => {
+    it('should decrement remaining ticks by one when still holding the same drill input', () => {
       const getBlockAt = (col: number, row: number) => (col === 5 && row === 11 ? { hp: 3 } : undefined);
 
       const result = advanceDrill({
@@ -159,7 +159,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.DOWN,
           drillTargetCol: 5,
           drillTargetRow: 11,
-          drillCooldownRemainingMs: DRILL_COOLDOWN,
+          drillCooldownRemainingTicks: DRILL_COOLDOWN_TICKS,
         },
         getBlockAt,
       });
@@ -169,7 +169,7 @@ describe('advanceDrill', () => {
         drillDirection: DRILL_DIRECTIONS.DOWN,
         drillTargetCol: 5,
         drillTargetRow: 11,
-        drillCooldownRemainingMs: DRILL_COOLDOWN - FIXED_TIME_STEP,
+        drillCooldownRemainingTicks: DRILL_COOLDOWN_TICKS - 1,
       });
     });
 
@@ -183,7 +183,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.DOWN,
           drillTargetCol: 5,
           drillTargetRow: 11,
-          drillCooldownRemainingMs: DRILL_COOLDOWN - FIXED_TIME_STEP,
+          drillCooldownRemainingTicks: DRILL_COOLDOWN_TICKS - 1,
         },
         getBlockAt,
       });
@@ -193,7 +193,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.IDLE,
           drillTargetCol: -1,
           drillTargetRow: -1,
-          drillCooldownRemainingMs: 0,
+          drillCooldownRemainingTicks: 0,
         },
         drillCompletion: undefined,
       });
@@ -210,7 +210,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.DOWN,
           drillTargetCol: 5,
           drillTargetRow: 11,
-          drillCooldownRemainingMs: 100,
+          drillCooldownRemainingTicks: 5,
         },
         getBlockAt,
       });
@@ -219,7 +219,7 @@ describe('advanceDrill', () => {
         drillDirection: DRILL_DIRECTIONS.IDLE,
         drillTargetCol: -1,
         drillTargetRow: -1,
-        drillCooldownRemainingMs: 0,
+        drillCooldownRemainingTicks: 0,
       });
     });
   });
@@ -235,7 +235,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.DOWN,
           drillTargetCol: 5,
           drillTargetRow: 11,
-          drillCooldownRemainingMs: FIXED_TIME_STEP,
+          drillCooldownRemainingTicks: 1,
         },
         getBlockAt,
       });
@@ -249,7 +249,7 @@ describe('advanceDrill', () => {
         drillDirection: DRILL_DIRECTIONS.IDLE,
         drillTargetCol: -1,
         drillTargetRow: -1,
-        drillCooldownRemainingMs: 0,
+        drillCooldownRemainingTicks: 0,
       });
     });
 
@@ -263,7 +263,7 @@ describe('advanceDrill', () => {
           drillDirection: DRILL_DIRECTIONS.DOWN,
           drillTargetCol: 5,
           drillTargetRow: 11,
-          drillCooldownRemainingMs: FIXED_TIME_STEP,
+          drillCooldownRemainingTicks: 1,
         },
         getBlockAt,
       });
@@ -277,7 +277,7 @@ describe('advanceDrill', () => {
         drillDirection: DRILL_DIRECTIONS.DOWN,
         drillTargetCol: 5,
         drillTargetRow: 11,
-        drillCooldownRemainingMs: DRILL_COOLDOWN,
+        drillCooldownRemainingTicks: DRILL_COOLDOWN_TICKS,
       });
     });
   });

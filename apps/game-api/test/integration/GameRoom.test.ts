@@ -576,7 +576,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       player.drillDirection = DRILL_DIRECTIONS.IDLE;
       player.drillTargetCol = -1;
       player.drillTargetRow = -1;
-      player.drillCooldownRemainingMs = 0;
+      player.drillCooldownRemainingTicks = 0;
       return player;
     };
 
@@ -602,7 +602,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
       const player = positionPlayerInSpawnArea(room, client.sessionId);
-      player.drillCooldownRemainingMs = 0;
+      player.drillCooldownRemainingTicks = 0;
 
       client.send(WS_EVENT.PLAYER_INPUT, { ...noInput, down: true } satisfies InputPayload);
       await room.waitForNextSimulationTick();

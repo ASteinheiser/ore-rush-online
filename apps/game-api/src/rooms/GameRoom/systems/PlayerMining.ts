@@ -20,7 +20,7 @@ export class PlayerMining {
     player.drillDirection = result.drillState.drillDirection;
     player.drillTargetCol = result.drillState.drillTargetCol;
     player.drillTargetRow = result.drillState.drillTargetRow;
-    player.drillCooldownRemainingMs = result.drillState.drillCooldownRemainingMs;
+    player.drillCooldownRemainingTicks = result.drillState.drillCooldownRemainingTicks;
 
     if (result.drillCompletion) {
       // consume fuel if the drill completion was successful

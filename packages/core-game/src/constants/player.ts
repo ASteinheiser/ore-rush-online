@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FIXED_TIME_STEP } from './world';
 
 /** The size of the player in pixels */
 export const PLAYER_SIZE = {
@@ -23,6 +24,8 @@ export const PLAYER_THRUST_VY_MAX = 16;
 export const PLAYER_FRAME_RATE = 8;
 /** Drill animation takes 0.375 seconds total (3 frames at 8fps) */
 export const DRILL_COOLDOWN = 375;
+/** Number of fixed simulation ticks the drill action takes to deal damage */
+export const DRILL_COOLDOWN_TICKS = Math.round(DRILL_COOLDOWN / FIXED_TIME_STEP);
 /** The directions the player can drill */
 export const DRILL_DIRECTIONS = {
   IDLE: 'idle',

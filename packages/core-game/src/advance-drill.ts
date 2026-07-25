@@ -1,7 +1,6 @@
-import { FIXED_TIME_STEP } from './constants/world';
 import { BLOCK_SIZE } from './constants/block';
 import {
-  DRILL_COOLDOWN,
+  DRILL_COOLDOWN_TICKS,
   DRILL_DIRECTIONS,
   type DRILL_DIRECTION,
   type InputPayload,
@@ -24,7 +23,7 @@ interface DrillState {
   drillDirection: DRILL_DIRECTION;
   drillTargetCol: number;
   drillTargetRow: number;
-  drillCooldownRemainingMs: number;
+  drillCooldownRemainingTicks: number;
 }
 
 interface PlayerState {
@@ -45,7 +44,7 @@ const idleState = (): DrillState => ({
   drillDirection: DRILL_DIRECTIONS.IDLE,
   drillTargetCol: -1,
   drillTargetRow: -1,
-  drillCooldownRemainingMs: 0,
+  drillCooldownRemainingTicks: 0,
 });
 
 /** Handles one fixed-tick step of input processing for drilling */
@@ -54,24 +53,23 @@ export const advanceDrill = ({ input, state, getBlockAt }: AdvanceDrillArgs): Ad
     drillDirection: state.drillDirection,
     drillTargetCol: state.drillTargetCol,
     drillTargetRow: state.drillTargetRow,
-    drillCooldownRemainingMs: state.drillCooldownRemainingMs,
+    drillCooldownRemainingTicks: state.drillCooldownRemainingTicks,
   };
   let drillCompletion: DrillCompletion | undefined;
 
-  if (workingState.drillCooldownRemainingMs > 0) {
-    // this logic should run every tick, so we can use FIXED_TIME_STEP to advance the cooldown
-    const cooldownRemainingMs = Math.max(0, workingState.drillCooldownRemainingMs - FIXED_TIME_STEP);
+  if (workingState.drillCooldownRemainingTicks > 0) {
+    const remainingTicks = workingState.drillCooldownRemainingTicks - 1;
 
-    if (cooldownRemainingMs > 0) {
+    if (remainingTicks > 0) {
       if (
         !isStillHoldingDrill(input, workingState.drillDirection, state.isGrounded) ||
         !isTargetUnchanged(state)
       ) {
         return { drillState: idleState() };
       }
-      return { drillState: { ...workingState, drillCooldownRemainingMs: cooldownRemainingMs } };
+      return { drillState: { ...workingState, drillCooldownRemainingTicks: remainingTicks } };
     }
-    workingState.drillCooldownRemainingMs = 0;
+    workingState.drillCooldownRemainingTicks = 0;
   }
 
   if (
@@ -110,7 +108,7 @@ export const advanceDrill = ({ input, state, getBlockAt }: AdvanceDrillArgs): Ad
       drillDirection: newDrillDirection,
       drillTargetCol: target.col,
       drillTargetRow: target.row,
-      drillCooldownRemainingMs: DRILL_COOLDOWN,
+      drillCooldownRemainingTicks: DRILL_COOLDOWN_TICKS,
     },
     drillCompletion,
   };
