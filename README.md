@@ -323,6 +323,23 @@ This snapshot was created on `2026-04-24`. All tests were run for 3 minutes agai
 
 **NOTE:** With 200 players on the server at once, I was seeing my ping fluctuate between 50-200ms, which was borderline unplayable
 
+### v0.0.6 Snapshot
+
+This snapshot was created on `2026-07-26`. All tests were run for 3 minutes against the 2nd cheapest DigitalOcean Droplet:
+- 1GB RAM
+- 1 vCPU
+- 10GB SSD
+- Ubuntu 24.04 LTS
+- US West - San Francisco
+
+| Room Size | Players | CPU Peak | Memory Peak |
+|---------|-----------|----------|-------------|
+| - | - (idle) | 1% | 48% (141 mb) |
+| 10 | 100 | 56% | 61% (283 mb) |
+| 10 | 200 | 70% | 72% (371 mb) |
+
+**NOTE:** With 200 players on the server at once, I was seeing my ping fluctuate between 35-60ms. This felt stable on the high end, and is a huge performance improvement over `v0.0.5`!
+
 ## Available Commands
 
 | Command | Description |
