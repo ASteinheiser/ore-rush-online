@@ -5,6 +5,7 @@ import {
   BLOCK_TYPES,
   type Player,
   PLAYER_VIEW_RADIUS,
+  PLAYER_VERTICAL_LOOKAHEAD_TICKS,
   MAP_GRID_SIZE,
   EMPTY_MAP_ROWS,
 } from '@repo/core-game';
@@ -94,10 +95,17 @@ export class BlockMap {
     const playerCol = Math.floor(player.x / BLOCK_SIZE.width);
     const playerRow = Math.floor(player.y / BLOCK_SIZE.height);
 
+    // extend the row bounds in the direction of vertical travel based on the player's velocity
+    const lookaheadCells = Math.ceil(
+      (Math.abs(player.velocityY) * PLAYER_VERTICAL_LOOKAHEAD_TICKS) / BLOCK_SIZE.height
+    );
+    const rowMinLookahead = player.velocityY < 0 ? lookaheadCells : 0;
+    const rowMaxLookahead = player.velocityY > 0 ? lookaheadCells : 0;
+
     const colMin = Math.max(0, playerCol - this.viewRadiusCells);
     const colMax = Math.min(this.cols - 1, playerCol + this.viewRadiusCells);
-    const rowMin = Math.max(0, playerRow - this.viewRadiusCells);
-    const rowMax = Math.min(this.rows - 1, playerRow + this.viewRadiusCells);
+    const rowMin = Math.max(0, playerRow - this.viewRadiusCells - rowMinLookahead);
+    const rowMax = Math.min(this.rows - 1, playerRow + this.viewRadiusCells + rowMaxLookahead);
 
     for (let row = rowMin; row <= rowMax; row++) {
       for (let col = colMin; col <= colMax; col++) {

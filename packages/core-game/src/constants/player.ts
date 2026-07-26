@@ -8,6 +8,9 @@ export const PLAYER_SIZE = {
 } as const;
 /** The radius of the player's view in pixels */
 export const PLAYER_VIEW_RADIUS = 300;
+/** How many ticks ahead to preload blocks in the direction of vertical travel.
+ * Helps fast-falling/flying players prevent jittery block vision (latency-dependent) */
+export const PLAYER_VERTICAL_LOOKAHEAD_TICKS = 8;
 
 /** The horizontal velocity of the player in pixels per tick */
 export const PLAYER_VX_PER_TICK = 4;

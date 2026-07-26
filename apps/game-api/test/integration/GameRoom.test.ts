@@ -14,6 +14,8 @@ import {
   PLAYER_SIZE,
   PLAYER_VX_PER_TICK,
   PLAYER_GRAVITY_VY_PER_TICK,
+  PLAYER_GRAVITY_VY_MAX,
+  PLAYER_THRUST_VY_MAX,
   PLAYER_VIEW_RADIUS,
   PLAYER_VIEW_LEVELS,
   DRILL_COOLDOWN,
@@ -446,6 +448,37 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         const visibleBlockCount = room.blockMap.lastVisibleBlocks.get(client.sessionId)?.size ?? 0;
         expect(visibleBlockCount).toBe(expectedBlocks);
       }
+    });
+
+    it('should extend vertical vision by two extra rows when falling/flying at max velocity', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+
+      assertBasicPlayerState({ room, clientIds: [client.sessionId] });
+
+      const player = room.state.players.get(client.sessionId)!;
+      const playerClient = room.clients.getById(client.sessionId)!;
+      // Near center of the map, matching the 121-block (11x11) baseline used above
+      player.x = 2002;
+      player.y = 2002;
+
+      // Baseline: no vertical velocity => no lookahead, standard 11x11 grid
+      player.velocityY = 0;
+      room.blockMap.updateVisibleBlocks(playerClient, player);
+      // @ts-expect-error - allow use of private property for testing
+      expect(room.blockMap.lastVisibleBlocks.get(client.sessionId)?.size ?? 0).toBe(121);
+
+      // Falling at max gravity extends the visibility range by two extra rows of 11 blocks
+      player.velocityY = PLAYER_GRAVITY_VY_MAX;
+      room.blockMap.updateVisibleBlocks(playerClient, player);
+      // @ts-expect-error - allow use of private property for testing
+      expect(room.blockMap.lastVisibleBlocks.get(client.sessionId)?.size ?? 0).toBe(143);
+
+      // Flying at max thrust extends the visibility range by two extra rows of 11 blocks
+      player.velocityY = -PLAYER_THRUST_VY_MAX;
+      room.blockMap.updateVisibleBlocks(playerClient, player);
+      // @ts-expect-error - allow use of private property for testing
+      expect(room.blockMap.lastVisibleBlocks.get(client.sessionId)?.size ?? 0).toBe(143);
     });
 
     it('should show player position only when in vision (username always visible, x/y when in range)', async () => {
