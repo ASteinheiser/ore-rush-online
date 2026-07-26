@@ -4,12 +4,14 @@ import { PLAYER_VIEW_RADIUS, PLAYER_VIEW_LEVELS, type Player } from '@repo/core-
 import type { GameRoom } from '../index';
 
 export class PlayerVision {
-  private clientVisiblePlayers = new Map<string, Set<string>>();
+  private lastVisiblePlayers = new Map<string, Set<string>>();
+  private stagingVisiblePlayers = new Map<string, Set<string>>();
 
   constructor(private room: GameRoom) {}
 
   public cleanupPlayer(sessionId: string) {
-    this.clientVisiblePlayers.delete(sessionId);
+    this.lastVisiblePlayers.delete(sessionId);
+    this.stagingVisiblePlayers.delete(sessionId);
   }
 
   public setupVisionForClient(client: Client, player: Player) {
@@ -34,8 +36,19 @@ export class PlayerVision {
   }
 
   public updateVisiblePlayers(client: Client, player: Player) {
-    const visibleToClient = this.clientVisiblePlayers.get(client.sessionId) ?? new Set();
-    const nowVisible = new Set<string>();
+    let currentlyVisiblePlayers = this.lastVisiblePlayers.get(client.sessionId);
+    let nowVisible = this.stagingVisiblePlayers.get(client.sessionId);
+    // ensure sets are initialized once per client
+    if (!currentlyVisiblePlayers) {
+      currentlyVisiblePlayers = new Set();
+      this.lastVisiblePlayers.set(client.sessionId, currentlyVisiblePlayers);
+    }
+    if (!nowVisible) {
+      nowVisible = new Set();
+      this.stagingVisiblePlayers.set(client.sessionId, nowVisible);
+    }
+    // clear the staging set before calculating new visible players
+    nowVisible.clear();
 
     for (const [otherSessionId, otherPlayer] of this.room.state.players) {
       if (otherSessionId === client.sessionId) continue; // skip self
@@ -45,11 +58,11 @@ export class PlayerVision {
 
       if (dx <= PLAYER_VIEW_RADIUS && dy <= PLAYER_VIEW_RADIUS) {
         nowVisible.add(otherSessionId);
-        if (!visibleToClient.has(otherSessionId)) {
+        if (!currentlyVisiblePlayers.has(otherSessionId)) {
           client.view?.add(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
         }
       } else {
-        if (visibleToClient.has(otherSessionId)) {
+        if (currentlyVisiblePlayers.has(otherSessionId)) {
           client.view?.remove(otherPlayer, PLAYER_VIEW_LEVELS.VIEW);
           // ensure we still see basic player info (username)
           client.view?.add(otherPlayer);
@@ -57,6 +70,7 @@ export class PlayerVision {
       }
     }
 
-    this.clientVisiblePlayers.set(client.sessionId, nowVisible);
+    this.lastVisiblePlayers.set(client.sessionId, nowVisible);
+    this.stagingVisiblePlayers.set(client.sessionId, currentlyVisiblePlayers);
   }
 }

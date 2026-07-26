@@ -20,14 +20,16 @@ export class Block {
   private hitbox: Phaser.GameObjects.Rectangle;
   private ore: Phaser.GameObjects.Graphics;
   private cracks: Phaser.GameObjects.Graphics;
+  public readonly width = BLOCK_SIZE.width;
+  public readonly height = BLOCK_SIZE.height;
 
   constructor(
     scene: Phaser.Scene,
     public readonly x: number,
     public readonly y: number,
     type: BLOCK_TYPE,
-    hp: number,
-    maxHp: number
+    public hp: number,
+    private maxHp: number
   ) {
     this.hitbox = scene.add.rectangle(this.x, this.y, BLOCK_SIZE.width, BLOCK_SIZE.height);
     this.ore = scene.add.graphics().setDepth(1);
@@ -44,8 +46,15 @@ export class Block {
   }
 
   public update(hp: number, maxHp: number, type: BLOCK_TYPE) {
+    this.hp = hp;
+    this.maxHp = maxHp;
     this.setColor(type);
     this.drawCracks(hp, maxHp);
+  }
+
+  public updateHp(hp: number) {
+    this.hp = hp;
+    this.drawCracks(hp, this.maxHp);
   }
 
   private setColor(type: BLOCK_TYPE) {

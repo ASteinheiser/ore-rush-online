@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FIXED_TIME_STEP } from './world';
 
 /** The size of the player in pixels */
 export const PLAYER_SIZE = {
@@ -7,6 +8,9 @@ export const PLAYER_SIZE = {
 } as const;
 /** The radius of the player's view in pixels */
 export const PLAYER_VIEW_RADIUS = 300;
+/** How many ticks ahead to preload blocks in the direction of vertical travel.
+ * Helps fast-falling/flying players prevent jittery block vision (latency-dependent) */
+export const PLAYER_VIEW_LOOKAHEAD_TICKS = 8;
 
 /** The horizontal velocity of the player in pixels per tick */
 export const PLAYER_VX_PER_TICK = 4;
@@ -15,14 +19,16 @@ export const PLAYER_GRAVITY_VY_PER_TICK = 0.35;
 /** Upward thrust per tick while `up` is held (opposes gravity; enables flight) */
 export const PLAYER_THRUST_VY_PER_TICK = 0.5;
 /** Maximum downward speed per tick */
-export const PLAYER_GRAVITY_VY_MAX = 24;
+export const PLAYER_GRAVITY_VY_MAX = 16;
 /** Maximum upward speed per tick */
-export const PLAYER_THRUST_VY_MAX = 24;
+export const PLAYER_THRUST_VY_MAX = 16;
 
 /** The number of frames per second the player animates at (8fps) */
 export const PLAYER_FRAME_RATE = 8;
 /** Drill animation takes 0.375 seconds total (3 frames at 8fps) */
 export const DRILL_COOLDOWN = 375;
+/** Number of fixed simulation ticks the drill action takes to deal damage */
+export const DRILL_COOLDOWN_TICKS = Math.round(DRILL_COOLDOWN / FIXED_TIME_STEP);
 /** The directions the player can drill */
 export const DRILL_DIRECTIONS = {
   IDLE: 'idle',

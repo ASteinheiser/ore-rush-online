@@ -80,7 +80,14 @@ export class PlayerInput {
 
     // disable movement inputs if the player has no fuel
     if (player.fuelRemaining <= 0) {
-      input = { ...input, left: false, right: false, up: false, down: false };
+      input = {
+        seq: input.seq,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+      };
+      player.lastProcessedInput = input;
     }
 
     processFunction(input);

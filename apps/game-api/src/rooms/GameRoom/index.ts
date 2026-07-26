@@ -67,6 +67,10 @@ export class GameRoom extends Room {
         this.elapsedTime -= FIXED_TIME_STEP;
         this.fixedTick();
       }
+
+      // Vision updates should run once per simulation callback (patch rate, ~20Hz) rather than per fixed tick (~64Hz)
+      // Clients only receive state at patch rate, so visibility changes from intermediate fixed ticks are never sent
+      this.updateVisibility();
     }, this.patchRate);
   }
 
@@ -120,22 +124,17 @@ export class GameRoom extends Room {
 
   fixedTick() {
     this.state.players.forEach((player, sessionId) => {
-      const client = this.clients.getById(sessionId);
       try {
         this.playerInput.processPlayerInput(player, (input) => {
           this.playerMovement.handleInput(player, input);
           this.playerMining.handleInput(player, input);
         });
-
-        if (client?.view) {
-          // only update vision once per tick, after positions are updated
-          this.playerVision.updateVisiblePlayers(client, player);
-          this.blockMap.updateVisibleBlocks(client, player);
-        }
       } catch (error) {
+        const client = this.clients.getById(sessionId);
         const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;
+
         if (client) {
-          // allow reconnection as player inputs will be cleared, potentially solving issues
+          // allow reconnection in case reconnection solves the error
           this.auth.kickClient(WS_CODE.INTERNAL_SERVER_ERROR, message, client);
         } else {
           logger.error({
@@ -143,6 +142,23 @@ export class GameRoom extends Room {
             data: { roomId: this.roomId, clientId: sessionId, error: message },
           });
         }
+      }
+    });
+  }
+
+  /** Updates per-client visibility (players + blocks) */
+  updateVisibility() {
+    this.state.players.forEach((player, sessionId) => {
+      const client = this.clients.getById(sessionId);
+      if (!client?.view) return;
+
+      try {
+        this.playerVision.updateVisiblePlayers(client, player);
+        this.blockMap.updateVisibleBlocks(client, player);
+      } catch (error) {
+        const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;
+        // allow reconnection in case reconnection solves the error
+        this.auth.kickClient(WS_CODE.INTERNAL_SERVER_ERROR, message, client);
       }
     });
   }

@@ -46,7 +46,8 @@ export class Player extends Schema {
   /** Highest `seq` the server has accepted from the client, used to reject duplicate/old/spoofed inputs */
   lastReceivedSeq: number = -1;
   lastActivityTime: number = Date.now();
-  lastDrillTime: number = 0;
-  drillTargetCol: number = -1;
-  drillTargetRow: number = -1;
+  /** Fixed simulation ticks remaining before the current drill action completes (`0` = idle) */
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillCooldownRemainingTicks: number = 0;
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillTargetCol: number = -1;
+  @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillTargetRow: number = -1;
 }

@@ -34,6 +34,10 @@ export class Player {
   private idleAccumulator = 0;
   private displayedMoving = false;
   private static readonly IDLE_BUFFER_MS = 50;
+  /** Delays stopping drill / switching to roll when sim briefly reports drill idle (ie: moving along an edge) */
+  private drillIdleAccumulator = 0;
+  private logicalDrilling = false;
+  private static readonly DRILL_IDLE_BUFFER_MS = 50;
 
   constructor(
     private scene: Phaser.Scene,
@@ -122,6 +126,17 @@ export class Player {
       }
     }
 
+    // Asymmetric buffer: keep drill animation through short gaps in logical drill state
+    if (this.logicalDrilling) {
+      this.drillIdleAccumulator = 0;
+    } else {
+      this.drillIdleAccumulator += delta;
+      if (this.drillIdleAccumulator >= Player.DRILL_IDLE_BUFFER_MS) {
+        this.drillIdleAccumulator = 0;
+        if (this.isDrilling()) this.entity.anims.stop();
+      }
+    }
+
     this.entity.x = x;
     this.entity.y = y;
     this.nameText.x = x;
@@ -141,20 +156,24 @@ export class Player {
   public setDrillDirection(direction: DRILL_DIRECTION) {
     switch (direction) {
       case DRILL_DIRECTIONS.LEFT:
+        this.logicalDrilling = true;
         if (this.isDrillingLeft()) return;
         this.entity.anims.play(PLAYER_ANIM.DRILL_LEFT);
         break;
       case DRILL_DIRECTIONS.RIGHT:
+        this.logicalDrilling = true;
         if (this.isDrillingRight()) return;
         this.entity.anims.play(PLAYER_ANIM.DRILL_RIGHT);
         break;
       case DRILL_DIRECTIONS.DOWN:
+        this.logicalDrilling = true;
         if (this.isDrillingDown()) return;
         this.entity.anims.play(PLAYER_ANIM.DRILL_DOWN);
         break;
       case DRILL_DIRECTIONS.IDLE:
       default:
-        if (this.isDrilling()) this.entity.anims.stop();
+        this.logicalDrilling = false;
+        break;
     }
   }
 
