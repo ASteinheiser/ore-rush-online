@@ -8,9 +8,9 @@ datasource db {
 }
 
 model Profile {
-  userId    String @id @unique
-  userName  String @unique @db.VarChar(255)
-  inventory Item[]
+  userId   String @id @unique
+  userName String @unique @db.VarChar(255)
+  stash    Item[]
 }
 
 model Item {
