@@ -8,17 +8,18 @@ datasource db {
 }
 
 model Profile {
-  userId   String @id @unique
+  userId   String @id
   userName String @unique @db.VarChar(255)
   stash    Item[]
 }
 
 model Item {
-  id        String   @id @unique
+  id        String
   profileId String
   profile   Profile  @relation(fields: [profileId], references: [userId])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  itemId    String
   quantity  Int
+
+  @@id([profileId, id])
 }
