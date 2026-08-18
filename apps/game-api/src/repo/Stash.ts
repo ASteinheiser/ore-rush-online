@@ -36,8 +36,8 @@ export class StashRepository {
   }
 
   async removeItemFromStash(item: ItemWithoutTimestamps) {
-    const [, , remaining] = await this.prisma.$transaction([
-      this.prisma.item.updateMany({
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.item.updateManyAndReturn({
         where: {
           profileId: item.profileId,
           id: item.id,
@@ -53,16 +53,9 @@ export class StashRepository {
           quantity: { lte: 0 },
         },
       }),
-      this.prisma.item.findUnique({
-        where: {
-          profileId_id: {
-            profileId: item.profileId,
-            id: item.id,
-          },
-        },
-      }),
     ]);
 
-    return remaining;
+    const remaining = updated[0];
+    return remaining?.quantity > 0 ? remaining : null;
   }
 }
