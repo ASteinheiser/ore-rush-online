@@ -1,6 +1,7 @@
 import type { Client } from 'colyseus';
-import { type Player, EMPTY_MAP_ROWS, BLOCK_SIZE, WS_CODE } from '@repo/core-game';
+import { type Player, EMPTY_MAP_ROWS, BLOCK_SIZE, WS_CODE, ORE, isOreType } from '@repo/core-game';
 import type { GameRoom } from '../index';
+import { StashRepository } from '../../../repo/Stash';
 
 export class PlayerExtraction {
   constructor(private room: GameRoom) {}
@@ -16,12 +17,24 @@ export class PlayerExtraction {
    * Should validate the player is actually in the extraction zone first.
    * If successful, then persist the player's inventory and remove them from the map.
    */
-  public handleExtractRequest(client: Client) {
+  public async handleExtractRequest(client: Client) {
     const player = this.room.state.players.get(client.sessionId);
     if (!player) return;
 
     if (this.isInExtractionZone(player)) {
-      // TODO: persist the player's inventory
+      if (!this.room.prisma) return;
+      const stashRepository = new StashRepository(this.room.prisma);
+
+      const inventoryToStore = Object.keys(player.inventory)
+        .filter((itemId) => isOreType(itemId))
+        .map((itemId) => ({
+          profileId: player.userId,
+          id: ORE[itemId].id,
+          quantity: player.inventory[itemId],
+        }));
+
+      await stashRepository.storeItemInStash(inventoryToStore[0]);
+
       this.room.auth.kickClient(WS_CODE.SUCCESS, 'Player has extracted', client, false);
     }
   }
