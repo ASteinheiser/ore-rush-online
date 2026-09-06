@@ -55,9 +55,7 @@ export class GameRoom extends Room {
       client.send(WS_EVENT.PONG);
     });
 
-    this.onMessage(WS_EVENT.PLAYER_EXTRACT, (client) => {
-      this.playerExtraction.handleExtractRequest(client);
-    });
+    this.onMessage(WS_EVENT.PLAYER_EXTRACT, (client) => this.playerExtraction.handleExtractRequest(client));
 
     this.playerInput.setupPlayerInputHandler();
 
