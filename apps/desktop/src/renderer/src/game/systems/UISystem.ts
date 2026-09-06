@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { calculatePercentage, MAP_SIZE, type Inventory } from '@repo/core-game';
+import { calculatePercentage, MAP_SIZE, calculateInventoryWeight, type Inventory } from '@repo/core-game';
 import { CustomText } from '../objects/CustomText';
 import { FogOverlay } from '../objects/FogOverlay';
 import { FpsDisplay } from '../objects/FpsDisplay';
@@ -116,7 +116,7 @@ export class UISystem {
   }
 
   public updateInventory(inventory: Inventory) {
-    const usedCapacity = inventory.coal + inventory.iron + inventory.copper;
+    const usedCapacity = calculateInventoryWeight(inventory);
     const capacityPercent = calculatePercentage(usedCapacity, inventory.capacity);
     if (capacityPercent > 70) {
       this.capacityText.setColor('#ef4444');
