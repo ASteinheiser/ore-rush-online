@@ -1,5 +1,5 @@
 import type { Client } from 'colyseus';
-import type { Player } from '@repo/core-game';
+import { EMPTY_MAP_ROWS, BLOCK_SIZE, type Player } from '@repo/core-game';
 import type { GameRoom } from '../index';
 
 export class PlayerExtraction {
@@ -7,7 +7,8 @@ export class PlayerExtraction {
 
   /** Whether the player is currently standing in the extraction zone */
   public isInExtractionZone(player: Player): boolean {
-    return false;
+    const extractionZoneHeight = EMPTY_MAP_ROWS * BLOCK_SIZE.height;
+    return player.y < extractionZoneHeight;
   }
 
   /**
