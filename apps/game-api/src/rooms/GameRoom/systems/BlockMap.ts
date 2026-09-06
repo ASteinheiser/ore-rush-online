@@ -3,6 +3,8 @@ import {
   Block,
   BLOCK_SIZE,
   BLOCK_TYPES,
+  DIRT_HARDNESS,
+  ORE,
   type Player,
   PLAYER_VIEW_RADIUS,
   PLAYER_VIEW_LOOKAHEAD_TICKS,
@@ -149,19 +151,18 @@ export class BlockMap {
       block.y = row * BLOCK_SIZE.height + BLOCK_SIZE.height / 2;
 
       const randomBlockTypeSeed = Math.random();
+
       if (randomBlockTypeSeed < 0.7) {
         block.type = BLOCK_TYPES.DIRT;
-        block.maxHp = 2;
       } else if (randomBlockTypeSeed < 0.85) {
         block.type = BLOCK_TYPES.COAL;
-        block.maxHp = 3;
       } else if (randomBlockTypeSeed < 0.95) {
         block.type = BLOCK_TYPES.IRON;
-        block.maxHp = 3;
       } else {
         block.type = BLOCK_TYPES.COPPER;
-        block.maxHp = 4;
       }
+
+      block.maxHp = block.type === BLOCK_TYPES.DIRT ? DIRT_HARDNESS : ORE[block.type].hardness;
       block.hp = block.maxHp;
 
       this.blockGrid[row][col] = block.id;

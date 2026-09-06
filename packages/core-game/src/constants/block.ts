@@ -12,3 +12,5 @@ export const BLOCK_TYPES = {
 } as const;
 /** List of blocks available (type) */
 export type BLOCK_TYPE = (typeof BLOCK_TYPES)[keyof typeof BLOCK_TYPES];
+/** Determines how many drill actions it takes to mine a single dirt block */
+export const DIRT_HARDNESS = 2;
