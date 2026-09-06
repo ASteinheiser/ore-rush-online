@@ -27,6 +27,7 @@ export const WS_CODE = {
   BAD_REQUEST: 3004,
   TIMEOUT: 3008,
   NOT_FOUND: 4004,
+  DEATH: 4000,
 } as const;
 
 /** The payload for joining a room or refreshing a token */

@@ -1,12 +1,12 @@
 import type { Client } from 'colyseus';
-import { EMPTY_MAP_ROWS, BLOCK_SIZE, type Player } from '@repo/core-game';
+import { type Player, EMPTY_MAP_ROWS, BLOCK_SIZE, WS_CODE } from '@repo/core-game';
 import type { GameRoom } from '../index';
 
 export class PlayerExtraction {
   constructor(private room: GameRoom) {}
 
   /** Whether the player is currently standing in the extraction zone */
-  public isInExtractionZone(player: Player): boolean {
+  private isInExtractionZone(player: Player): boolean {
     const extractionZoneHeight = EMPTY_MAP_ROWS * BLOCK_SIZE.height;
     return player.y < extractionZoneHeight;
   }
@@ -17,14 +17,16 @@ export class PlayerExtraction {
    * If successful, then persist the player's inventory.
    */
   public handleExtractRequest(client: Client, player: Player) {
-    // TODO
+    if (this.isInExtractionZone(player)) {
+      // TODO
+    }
   }
 
   /**
    * Called when a player dies (ex: fuel depleted outside of the extraction zone).
-   * Should discard the player's inventory and remove them from the map.
+   * Should discard the player's inventory (do not persist) and remove them from the map.
    */
-  public handleDeath(sessionId: string, player: Player) {
-    // TODO
+  public handleDeath(client: Client) {
+    this.room.auth.kickClient(WS_CODE.DEATH, 'Player has died', client, false);
   }
 }
