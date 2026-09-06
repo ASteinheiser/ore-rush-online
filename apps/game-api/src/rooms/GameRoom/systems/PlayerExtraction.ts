@@ -16,9 +16,13 @@ export class PlayerExtraction {
    * Should validate the player is actually in the extraction zone first.
    * If successful, then persist the player's inventory.
    */
-  public handleExtractRequest(client: Client, player: Player) {
+  public handleExtractRequest(client: Client) {
+    const player = this.room.state.players.get(client.sessionId);
+    if (!player) return;
+
     if (this.isInExtractionZone(player)) {
-      // TODO
+      // TODO: persist the player's inventory
+      this.room.auth.kickClient(WS_CODE.SUCCESS, 'Player has extracted', client, false);
     }
   }
 

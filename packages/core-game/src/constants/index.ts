@@ -14,9 +14,9 @@ export const WS_ROOM = {
 export const WS_EVENT = {
   PING: 'ping',
   PONG: 'pong',
-  LEAVE_ROOM: 'leaveRoom',
-  PLAYER_INPUT: 'playerInput',
   REFRESH_TOKEN: 'refreshToken',
+  PLAYER_INPUT: 'playerInput',
+  PLAYER_EXTRACT: 'playerExtract',
 } as const;
 /** The websocket message codes available */
 export const WS_CODE = {

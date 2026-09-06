@@ -9,6 +9,7 @@ import { PlayerInput } from './systems/PlayerInput';
 import { PlayerVision } from './systems/PlayerVision';
 import { PlayerMovement } from './systems/PlayerMovement';
 import { PlayerMining } from './systems/PlayerMining';
+import { PlayerExtraction } from './systems/PlayerExtraction';
 import { InputRateLimiter } from './systems/InputRateLimiter';
 
 const MAX_PLAYERS_PER_ROOM = 10;
@@ -36,6 +37,7 @@ export class GameRoom extends Room {
   private playerVision = new PlayerVision(this);
   private playerMovement = new PlayerMovement(this);
   private playerMining = new PlayerMining(this);
+  private playerExtraction = new PlayerExtraction(this);
 
   onCreate({ prisma, connectionCheckInterval }: GameRoomArgs) {
     logger.info({
@@ -53,9 +55,8 @@ export class GameRoom extends Room {
       client.send(WS_EVENT.PONG);
     });
 
-    this.onMessage(WS_EVENT.LEAVE_ROOM, (client) => {
-      // we explicitly do not want to allow reconnection here
-      this.auth.kickClient(WS_CODE.SUCCESS, 'Intentional leave', client, false);
+    this.onMessage(WS_EVENT.PLAYER_EXTRACT, (client) => {
+      this.playerExtraction.handleExtractRequest(client);
     });
 
     this.playerInput.setupPlayerInputHandler();
