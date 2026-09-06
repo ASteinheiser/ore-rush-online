@@ -1,9 +1,11 @@
 import {
-  BLOCK_TYPES,
+  type Player,
+  type InputPayload,
   PLAYER_FUEL_CONSUMPTION_RATE_DRILL,
   advanceDrill,
-  type InputPayload,
-  type Player,
+  ORE,
+  isOreType,
+  calculateInventoryWeight,
 } from '@repo/core-game';
 import type { GameRoom } from '../index';
 
@@ -30,17 +32,16 @@ export class PlayerMining {
       const block = this.room.blockMap.getBlock(col, row);
       if (block) {
         block.hp = hpAfter;
+        // if the block is destroyed
         if (block.hp <= 0) {
-          if (
-            block.type === BLOCK_TYPES.COAL ||
-            block.type === BLOCK_TYPES.IRON ||
-            block.type === BLOCK_TYPES.COPPER
-          ) {
-            const usedCapacity = player.inventory.coal + player.inventory.iron + player.inventory.copper;
-            if (usedCapacity < player.inventory.capacity) {
+          // if the block is an ore, add it to the player's inventory
+          if (isOreType(block.type)) {
+            const usedCapacity = calculateInventoryWeight(player.inventory);
+            if (usedCapacity + ORE[block.type].weight <= player.inventory.capacity) {
               player.inventory[block.type]++;
             }
           }
+          // delete the block from the block map
           this.room.blockMap.deleteBlock(block.id);
         }
       }
