@@ -130,6 +130,7 @@ export class GameRoom extends Room {
           this.playerMovement.handleInput(player, input);
           this.playerMining.handleInput(player, input);
         });
+        this.playerExtraction.handleDeath(player, sessionId);
       } catch (error) {
         const client = this.clients.getById(sessionId);
         const message = (error as Error)?.message || ROOM_ERROR.INTERNAL_SERVER_ERROR;

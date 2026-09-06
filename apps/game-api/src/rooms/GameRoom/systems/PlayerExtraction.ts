@@ -30,9 +30,16 @@ export class PlayerExtraction {
    * Executes when a player dies (ex: fuel depleted outside of the extraction zone).
    * Should discard the player's inventory (do not persist) and remove them from the map.
    */
-  public handleDeath(client: Client, player: Player) {
-    if (player.fuelRemaining <= 0 && !this.isInExtractionZone(player)) {
-      this.room.auth.kickClient(WS_CODE.DEATH, 'Player has died', client, false);
+  public handleDeath(player: Player, sessionId: string) {
+    const hasPlayerDied = player.fuelRemaining <= 0 && !this.isInExtractionZone(player);
+
+    if (hasPlayerDied) {
+      const client = this.room.clients.getById(sessionId);
+      if (client) {
+        this.room.auth.kickClient(WS_CODE.DEATH, 'Player has died', client, false);
+      } else {
+        this.room.cleanupPlayer(sessionId);
+      }
     }
   }
 }
