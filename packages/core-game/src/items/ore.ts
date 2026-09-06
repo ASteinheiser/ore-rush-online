@@ -3,9 +3,9 @@ import type { Inventory } from '../schemas/Player';
 
 type ORE_TYPE = Exclude<BLOCK_TYPE, 'dirt'>;
 
-export const isOreType = (type: BLOCK_TYPE): type is ORE_TYPE => type in ORE;
+export const isOreType = (type: string): type is ORE_TYPE => Object.hasOwn(ORE, type);
 
-export const calculateInventoryWeight = (inventory: Exclude<Inventory, 'capacity'>) => {
+export const calculateInventoryWeight = (inventory: Omit<Inventory, 'capacity'>) => {
   return Object.keys(ORE).reduce((sum, type) => {
     const oreType = type as ORE_TYPE;
     return sum + inventory[oreType] * ORE[oreType].weight;
