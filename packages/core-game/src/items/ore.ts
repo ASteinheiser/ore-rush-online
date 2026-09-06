@@ -1,6 +1,16 @@
-import type { BLOCK_TYPE } from '../constants/block';
+import { BLOCK_TYPES, type BLOCK_TYPE } from '../constants/block';
+import type { Inventory } from '../schemas/Player';
 
 type ORE_TYPE = Exclude<BLOCK_TYPE, 'dirt'>;
+
+export const isOreType = (type: BLOCK_TYPE): type is ORE_TYPE => type in ORE;
+
+export const calculateInventoryWeight = (inventory: Exclude<Inventory, 'capacity'>) => {
+  return Object.keys(ORE).reduce((sum, type) => {
+    const oreType = type as ORE_TYPE;
+    return sum + inventory[oreType] * ORE[oreType].weight;
+  }, 0);
+};
 
 interface Ore {
   id: string;
@@ -13,21 +23,21 @@ interface Ore {
 }
 
 export const ORE: Record<ORE_TYPE, Ore> = {
-  coal: {
+  [BLOCK_TYPES.COAL]: {
     id: 'ore-coal',
     name: 'Coal',
     description: 'Used mainly as a fuel source.',
     hardness: 3,
     weight: 1,
   },
-  iron: {
+  [BLOCK_TYPES.IRON]: {
     id: 'ore-iron',
     name: 'Iron',
     description: 'Material used in many standard parts.',
     hardness: 4,
     weight: 5,
   },
-  copper: {
+  [BLOCK_TYPES.COPPER]: {
     id: 'ore-copper',
     name: 'Copper',
     description: 'Allows for advanced electronics.',
