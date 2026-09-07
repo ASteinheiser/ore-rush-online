@@ -26,6 +26,8 @@ export class UISystem {
   private copperCountText: CustomText;
   private extractText: CustomText;
   private remotePlayerList: CustomText;
+  /** Tracks the player's inventory */
+  private inventory?: Inventory;
 
   constructor(private scene: Game) {
     // set the camera bounds to the map size
@@ -122,9 +124,16 @@ export class UISystem {
     this.copperCountText.destroy();
     this.extractText.destroy();
     this.remotePlayerList.destroy();
+    this.inventory = undefined;
+  }
+
+  public getInventory() {
+    return { ...this.inventory };
   }
 
   public updateInventory(inventory: Inventory) {
+    this.inventory = inventory;
+
     const usedCapacity = calculateInventoryWeight(inventory);
     const capacityPercent = calculatePercentage(usedCapacity, inventory.capacity);
     if (capacityPercent > 70) {
