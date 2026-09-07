@@ -1,43 +1,54 @@
-import * as Phaser from 'phaser';
+import type * as Phaser from 'phaser';
 import { WS_EVENT, type InputPayload } from '@repo/core-game';
 import type { Game } from '../scenes/Game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 
+interface InputKeys {
+  ESC: Phaser.Input.Keyboard.Key;
+  W: Phaser.Input.Keyboard.Key;
+  A: Phaser.Input.Keyboard.Key;
+  S: Phaser.Input.Keyboard.Key;
+  D: Phaser.Input.Keyboard.Key;
+  UP: Phaser.Input.Keyboard.Key;
+  DOWN: Phaser.Input.Keyboard.Key;
+  LEFT: Phaser.Input.Keyboard.Key;
+  RIGHT: Phaser.Input.Keyboard.Key;
+  SHIFT: Phaser.Input.Keyboard.Key;
+}
+
 export class InputSystem {
   private inputSeq = 0;
-  private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
-  private escapeKey?: Phaser.Input.Keyboard.Key;
+  private inputKeys?: InputKeys;
 
   constructor(private scene: Game) {}
 
   public setupInputSystem() {
     this.inputSeq = 0;
-    this.escapeKey = this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-    this.cursorKeys = this.scene.input.keyboard?.createCursorKeys();
+    this.inputKeys = this.scene.input.keyboard?.addKeys('ESC,W,A,S,D,UP,DOWN,LEFT,RIGHT,SHIFT') as InputKeys;
   }
 
   public processInput() {
-    if (!this.scene.roomSystem.room?.connection.isOpen || !this.cursorKeys || !this.escapeKey) {
+    if (!this.scene.roomSystem.room?.connection.isOpen || !this.inputKeys) {
       return;
     }
 
     // press escape to open the settings menu
-    if (this.escapeKey.isDown) {
+    if (this.inputKeys.ESC.isDown) {
       EventBus.emit(EVENT_BUS.SETTINGS_OPEN);
     }
 
-    // press shift to leave the game
-    if (this.cursorKeys.shift.isDown) {
-      this.scene.roomSystem.room?.send(WS_EVENT.LEAVE_ROOM);
+    // press shift to extract with inventory + ship
+    if (this.inputKeys.SHIFT.isDown) {
+      this.scene.roomSystem.room?.send(WS_EVENT.PLAYER_EXTRACT);
       return;
     }
 
     const inputPayload: InputPayload = {
       seq: this.inputSeq++,
-      left: this.cursorKeys.left.isDown,
-      right: this.cursorKeys.right.isDown,
-      up: this.cursorKeys.up.isDown,
-      down: this.cursorKeys.down.isDown,
+      left: this.inputKeys.LEFT.isDown || this.inputKeys.A.isDown,
+      right: this.inputKeys.RIGHT.isDown || this.inputKeys.D.isDown,
+      up: this.inputKeys.UP.isDown || this.inputKeys.W.isDown,
+      down: this.inputKeys.DOWN.isDown || this.inputKeys.S.isDown,
     };
     // send the input to the server
     this.scene.roomSystem.room?.send(WS_EVENT.PLAYER_INPUT, inputPayload);
