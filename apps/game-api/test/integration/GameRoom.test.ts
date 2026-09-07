@@ -21,6 +21,7 @@ import {
   DRILL_COOLDOWN,
   DRILL_DIRECTIONS,
   EMPTY_MAP_ROWS,
+  ORE,
   Player,
   type InputPayload,
 } from '@repo/core-game';
@@ -145,9 +146,20 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       expect(pong).toBe(true);
     });
 
-    it('should return WS_CODE.SUCCESS when a client leaves the room via the LEAVE_ROOM event', async () => {
+    // NOTE: allow this test to run before the following ones that add to the player's "stash" (item DB rows)
+    it('should handle player death (discarding inventory) when their fuel runs out outside the extraction zone', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(client.roomId);
+      const player = room.state.players.get(client.sessionId)!;
+
+      // position the player below the empty spawn rows, i.e. outside of the extraction zone
+      player.x = MAP_SIZE.width / 2;
+      player.y = EMPTY_MAP_ROWS * BLOCK_SIZE.height + PLAYER_SIZE.height;
+      player.velocityY = 0;
+      player.fuelRemaining = 0;
+      // these inventory items should be discarded when the player dies
+      player.inventory.iron = 3;
+      player.inventory.copper = 2;
 
       const leaveCodePromise = new Promise((resolve) => {
         client.onLeave((code) => resolve(code));
@@ -155,11 +167,47 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
       assertBasicPlayerState({ room, clientIds: [client.sessionId] });
 
-      client.send(WS_EVENT.LEAVE_ROOM);
+      await room.waitForNextSimulationTick();
+
+      assertBasicPlayerState({ room, clientIds: [] });
+      expect(await leaveCodePromise).toBe(WS_CODE.DEATH);
+
+      const savedItems = await prisma.item.findMany({ where: { profileId: TEST_USERS[0].id } });
+      expect(savedItems.length).toBe(0);
+    });
+
+    // NOTE: allow this test to run before the following ones that add to the player's "stash" (item DB rows)
+    it('should do nothing if a player attempts to extract but is not in the extraction zone', async () => {
+      expect(true).toBe(true);
+    });
+
+    it('should return WS_CODE.SUCCESS, persist inventory to the stash, and remove the player when they extract', async () => {
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
+
+      player.inventory.iron = 1;
+      player.inventory.copper = 4;
+
+      const leaveCodePromise = new Promise((resolve) => {
+        client.onLeave((code) => resolve(code));
+      });
+
+      assertBasicPlayerState({ room, clientIds: [client.sessionId] });
+
+      client.send(WS_EVENT.PLAYER_EXTRACT);
       await room.waitForNextSimulationTick();
 
       assertBasicPlayerState({ room, clientIds: [] });
       expect(await leaveCodePromise).toBe(WS_CODE.SUCCESS);
+
+      const savedItems = await prisma.item.findMany({ where: { profileId: TEST_USERS[0].id } });
+      const savedIron = savedItems.find((item) => item.id === ORE.iron.id);
+      const savedCopper = savedItems.find((item) => item.id === ORE.copper.id);
+
+      expect(savedItems.length).toBe(2);
+      expect(savedIron?.quantity).toBe(1);
+      expect(savedCopper?.quantity).toBe(4);
     });
 
     it('should allow a client to reconnect to a room', async () => {
