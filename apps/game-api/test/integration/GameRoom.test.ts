@@ -178,7 +178,26 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
     // NOTE: allow this test to run before the following ones that add to the player's "stash" (item DB rows)
     it('should do nothing if a player attempts to extract but is not in the extraction zone', async () => {
-      expect(true).toBe(true);
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = room.state.players.get(client.sessionId)!;
+
+      // position the player below the empty spawn rows, i.e. outside of the extraction zone
+      player.x = MAP_SIZE.width / 2;
+      player.y = EMPTY_MAP_ROWS * BLOCK_SIZE.height + PLAYER_SIZE.height;
+      player.velocityY = 0;
+      player.inventory.iron = 5;
+      player.inventory.copper = 3;
+
+      assertBasicPlayerState({ room, clientIds: [client.sessionId] });
+
+      client.send(WS_EVENT.PLAYER_EXTRACT);
+      await room.waitForNextSimulationTick();
+
+      assertBasicPlayerState({ room, clientIds: [client.sessionId] });
+
+      const savedItems = await prisma.item.findMany({ where: { profileId: TEST_USERS[0].id } });
+      expect(savedItems.length).toBe(0);
     });
 
     it('should return WS_CODE.SUCCESS, persist inventory to the stash, and remove the player when they extract', async () => {
