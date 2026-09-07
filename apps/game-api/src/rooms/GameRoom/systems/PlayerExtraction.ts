@@ -14,11 +14,13 @@ export class PlayerExtraction {
    */
   public async handleExtractRequest(client: Client) {
     const player = this.room.state.players.get(client.sessionId);
-    if (!player) return;
+    if (!player || player.isExtracting) return;
 
     if (isInExtractionZone({ ...player, ...PLAYER_SIZE })) {
       if (!this.room.prisma) return;
       const stashRepository = new StashRepository(this.room.prisma);
+
+      player.isExtracting = true;
 
       try {
         const itemsToStore = Object.keys(player.inventory)
@@ -39,6 +41,8 @@ export class PlayerExtraction {
           message: `Error during player extraction - items failed to store in stash`,
           data: { roomId: this.room.roomId, userId: player.userId, error: errorMessage },
         });
+
+        player.isExtracting = false;
       }
     }
   }

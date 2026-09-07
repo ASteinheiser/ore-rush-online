@@ -50,4 +50,6 @@ export class Player extends Schema {
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillCooldownRemainingTicks: number = 0;
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillTargetCol: number = -1;
   @view(PLAYER_VIEW_LEVELS.PRIVATE) @type('number') drillTargetRow: number = -1;
+  /** `true` while an extraction is in progress or has completed, used to prevent duplicate extraction requests */
+  isExtracting: boolean = false;
 }
