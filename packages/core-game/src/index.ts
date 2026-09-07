@@ -6,3 +6,4 @@ export * from './calculate-percentage';
 export * from './calculate-movement';
 export * from './check-AABB-collision';
 export * from './advance-drill';
+export * from './is-in-extraction-zone';

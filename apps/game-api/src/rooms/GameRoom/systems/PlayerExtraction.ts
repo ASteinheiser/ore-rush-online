@@ -1,17 +1,11 @@
 import type { Client } from 'colyseus';
-import { type Player, EMPTY_MAP_ROWS, BLOCK_SIZE, WS_CODE, ORE, isOreType } from '@repo/core-game';
+import { type Player, PLAYER_SIZE, WS_CODE, ORE, isOreType, isInExtractionZone } from '@repo/core-game';
 import { logger } from '../../../logger';
 import type { GameRoom } from '../index';
 import { StashRepository } from '../../../repo/Stash';
 
 export class PlayerExtraction {
   constructor(private room: GameRoom) {}
-
-  /** Whether the player is currently standing in the extraction zone */
-  private isInExtractionZone(player: Player): boolean {
-    const extractionZoneHeight = EMPTY_MAP_ROWS * BLOCK_SIZE.height;
-    return player.y < extractionZoneHeight;
-  }
 
   /**
    * Called when a player requests to extract (ex: a new WS_EVENT.EXTRACT message).
@@ -22,7 +16,7 @@ export class PlayerExtraction {
     const player = this.room.state.players.get(client.sessionId);
     if (!player) return;
 
-    if (this.isInExtractionZone(player)) {
+    if (isInExtractionZone({ ...player, ...PLAYER_SIZE })) {
       if (!this.room.prisma) return;
       const stashRepository = new StashRepository(this.room.prisma);
 
@@ -54,7 +48,7 @@ export class PlayerExtraction {
    * Should discard the player's inventory (do not persist) and remove them from the map.
    */
   public handleDeath(player: Player, sessionId: string) {
-    const hasPlayerDied = player.fuelRemaining <= 0 && !this.isInExtractionZone(player);
+    const hasPlayerDied = player.fuelRemaining <= 0 && !isInExtractionZone({ ...player, ...PLAYER_SIZE });
 
     if (hasPlayerDied) {
       const client = this.room.clients.getById(sessionId);
