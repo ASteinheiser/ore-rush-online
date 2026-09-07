@@ -1,5 +1,5 @@
 import type * as Phaser from 'phaser';
-import { WS_EVENT, type InputPayload } from '@repo/core-game';
+import { type InputPayload, WS_EVENT, isInExtractionZone } from '@repo/core-game';
 import type { Game } from '../scenes/Game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 
@@ -39,8 +39,11 @@ export class InputSystem {
 
     // press shift to extract with inventory + ship
     if (this.inputKeys.SHIFT.isDown) {
-      this.scene.roomSystem.room?.send(WS_EVENT.PLAYER_EXTRACT);
-      return;
+      const playerEntity = this.scene.playerSystem.currentPlayer?.entity;
+
+      if (playerEntity && isInExtractionZone(playerEntity)) {
+        this.scene.roomSystem.room?.send(WS_EVENT.PLAYER_EXTRACT);
+      }
     }
 
     const inputPayload: InputPayload = {

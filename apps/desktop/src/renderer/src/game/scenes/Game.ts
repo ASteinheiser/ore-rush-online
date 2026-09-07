@@ -14,7 +14,7 @@ export class Game extends Phaser.Scene {
   private uiSystem?: UISystem;
   public roomSystem = new RoomSystem(this);
   private inputSystem = new InputSystem(this);
-  private playerSystem = new PlayerSystem(this);
+  public playerSystem = new PlayerSystem(this);
   private remotePlayerSystem = new RemotePlayerSystem(this);
   public blockSystem = new BlockSystem(this);
 
