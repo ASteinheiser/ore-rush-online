@@ -229,6 +229,72 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       expect(savedCopper?.quantity).toBe(4);
     });
 
+    it("should stack items in the player's stash and create new stacks as needed", async () => {
+      // use the same user as the previous test
+      const client = await joinTestRoom({ server, token: generateTestJWT({}) });
+      const room = getRoom(client.roomId);
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
+
+      player.inventory.iron = 4; // expecting + 1 from the previous test
+      player.inventory.copper = 2; // expecting + 4 from the previous test
+      player.inventory.coal = 3;
+
+      const leaveCodePromise = new Promise((resolve) => {
+        client.onLeave((code) => resolve(code));
+      });
+
+      assertBasicPlayerState({ room, clientIds: [client.sessionId] });
+
+      client.send(WS_EVENT.PLAYER_EXTRACT);
+      await room.waitForNextSimulationTick();
+
+      assertBasicPlayerState({ room, clientIds: [] });
+      expect(await leaveCodePromise).toBe(WS_CODE.SUCCESS);
+
+      const savedItems = await prisma.item.findMany({ where: { profileId: TEST_USERS[0].id } });
+      const savedIron = savedItems.find((item) => item.id === ORE.iron.id);
+      const savedCopper = savedItems.find((item) => item.id === ORE.copper.id);
+      const savedCoal = savedItems.find((item) => item.id === ORE.coal.id);
+
+      expect(savedItems.length).toBe(3);
+      expect(savedIron?.quantity).toBe(5);
+      expect(savedCopper?.quantity).toBe(6);
+      expect(savedCoal?.quantity).toBe(3);
+    });
+
+    it('should only process the first request when a player sends two extraction requests in sequence', async () => {
+      // use a different user to get a fresh "stash" to work with
+      const client = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[1] }) });
+      const room = getRoom(client.roomId);
+      const player = positionPlayerInSpawnArea(room, client.sessionId);
+
+      player.inventory.iron = 5;
+      player.inventory.coal = 8;
+
+      const leaveCodePromise = new Promise((resolve) => {
+        client.onLeave((code) => resolve(code));
+      });
+
+      assertBasicPlayerState({ room, clientIds: [client.sessionId] });
+
+      // send two extraction requests back-to-back
+      client.send(WS_EVENT.PLAYER_EXTRACT);
+      client.send(WS_EVENT.PLAYER_EXTRACT);
+      await room.waitForNextSimulationTick();
+
+      assertBasicPlayerState({ room, clientIds: [] });
+      expect(await leaveCodePromise).toBe(WS_CODE.SUCCESS);
+
+      // the player's items should only be persisted once, not duplicated by the second request
+      const savedItems = await prisma.item.findMany({ where: { profileId: TEST_USERS[1].id } });
+      const savedIron = savedItems.find((item) => item.id === ORE.iron.id);
+      const savedCoal = savedItems.find((item) => item.id === ORE.coal.id);
+
+      expect(savedItems.length).toBe(2);
+      expect(savedIron?.quantity).toBe(5);
+      expect(savedCoal?.quantity).toBe(8);
+    });
+
     it('should allow a client to reconnect to a room', async () => {
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const reconnectionToken = client.reconnectionToken;
