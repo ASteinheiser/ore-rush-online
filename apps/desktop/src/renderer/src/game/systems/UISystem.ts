@@ -1,5 +1,11 @@
 import * as Phaser from 'phaser';
-import { calculatePercentage, MAP_SIZE, calculateInventoryWeight, type Inventory } from '@repo/core-game';
+import {
+  type Inventory,
+  MAP_SIZE,
+  calculatePercentage,
+  calculateInventoryWeight,
+  isInExtractionZone,
+} from '@repo/core-game';
 import { CustomText } from '../objects/CustomText';
 import { FogOverlay } from '../objects/FogOverlay';
 import { FpsDisplay } from '../objects/FpsDisplay';
@@ -13,12 +19,12 @@ export class UISystem {
   public pingDisplay: PingDisplay;
   private mapBorder: Phaser.GameObjects.Rectangle;
   private mapBackground: Phaser.GameObjects.Image;
-  private leaveText: CustomText;
   private fuelText: CustomText;
   private capacityText: CustomText;
   private coalCountText: CustomText;
   private ironCountText: CustomText;
   private copperCountText: CustomText;
+  private extractText: CustomText;
   private remotePlayerList: CustomText;
 
   constructor(private scene: Game) {
@@ -39,11 +45,6 @@ export class UISystem {
       .setOrigin(0.5)
       .setPosition(MAP_SIZE.width / 2, MAP_SIZE.height / 2)
       .setDisplaySize(MAP_SIZE.width, MAP_SIZE.height);
-
-    this.leaveText = new CustomText(this.scene, 0, 0, 'Press Shift to leave the game', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    }).setScrollFactor(0);
 
     this.fuelText = new CustomText(this.scene, 0, 0, 'Fuel: -%', {
       fontFamily: 'Tiny5',
@@ -70,6 +71,14 @@ export class UISystem {
       fontSize: 20,
     }).setScrollFactor(0);
 
+    this.extractText = new CustomText(this.scene, 0, 0, 'Press <SHIFT> to extract', {
+      fontFamily: 'Tiny5',
+      fontSize: 20,
+      color: '#007bff',
+    })
+      .setScrollFactor(0)
+      .setAlpha(0);
+
     this.remotePlayerList = new CustomText(this.scene, 0, 0, 'no signals detected', {
       fontFamily: 'Tiny5',
       fontSize: 20,
@@ -80,12 +89,12 @@ export class UISystem {
 
     const layout = () => {
       const { width } = this.scene.scale;
-      this.leaveText?.setPosition((width - this.leaveText.width) / 2, 20);
       this.fuelText?.setPosition(20, 10);
       this.capacityText?.setPosition(20, 30);
       this.coalCountText?.setPosition(20, 60);
       this.ironCountText?.setPosition(20, 80);
       this.copperCountText?.setPosition(20, 100);
+      this.extractText?.setPosition(20, 130);
       this.remotePlayerList?.setPosition(width - 16, 100);
     };
 
@@ -106,12 +115,12 @@ export class UISystem {
     this.pingDisplay.destroy();
     this.mapBorder.destroy();
     this.mapBackground.destroy();
-    this.leaveText.destroy();
     this.fuelText.destroy();
     this.capacityText.destroy();
     this.coalCountText.destroy();
     this.ironCountText.destroy();
     this.copperCountText.destroy();
+    this.extractText.destroy();
     this.remotePlayerList.destroy();
   }
 
@@ -130,6 +139,14 @@ export class UISystem {
     this.coalCountText.setText(`Coal: ${inventory.coal}`);
     this.ironCountText.setText(`Iron: ${inventory.iron}`);
     this.copperCountText.setText(`Copper: ${inventory.copper}`);
+
+    const playerEntity = this.scene.playerSystem.currentPlayer?.entity;
+    // show extract help text once player has items and is within extraction zone
+    if (usedCapacity > 0 && playerEntity && isInExtractionZone(playerEntity)) {
+      this.extractText.fadeIn(150);
+    } else if (this.extractText.visible) {
+      this.extractText.fadeOut(150);
+    }
   }
 
   public updateFuel(current: number, total: number) {
