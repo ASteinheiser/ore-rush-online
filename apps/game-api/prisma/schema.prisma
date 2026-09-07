@@ -16,7 +16,7 @@ model Profile {
 model Item {
   id        String
   profileId String
-  profile   Profile  @relation(fields: [profileId], references: [userId])
+  profile   Profile  @relation(fields: [profileId], references: [userId], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   quantity  Int
