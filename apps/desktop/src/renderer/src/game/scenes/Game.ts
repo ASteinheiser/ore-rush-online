@@ -8,6 +8,7 @@ import { UISystem } from '../systems/UISystem';
 import { PlayerSystem } from '../systems/PlayerSystem';
 import { RemotePlayerSystem } from '../systems/RemotePlayerSystem';
 import { BlockSystem } from '../systems/BlockSystem';
+import type { GameOverSceneData } from './GameOver';
 
 export class Game extends Phaser.Scene {
   private elapsedTime = 0;
@@ -109,9 +110,14 @@ export class Game extends Phaser.Scene {
     this.scene.start(SCENE.MAIN_MENU);
   }
 
-  public sendToGameOver() {
+  public sendToGameOver(success = false) {
+    const sceneData: GameOverSceneData = {
+      success,
+      inventory: this.uiSystem?.getInventorySnapshot(),
+    };
+
     this.roomSystem.cleanupRoom();
     this.cleanupScene();
-    this.scene.start(SCENE.GAME_OVER);
+    this.scene.start(SCENE.GAME_OVER, sceneData);
   }
 }

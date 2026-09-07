@@ -13,6 +13,12 @@ import { PingDisplay } from '../objects/PingDisplay';
 import { ASSET } from '../constants';
 import type { Game } from '../scenes/Game';
 
+export interface InventorySnapshot {
+  coal: number;
+  iron: number;
+  copper: number;
+}
+
 export class UISystem {
   public fogOverlay: FogOverlay;
   public fpsDisplay: FpsDisplay;
@@ -26,8 +32,7 @@ export class UISystem {
   private copperCountText: CustomText;
   private extractText: CustomText;
   private remotePlayerList: CustomText;
-  /** Tracks the player's inventory */
-  private inventory?: Inventory;
+  private inventorySnapshot?: InventorySnapshot;
 
   constructor(private scene: Game) {
     // set the camera bounds to the map size
@@ -124,15 +129,19 @@ export class UISystem {
     this.copperCountText.destroy();
     this.extractText.destroy();
     this.remotePlayerList.destroy();
-    this.inventory = undefined;
+    this.inventorySnapshot = undefined;
   }
 
-  public getInventory() {
-    return { ...this.inventory };
+  public getInventorySnapshot() {
+    return this.inventorySnapshot;
   }
 
   public updateInventory(inventory: Inventory) {
-    this.inventory = inventory;
+    this.inventorySnapshot = {
+      coal: inventory.coal,
+      iron: inventory.iron,
+      copper: inventory.copper,
+    };
 
     const usedCapacity = calculateInventoryWeight(inventory);
     const capacityPercent = calculatePercentage(usedCapacity, inventory.capacity);

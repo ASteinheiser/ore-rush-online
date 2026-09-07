@@ -2,6 +2,12 @@ import * as Phaser from 'phaser';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { CustomText } from '../objects/CustomText';
 import { ASSET, SCENE } from '../constants';
+import type { InventorySnapshot } from '../systems/UISystem';
+
+export interface GameOverSceneData {
+  success: boolean;
+  inventory?: InventorySnapshot;
+}
 
 export class GameOver extends Phaser.Scene {
   private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -14,7 +20,8 @@ export class GameOver extends Phaser.Scene {
     this.cursorKeys = this.input.keyboard?.createCursorKeys();
   }
 
-  create() {
+  create({ success, inventory }: GameOverSceneData) {
+    console.log('GameOver constructor', success, inventory);
     this.cameras.main.setBackgroundColor(0xff0000);
 
     const bg = this.add.image(0, 0, ASSET.BACKGROUND).setAlpha(0.5).setOrigin(0.5);
