@@ -29,6 +29,7 @@ export class PlayerExtraction {
       try {
         const itemsToStore = Object.keys(player.inventory)
           .filter((itemId) => isOreType(itemId))
+          .filter((itemId) => player.inventory[itemId] > 0)
           .map((itemId) => ({
             profileId: player.userId,
             id: ORE[itemId].id,
