@@ -1,5 +1,6 @@
 import type { Client } from 'colyseus';
 import { type Player, EMPTY_MAP_ROWS, BLOCK_SIZE, WS_CODE, ORE, isOreType } from '@repo/core-game';
+import { logger } from '../../../logger';
 import type { GameRoom } from '../index';
 import { StashRepository } from '../../../repo/Stash';
 
@@ -25,17 +26,25 @@ export class PlayerExtraction {
       if (!this.room.prisma) return;
       const stashRepository = new StashRepository(this.room.prisma);
 
-      const inventoryToStore = Object.keys(player.inventory)
-        .filter((itemId) => isOreType(itemId))
-        .map((itemId) => ({
-          profileId: player.userId,
-          id: ORE[itemId].id,
-          quantity: player.inventory[itemId],
-        }));
+      try {
+        const itemsToStore = Object.keys(player.inventory)
+          .filter((itemId) => isOreType(itemId))
+          .map((itemId) => ({
+            profileId: player.userId,
+            id: ORE[itemId].id,
+            quantity: player.inventory[itemId],
+          }));
 
-      await stashRepository.storeItemInStash(inventoryToStore[0]);
+        await stashRepository.storeItemsInStash(itemsToStore);
 
-      this.room.auth.kickClient(WS_CODE.SUCCESS, 'Player has extracted', client, false);
+        this.room.auth.kickClient(WS_CODE.SUCCESS, 'Player has extracted', client, false);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        logger.error({
+          message: `Error during player extraction - items failed to store in stash`,
+          data: { roomId: this.room.roomId, userId: player.userId, error: errorMessage },
+        });
+      }
     }
   }
 
