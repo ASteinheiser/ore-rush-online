@@ -154,8 +154,9 @@ export class RoomSystem {
   private async handleOnLeave(code: number, setupStateListeners: () => void) {
     switch (code) {
       case WS_CODE.SUCCESS:
+      case WS_CODE.DEATH:
         this.clearStoredReconnectionToken();
-        this.scene.sendToGameOver();
+        this.scene.sendToGameOver(code === WS_CODE.SUCCESS);
         break;
       case WS_CODE.INTERNAL_SERVER_ERROR:
       case WS_CODE.BAD_REQUEST:
