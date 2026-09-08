@@ -1,7 +1,7 @@
 {
   "name": "ore-rush-online-repo",
   "packageManager": "pnpm@11.17.0",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "Andrew Steinheiser <me@iamandrew.io>",
   "license": "PolyForm-Noncommercial-1.0.0",
   "private": false,
