@@ -78,6 +78,7 @@ export class StarBackground {
 
   /** Redraws the gradient and repositions stars to fit the given dimensions */
   public resize(width: number, height: number) {
+    const previousHeight = this.height;
     this.width = width;
     this.height = height;
 
@@ -94,6 +95,9 @@ export class StarBackground {
     this.stars.forEach((star) => {
       if (!this.initialized) {
         star.y = Phaser.Math.Between(0, height);
+      } else if (previousHeight > 0 && previousHeight !== height) {
+        // handle screen resize by redrawing the star at the new height
+        star.y = (star.y / previousHeight) * height;
       }
       star.shape.setPosition(width * star.xFrac, star.y);
     });
