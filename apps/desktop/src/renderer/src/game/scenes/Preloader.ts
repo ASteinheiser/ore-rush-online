@@ -5,10 +5,6 @@ import { PLAYER_ANIM } from '../objects/Player';
 import { StarBackground } from '../objects/StarBackground';
 import { ASSET, SCENE } from '../constants';
 
-const PROGRESS_BAR_WIDTH = 468;
-const PROGRESS_BAR_HEIGHT = 32;
-const PROGRESS_BAR_PADDING = 4;
-
 export class Preloader extends Phaser.Scene {
   private starBackground!: StarBackground;
 
@@ -19,17 +15,9 @@ export class Preloader extends Phaser.Scene {
   init() {
     this.starBackground = new StarBackground(this, { fixedToCamera: true, showStars: false });
 
-    // create a progress bar container with two rectangle components
-    const progressFill = this.add.rectangle(0, 0, 0, PROGRESS_BAR_HEIGHT - PROGRESS_BAR_PADDING, 0xffffff);
-    const progressOutline = this.add
-      .rectangle((PROGRESS_BAR_WIDTH - PROGRESS_BAR_PADDING) / 2, 0, PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT)
-      .setStrokeStyle(1, 0xffffff);
-    const progress = this.add.container(0, 0, [progressOutline, progressFill]);
-
     const layout = () => {
       const { width, height } = this.scale;
       this.starBackground.resize(width, height);
-      progress.setPosition(width / 2 - PROGRESS_BAR_WIDTH / 2, height / 2 - PROGRESS_BAR_HEIGHT / 2);
     };
 
     layout();
@@ -37,10 +25,6 @@ export class Preloader extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, layout);
       this.starBackground.destroy();
-    });
-
-    this.load.on(Phaser.Loader.Events.PROGRESS, (progress: number) => {
-      progressFill.width = (PROGRESS_BAR_WIDTH - PROGRESS_BAR_PADDING) * progress;
     });
   }
 
