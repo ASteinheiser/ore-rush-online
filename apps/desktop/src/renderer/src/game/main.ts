@@ -1,7 +1,7 @@
 import { AUTO, Game, Scale, type Types } from 'phaser';
 import { Boot } from './scenes/Boot';
 import { Preloader } from './scenes/Preloader';
-import { MainMenu } from './scenes/MainMenu';
+import { HomeBase } from './scenes/HomeBase';
 import { Game as MainGame } from './scenes/Game';
 import { GameOver } from './scenes/GameOver';
 import { GAME_CONTAINER_ID } from './constants';
@@ -9,7 +9,7 @@ import { GAME_CONTAINER_ID } from './constants';
 const config: Types.Core.GameConfig = {
   type: AUTO,
   parent: GAME_CONTAINER_ID,
-  scene: [Boot, Preloader, MainMenu, MainGame, GameOver],
+  scene: [Boot, Preloader, HomeBase, MainGame, GameOver],
   pixelArt: true,
   scale: {
     mode: Scale.RESIZE,

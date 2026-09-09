@@ -85,6 +85,7 @@ export class Game extends Phaser.Scene {
     this.remotePlayerSystem.interpolateRemotePlayers(delta);
 
     this.uiSystem?.fpsDisplay.update(delta);
+    this.uiSystem?.starBackground.update(delta);
     this.uiSystem?.fogOverlay.update(this.playerSystem.currentPlayer.entity);
   }
 

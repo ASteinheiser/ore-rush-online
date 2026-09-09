@@ -1,22 +1,23 @@
 import * as Phaser from 'phaser';
 import { PLAYER_FRAME_RATE, PLAYER_SIZE } from '@repo/core-game';
 import player from '../../assets/ship-sprite.png';
-import punch from '../../assets/punch.mp3';
 import { PLAYER_ANIM } from '../objects/Player';
-import { ASSET, SCENE, SOUND } from '../constants';
+import { StarBackground } from '../objects/StarBackground';
+import { ASSET, SCENE } from '../constants';
 
 const PROGRESS_BAR_WIDTH = 468;
 const PROGRESS_BAR_HEIGHT = 32;
 const PROGRESS_BAR_PADDING = 4;
 
 export class Preloader extends Phaser.Scene {
+  private starBackground!: StarBackground;
+
   constructor() {
     super(SCENE.PRELOADER);
   }
 
   init() {
-    // We loaded this image in our Boot Scene, so we can display it here
-    const bg = this.add.image(0, 0, ASSET.BACKGROUND).setOrigin(0.5);
+    this.starBackground = new StarBackground(this, { fixedToCamera: true, showStars: false });
 
     // create a progress bar container with two rectangle components
     const progressFill = this.add.rectangle(0, 0, 0, PROGRESS_BAR_HEIGHT - PROGRESS_BAR_PADDING, 0xffffff);
@@ -27,7 +28,7 @@ export class Preloader extends Phaser.Scene {
 
     const layout = () => {
       const { width, height } = this.scale;
-      bg.setPosition(width / 2, height / 2).setDisplaySize(width, height);
+      this.starBackground.resize(width, height);
       progress.setPosition(width / 2 - PROGRESS_BAR_WIDTH / 2, height / 2 - PROGRESS_BAR_HEIGHT / 2);
     };
 
@@ -35,6 +36,7 @@ export class Preloader extends Phaser.Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, layout);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, layout);
+      this.starBackground.destroy();
     });
 
     this.load.on(Phaser.Loader.Events.PROGRESS, (progress: number) => {
@@ -47,7 +49,6 @@ export class Preloader extends Phaser.Scene {
       frameWidth: PLAYER_SIZE.width,
       frameHeight: PLAYER_SIZE.height,
     });
-    this.load.audio(SOUND.PUNCH, punch);
   }
 
   create() {

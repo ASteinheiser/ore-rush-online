@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '@repo/core-game';
-import { ASSET, SOUND } from '../constants';
+import { ASSET } from '../constants';
 import { CustomText } from './CustomText';
 
 const DEBUG_BOX_COLOR = 0x00ff00; // green
@@ -29,7 +29,6 @@ export class Player {
   public nameText: CustomText;
   public debugBox?: Phaser.GameObjects.Rectangle;
   private debugFlashTimer?: Phaser.Time.TimerEvent;
-  private punchSfx: Phaser.Sound.BaseSound;
   /** Handles delaying the idle animation to prevent flickering on high FPS */
   private idleAccumulator = 0;
   private displayedMoving = false;
@@ -53,8 +52,6 @@ export class Player {
     })
       .setOrigin(0.5, 3.1)
       .setDepth(101);
-
-    this.punchSfx = scene.sound.add(SOUND.PUNCH);
 
     this.setupDebugCombo();
   }
@@ -93,7 +90,6 @@ export class Player {
   public destroy() {
     this.entity.destroy();
     this.nameText.destroy();
-    this.punchSfx.destroy();
     this.debugBox?.destroy();
     this.debugFlashTimer?.remove(false);
   }

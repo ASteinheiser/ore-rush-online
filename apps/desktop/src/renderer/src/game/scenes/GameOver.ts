@@ -1,7 +1,8 @@
 import * as Phaser from 'phaser';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { CustomText } from '../objects/CustomText';
-import { ASSET, SCENE } from '../constants';
+import { StarBackground } from '../objects/StarBackground';
+import { SCENE } from '../constants';
 import { ORE } from '@repo/core-game';
 import type { InventorySnapshot } from '../systems/UISystem';
 
@@ -12,6 +13,7 @@ export interface GameOverSceneData {
 
 export class GameOver extends Phaser.Scene {
   private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
+  private starBackground!: StarBackground;
 
   constructor() {
     super(SCENE.GAME_OVER);
@@ -22,9 +24,10 @@ export class GameOver extends Phaser.Scene {
   }
 
   create({ success, inventory }: GameOverSceneData) {
-    this.cameras.main.setBackgroundColor(success ? 0x00ff00 : 0xff0000);
+    this.starBackground = new StarBackground(this);
 
-    const bg = this.add.image(0, 0, ASSET.BACKGROUND).setAlpha(0.5).setOrigin(0.5);
+    // filter out items that have no quantity for display purposes
+    const heldItems = Object.entries(inventory ?? {}).filter(([, count]) => count > 0);
 
     const continueText = new CustomText(this, 0, 0, 'Press <SHIFT> to continue', {
       fontFamily: 'Tiny5',
@@ -35,6 +38,7 @@ export class GameOver extends Phaser.Scene {
       fontFamily: 'Tiny5',
       fontSize: 64,
       strokeThickness: 8,
+      color: success ? '#00ff00' : '#ff0000',
     })
       .setOrigin(0.5)
       .typeWriter(150);
@@ -52,11 +56,11 @@ export class GameOver extends Phaser.Scene {
       }
     )
       .setOrigin(0.5)
+      .setVisible(!success || heldItems.length > 0)
       .typeWriter(75);
 
     const itemTexts: CustomText[] = [];
-    Object.keys(inventory ?? {}).forEach((oreType, index) => {
-      const oreCount = inventory?.[oreType] ?? 0;
+    heldItems.forEach(([oreType, oreCount], index) => {
       const oreName = ORE[oreType].name;
 
       const text = new CustomText(this, 0, 0, `${oreName}: ${oreCount}`, { fontFamily: 'Iceberg' })
@@ -68,7 +72,7 @@ export class GameOver extends Phaser.Scene {
 
     const layout = () => {
       const { width, height } = this.scale;
-      bg.setPosition(width / 2, height / 2).setDisplaySize(width, height);
+      this.starBackground.resize(width, height);
 
       continueText.setPosition((width - continueText.width) / 2, 20);
 
@@ -84,12 +88,15 @@ export class GameOver extends Phaser.Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, layout);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, layout);
+      this.starBackground.destroy();
     });
 
     EventBus.emit(EVENT_BUS.CURRENT_SCENE_READY, this);
   }
 
-  update() {
+  update(_time: number, delta: number) {
+    this.starBackground.update(delta);
+
     if (this.cursorKeys?.shift.isDown) {
       this.changeScene();
     }

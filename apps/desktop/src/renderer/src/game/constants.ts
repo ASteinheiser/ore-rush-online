@@ -9,10 +9,9 @@ export const SCENE = {
 } as const;
 
 export const ASSET = {
-  BACKGROUND: 'background',
   PLAYER: 'player',
 } as const;
 
 export const SOUND = {
-  PUNCH: 'punch',
+  // TODO: add sounds keys here
 } as const;

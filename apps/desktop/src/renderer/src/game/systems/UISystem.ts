@@ -10,7 +10,7 @@ import { CustomText } from '../objects/CustomText';
 import { FogOverlay } from '../objects/FogOverlay';
 import { FpsDisplay } from '../objects/FpsDisplay';
 import { PingDisplay } from '../objects/PingDisplay';
-import { ASSET } from '../constants';
+import { StarBackground } from '../objects/StarBackground';
 import type { Game } from '../scenes/Game';
 
 export interface InventorySnapshot {
@@ -23,8 +23,7 @@ export class UISystem {
   public fogOverlay: FogOverlay;
   public fpsDisplay: FpsDisplay;
   public pingDisplay: PingDisplay;
-  private mapBorder: Phaser.GameObjects.Rectangle;
-  private mapBackground: Phaser.GameObjects.Image;
+  public starBackground: StarBackground;
   private fuelText: CustomText;
   private capacityText: CustomText;
   private coalCountText: CustomText;
@@ -38,20 +37,12 @@ export class UISystem {
     // set the camera bounds to the map size
     this.scene.cameras.main.setBounds(0, 0, MAP_SIZE.width, MAP_SIZE.height);
 
-    // draw a border around the map area
-    this.mapBorder = this.scene.add
-      .rectangle(0, 0, MAP_SIZE.width, MAP_SIZE.height)
-      .setOrigin(0, 0)
-      .setDepth(100)
-      .setStrokeStyle(8, 0x990099);
-
-    // set the background image to cover the entire map area
-    this.mapBackground = this.scene.add
-      .image(0, 0, ASSET.BACKGROUND)
-      .setAlpha(0)
-      .setOrigin(0.5)
-      .setPosition(MAP_SIZE.width / 2, MAP_SIZE.height / 2)
-      .setDisplaySize(MAP_SIZE.width, MAP_SIZE.height);
+    // space backdrop behind everything, fixed to the screen since the map is much bigger than the window
+    this.starBackground = new StarBackground(this.scene, {
+      gradientTop: 0x160a1e,
+      gradientBottom: 0x000000,
+      fixedToCamera: true,
+    });
 
     this.fuelText = new CustomText(this.scene, 0, 0, 'Fuel: -%', {
       fontFamily: 'Tiny5',
@@ -95,7 +86,8 @@ export class UISystem {
       .setScrollFactor(0);
 
     const layout = () => {
-      const { width } = this.scene.scale;
+      const { width, height } = this.scene.scale;
+      this.starBackground?.resize(width, height);
       this.fuelText?.setPosition(20, 10);
       this.capacityText?.setPosition(20, 30);
       this.coalCountText?.setPosition(20, 60);
@@ -120,8 +112,7 @@ export class UISystem {
     this.fogOverlay.destroy();
     this.fpsDisplay.destroy();
     this.pingDisplay.destroy();
-    this.mapBorder.destroy();
-    this.mapBackground.destroy();
+    this.starBackground.destroy();
     this.fuelText.destroy();
     this.capacityText.destroy();
     this.coalCountText.destroy();
