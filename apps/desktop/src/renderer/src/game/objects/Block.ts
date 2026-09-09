@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { BLOCK_SIZE, BLOCK_TYPES, type BLOCK_TYPE } from '@repo/core-game';
+import { DEPTH } from '../constants';
 
 const DIRT_COLOR = 0x8b4513;
 const COAL_COLOR = 0x1c1c1c;
@@ -18,7 +19,7 @@ const seeded = (seed: number): number => {
 
 export class Block {
   private hitbox: Phaser.GameObjects.Rectangle;
-  private ore: Phaser.GameObjects.Graphics;
+  private block: Phaser.GameObjects.Graphics;
   private cracks: Phaser.GameObjects.Graphics;
   public readonly width = BLOCK_SIZE.width;
   public readonly height = BLOCK_SIZE.height;
@@ -32,8 +33,8 @@ export class Block {
     private maxHp: number
   ) {
     this.hitbox = scene.add.rectangle(this.x, this.y, BLOCK_SIZE.width, BLOCK_SIZE.height);
-    this.ore = scene.add.graphics().setDepth(1);
-    this.cracks = scene.add.graphics().setDepth(99);
+    this.block = scene.add.graphics().setDepth(DEPTH.BLOCK);
+    this.cracks = scene.add.graphics().setDepth(DEPTH.BLOCK_CRACKS);
 
     this.setColor(type);
     this.drawCracks(hp, maxHp);
@@ -41,7 +42,7 @@ export class Block {
 
   public destroy() {
     this.cracks.destroy();
-    this.ore.destroy();
+    this.block.destroy();
     this.hitbox.destroy();
   }
 
@@ -60,7 +61,7 @@ export class Block {
   private setColor(type: BLOCK_TYPE) {
     this.hitbox.setStrokeStyle(1, DIRT_COLOR);
     this.hitbox.setFillStyle(DIRT_COLOR);
-    this.ore.clear();
+    this.block.clear();
 
     switch (type) {
       case BLOCK_TYPES.COAL:
@@ -91,8 +92,8 @@ export class Block {
       const py = top + pad + seeded(seed + 2) * (h - pad * 2);
       const size = 3 + seeded(seed + 3) * 5; // 3-8px
 
-      this.ore.fillStyle(color, 0.85);
-      this.ore.fillRect(px - size / 2, py - size / 2, size, size);
+      this.block.fillStyle(color, 0.85);
+      this.block.fillRect(px - size / 2, py - size / 2, size, size);
     }
   }
 

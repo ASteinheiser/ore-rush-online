@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { CustomText } from './CustomText';
+import { DEPTH } from '../constants';
 
 export interface InteractableConfig {
   /** Distance (px) the player must be within to trigger this interactable */
@@ -57,7 +58,10 @@ export class Interactable {
     this.radius = radius;
     this.onInteract = onInteract;
 
-    this.marker = scene.add.circle(0, 0, markerRadius, color, 0.15).setStrokeStyle(2, color).setDepth(90);
+    this.marker = scene.add
+      .circle(0, 0, markerRadius, color, 0.15)
+      .setStrokeStyle(2, color)
+      .setDepth(DEPTH.INTERACTABLE);
 
     this.label = new CustomText(scene, 0, 0, name, {
       fontFamily: 'Tiny5',
@@ -65,7 +69,7 @@ export class Interactable {
       strokeThickness: 6,
     })
       .setOrigin(0.5)
-      .setDepth(91);
+      .setDepth(DEPTH.INTERACTABLE);
 
     this.prompt = new CustomText(scene, 0, 0, promptText, {
       fontFamily: 'Tiny5',
@@ -73,7 +77,7 @@ export class Interactable {
       strokeThickness: 6,
     })
       .setOrigin(0.5)
-      .setDepth(92)
+      .setDepth(DEPTH.INTERACTABLE)
       .setVisible(false);
   }
 

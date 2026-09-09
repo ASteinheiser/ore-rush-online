@@ -1,5 +1,6 @@
 import type * as Phaser from 'phaser';
 import { type EntityPosition, MAP_SIZE, PLAYER_VIEW_RADIUS } from '@repo/core-game';
+import { DEPTH } from '../constants';
 
 // FOG_RADIUS should be slightly smaller than the actual view radius to account for the server sending updated block state
 // this isn't a silver bullet, players with bad ping will still experience laggy block rendering
@@ -9,7 +10,7 @@ export class FogOverlay {
   private fogOverlay: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene) {
-    this.fogOverlay = scene.add.graphics().setDepth(102).setScrollFactor(1);
+    this.fogOverlay = scene.add.graphics().setDepth(DEPTH.FOG_OVERLAY).setScrollFactor(1);
   }
 
   public destroy() {

@@ -11,6 +11,7 @@ import { FogOverlay } from '../objects/FogOverlay';
 import { FpsDisplay } from '../objects/FpsDisplay';
 import { PingDisplay } from '../objects/PingDisplay';
 import { StarBackground } from '../objects/StarBackground';
+import { DEPTH } from '../constants';
 import type { Game } from '../scenes/Game';
 
 export interface InventorySnapshot {
@@ -47,27 +48,37 @@ export class UISystem {
     this.fuelText = new CustomText(this.scene, 0, 0, 'Fuel: -%', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-    }).setScrollFactor(0);
+    })
+      .setScrollFactor(0)
+      .setDepth(DEPTH.HUD_FOREGROUND);
 
     this.capacityText = new CustomText(this.scene, 0, 0, 'Weight: -%', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-    }).setScrollFactor(0);
+    })
+      .setScrollFactor(0)
+      .setDepth(DEPTH.HUD_FOREGROUND);
 
     this.coalCountText = new CustomText(this.scene, 0, 0, 'Coal: 0', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-    }).setScrollFactor(0);
+    })
+      .setScrollFactor(0)
+      .setDepth(DEPTH.HUD_FOREGROUND);
 
     this.ironCountText = new CustomText(this.scene, 0, 0, 'Iron: 0', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-    }).setScrollFactor(0);
+    })
+      .setScrollFactor(0)
+      .setDepth(DEPTH.HUD_FOREGROUND);
 
     this.copperCountText = new CustomText(this.scene, 0, 0, 'Copper: 0', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-    }).setScrollFactor(0);
+    })
+      .setScrollFactor(0)
+      .setDepth(DEPTH.HUD_FOREGROUND);
 
     this.extractText = new CustomText(this.scene, 0, 0, 'Press <SHIFT> to extract', {
       fontFamily: 'Tiny5',
@@ -75,15 +86,17 @@ export class UISystem {
       color: '#007bff',
     })
       .setScrollFactor(0)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(DEPTH.HUD_FOREGROUND);
 
     this.remotePlayerList = new CustomText(this.scene, 0, 0, 'no signals detected', {
       fontFamily: 'Tiny5',
       fontSize: 20,
       align: 'right',
     })
+      .setScrollFactor(0)
       .setOrigin(1, 0)
-      .setScrollFactor(0);
+      .setDepth(DEPTH.HUD_FOREGROUND);
 
     const layout = () => {
       const { width, height } = this.scene.scale;

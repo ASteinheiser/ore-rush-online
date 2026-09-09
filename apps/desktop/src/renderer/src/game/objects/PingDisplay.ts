@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { WS_EVENT } from '@repo/core-game';
 import type { Game } from '../scenes/Game';
 import { CustomText } from './CustomText';
+import { DEPTH } from '../constants';
 
 const MARGIN = 16;
 const PADDING = 6;
@@ -16,13 +17,14 @@ export class PingDisplay {
   private pingText: CustomText;
 
   constructor(private scene: Game) {
-    this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(102);
+    this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(DEPTH.HUD_BACKGROUND);
 
     this.pingText = new CustomText(this.scene, 0, 0, '--', {
       fontFamily: 'Montserrat',
       fontSize: 14,
       color: '#00ff00',
     })
+      .setDepth(DEPTH.HUD_FOREGROUND)
       .setOrigin(1, 0)
       .setScrollFactor(0);
 

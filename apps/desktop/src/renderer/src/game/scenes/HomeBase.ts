@@ -4,7 +4,7 @@ import { EventBus, EVENT_BUS } from '../EventBus';
 import { PLAYER_ANIM } from '../objects/Player';
 import { StarBackground } from '../objects/StarBackground';
 import { Interactable } from '../objects/Interactable';
-import { ASSET, SCENE } from '../constants';
+import { ASSET, DEPTH, SCENE } from '../constants';
 
 /** Constant movement speed (px/s), derived from the player's VX tick constant */
 const PLAYER_SPEED = 1.5 * PLAYER_VX_PER_TICK * TICKS_PER_SECOND;
@@ -34,13 +34,15 @@ export class HomeBase extends Phaser.Scene {
   }
 
   create() {
-    this.physics.world.gravity.set(0, 0);
-
     this.starBackground = new StarBackground(this);
 
-    this.player = this.physics.add.sprite(0, 0, ASSET.PLAYER).setCollideWorldBounds(true).setDepth(101);
-    // always play the fly animation on this screen, regardless of movement state
-    this.player.play(PLAYER_ANIM.FLY);
+    this.physics.world.gravity.set(0, 0);
+
+    this.player = this.physics.add
+      .sprite(0, 0, ASSET.PLAYER)
+      .setCollideWorldBounds(true)
+      .setDepth(DEPTH.PLAYER)
+      .play(PLAYER_ANIM.FLY);
 
     this.inputKeys = this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as InputKeys;
 

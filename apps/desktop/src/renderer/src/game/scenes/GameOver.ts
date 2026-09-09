@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { CustomText } from '../objects/CustomText';
 import { StarBackground } from '../objects/StarBackground';
-import { SCENE } from '../constants';
+import { DEPTH, SCENE } from '../constants';
 import { ORE } from '@repo/core-game';
 import type { InventorySnapshot } from '../systems/UISystem';
 
@@ -32,7 +32,9 @@ export class GameOver extends Phaser.Scene {
     const continueText = new CustomText(this, 0, 0, 'Press <SHIFT> to continue', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-    }).fadeIn(1500);
+    })
+      .setDepth(DEPTH.HUD_FOREGROUND)
+      .fadeIn(1500);
 
     const titleText = new CustomText(this, 0, 0, success ? 'Extraction Successful!' : 'Mission Failed', {
       fontFamily: 'Tiny5',
@@ -41,6 +43,7 @@ export class GameOver extends Phaser.Scene {
       color: success ? '#00ff00' : '#ff0000',
     })
       .setOrigin(0.5)
+      .setDepth(DEPTH.HUD_FOREGROUND)
       .typeWriter(150);
 
     const bodyText = new CustomText(
@@ -56,6 +59,7 @@ export class GameOver extends Phaser.Scene {
       }
     )
       .setOrigin(0.5)
+      .setDepth(DEPTH.HUD_FOREGROUND)
       .setVisible(!success || heldItems.length > 0)
       .typeWriter(75);
 
@@ -65,6 +69,7 @@ export class GameOver extends Phaser.Scene {
 
       const text = new CustomText(this, 0, 0, `${oreName}: ${oreCount}`, { fontFamily: 'Iceberg' })
         .setOrigin(0.5)
+        .setDepth(DEPTH.HUD_FOREGROUND)
         .fadeIn(500, 800 + 500 * (index + 1));
 
       itemTexts.push(text);

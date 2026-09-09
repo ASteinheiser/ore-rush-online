@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '@repo/core-game';
-import { ASSET } from '../constants';
+import { ASSET, DEPTH } from '../constants';
 import { CustomText } from './CustomText';
 
 const DEBUG_BOX_COLOR = 0x00ff00; // green
@@ -44,14 +44,14 @@ export class Player {
     x: number,
     y: number
   ) {
-    this.entity = scene.physics.add.sprite(x, y, ASSET.PLAYER).setDepth(101);
+    this.entity = scene.physics.add.sprite(x, y, ASSET.PLAYER).setDepth(DEPTH.PLAYER);
 
     this.nameText = new CustomText(scene, x, y, username, {
       fontFamily: 'Tiny5',
       fontSize: 12,
     })
       .setOrigin(0.5, 3.1)
-      .setDepth(101);
+      .setDepth(DEPTH.PLAYER);
 
     this.setupDebugCombo();
   }
@@ -82,7 +82,7 @@ export class Player {
   public createDebugBox() {
     this.debugBox = this.scene.add
       .rectangle(this.entity.x, this.entity.y, this.entity.width, this.entity.height)
-      .setDepth(101)
+      .setDepth(DEPTH.PLAYER)
       .setStrokeStyle(1, DEBUG_BOX_COLOR)
       .setVisible(false);
   }

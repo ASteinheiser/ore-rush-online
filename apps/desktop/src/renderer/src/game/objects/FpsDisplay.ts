@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { CustomText } from './CustomText';
+import { DEPTH } from '../constants';
 
 const MARGIN = 16;
 const PADDING = 6;
@@ -12,13 +13,14 @@ export class FpsDisplay {
   private background: Phaser.GameObjects.Graphics;
 
   constructor(private scene: Phaser.Scene) {
-    this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(102);
+    this.background = this.scene.add.graphics().setScrollFactor(0).setDepth(DEPTH.HUD_BACKGROUND);
 
     this.fpsText = new CustomText(this.scene, 0, 0, '-- FPS', {
       fontFamily: 'Montserrat',
       fontSize: 14,
       color: '#00ff00',
     })
+      .setDepth(DEPTH.HUD_FOREGROUND)
       .setOrigin(1, 0)
       .setScrollFactor(0);
 

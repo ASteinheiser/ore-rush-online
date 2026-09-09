@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { DEPTH } from '../constants';
 
 /** A twinkling background star, drawn as a small white diamond that slowly drifts upward */
 interface Star {
@@ -63,7 +64,7 @@ export class StarBackground {
 
     this.gradient = scene.add
       .graphics()
-      .setDepth(-2)
+      .setDepth(DEPTH.BACKGROUND)
       .setScrollFactor(fixedToCamera ? 0 : 1);
 
     this.stars = showStars ? Array.from({ length: starCount }, () => this.createStar()) : [];
@@ -126,7 +127,7 @@ export class StarBackground {
       .rectangle(0, 0, size, size, 0xffffff, baseAlpha)
       .setAlpha(baseAlpha)
       .setRotation(Math.PI / 4)
-      .setDepth(-1)
+      .setDepth(DEPTH.BACKGROUND_STARS)
       .setScrollFactor(this.fixedToCamera ? 0 : 1);
 
     this.scene.tweens.add({

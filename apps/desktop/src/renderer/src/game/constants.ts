@@ -15,3 +15,15 @@ export const ASSET = {
 export const SOUND = {
   // TODO: add sounds keys here
 } as const;
+
+export const DEPTH = {
+  BACKGROUND: -2,
+  BACKGROUND_STARS: -1,
+  INTERACTABLE: 24,
+  BLOCK: 25,
+  BLOCK_CRACKS: 26,
+  PLAYER: 50,
+  FOG_OVERLAY: 75,
+  HUD_BACKGROUND: 100,
+  HUD_FOREGROUND: 101,
+} as const;
