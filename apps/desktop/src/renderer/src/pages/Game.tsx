@@ -117,7 +117,7 @@ export const Game = () => {
       const isAlive = await scene.roomSystem.isConnectionAlive();
 
       if (!scene.roomSystem.room.connection.isOpen || !isAlive) {
-        scene.sendToMainMenu('Connection lost. Please try again.');
+        scene.sendToHomeBase('Connection lost. Please try again.');
       }
     };
 

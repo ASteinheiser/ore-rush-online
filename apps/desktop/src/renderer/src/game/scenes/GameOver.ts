@@ -103,6 +103,6 @@ export class GameOver extends Phaser.Scene {
   }
 
   public changeScene() {
-    this.scene.start(SCENE.MAIN_MENU);
+    this.scene.start(SCENE.HOME_BASE);
   }
 }

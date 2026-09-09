@@ -30,7 +30,7 @@ export class HomeBase extends Phaser.Scene {
   private activeInteractable?: Interactable;
 
   constructor() {
-    super(SCENE.MAIN_MENU);
+    super(SCENE.HOME_BASE);
   }
 
   create() {

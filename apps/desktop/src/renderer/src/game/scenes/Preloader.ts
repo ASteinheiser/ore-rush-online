@@ -92,7 +92,6 @@ export class Preloader extends Phaser.Scene {
       repeat: -1,
     });
 
-    //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
-    this.scene.start(SCENE.MAIN_MENU);
+    this.scene.start(SCENE.HOME_BASE);
   }
 }

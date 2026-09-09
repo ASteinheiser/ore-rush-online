@@ -3,7 +3,7 @@ export const GAME_CONTAINER_ID = 'game-container';
 export const SCENE = {
   BOOT: 'boot',
   PRELOADER: 'preloader',
-  MAIN_MENU: 'main_menu',
+  HOME_BASE: 'home_base',
   GAME: 'game',
   GAME_OVER: 'game_over',
 } as const;

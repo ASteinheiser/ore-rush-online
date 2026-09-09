@@ -162,17 +162,17 @@ export class RoomSystem {
       case WS_CODE.BAD_REQUEST:
       case WS_CODE.TIMEOUT:
         if (!(await this.handleReconnection(setupStateListeners))) {
-          this.scene.sendToMainMenu('Failed to reconnect');
+          this.scene.sendToHomeBase('Failed to reconnect');
         }
         break;
       case WS_CODE.UNAUTHORIZED:
       case WS_CODE.FORBIDDEN:
       case WS_CODE.NOT_FOUND:
         this.clearStoredReconnectionToken();
-        this.scene.sendToMainMenu('You were removed from the game');
+        this.scene.sendToHomeBase('You were removed from the game');
         break;
       default:
-        this.scene.sendToMainMenu('Oops, something went wrong. Please try to reconnect.');
+        this.scene.sendToHomeBase('Oops, something went wrong. Please try to reconnect.');
     }
   }
 
