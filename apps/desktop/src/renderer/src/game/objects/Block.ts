@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { BLOCK_SIZE, BLOCK_TYPES, type BLOCK_TYPE } from '@repo/core-game';
 import { DEPTH } from '../constants';
 
-const DIRT_COLOR = 0x8b4513;
+const DIRT_SHADES = [0x8b4513, 0x95491a, 0x82400f];
 const COAL_COLOR = 0x1c1c1c;
 const IRON_COLOR = 0xa19d94;
 const COPPER_COLOR = 0xcd7f32;
@@ -59,8 +59,8 @@ export class Block {
   }
 
   private setColor(type: BLOCK_TYPE) {
-    this.hitbox.setStrokeStyle(1, DIRT_COLOR);
-    this.hitbox.setFillStyle(DIRT_COLOR);
+    const dirtShade = this.getDirtShade();
+    this.hitbox.setStrokeStyle(1, dirtShade).setFillStyle(dirtShade);
     this.block.clear();
 
     switch (type) {
@@ -74,6 +74,13 @@ export class Block {
         this.drawOre(COPPER_COLOR);
         break;
     }
+  }
+
+  /** Picks a deterministic dirt shade based on block position */
+  private getDirtShade(): number {
+    const seed = this.x * 5 + this.y * 3;
+    const index = Math.floor(seeded(seed) * DIRT_SHADES.length);
+    return DIRT_SHADES[index];
   }
 
   private drawOre(color: number) {
