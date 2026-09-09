@@ -1,20 +1,22 @@
 import * as Phaser from 'phaser';
 import { CustomText } from './CustomText';
-import { DEPTH } from '../constants';
+import { ASSET, DEPTH } from '../constants';
 
 export interface InteractableConfig {
   /** Distance (px) the player must be within to trigger this interactable */
   radius?: number;
-  /** Radius (px) of the marker circle */
-  markerRadius?: number;
-  /** Color of the marker circle */
+  /** Texture key of the icon to render (defaults to the lock icon) */
+  iconKey?: (typeof ASSET)[keyof typeof ASSET];
+  /** Display size (px) of the icon */
+  iconSize?: number;
+  /** Tint color of the icon */
   color?: number;
-  /** Text shown below the marker when the player is within range */
+  /** Text shown below the icon when the player is within range */
   promptText?: string;
 }
 
 const DEFAULT_RADIUS = 90;
-const DEFAULT_MARKER_RADIUS = 36;
+const DEFAULT_ICON_SIZE = 64;
 const DEFAULT_COLOR = 0x00ffff;
 const DEFAULT_PROMPT_TEXT = 'Press <SPACE>';
 
@@ -24,7 +26,7 @@ const MAX_LAYOUT_HEIGHT = 1080;
 
 /**
  * Something the player can walk up to and trigger (eg: opening inventory, upgrading a ship).
- * Renders as a glowing marker circle, positioned at a relative anchor so it stays put (proportionally) across resizes.
+ * Renders as a colored icon, positioned at a relative anchor so it stays put (proportionally) across resizes.
  */
 export class Interactable {
   public readonly name: string;
@@ -34,7 +36,7 @@ export class Interactable {
 
   private xFrac: number;
   private yFrac: number;
-  private marker: Phaser.GameObjects.Arc;
+  private icon: Phaser.GameObjects.Image;
   private label: CustomText;
   private prompt: CustomText;
   private onInteract: () => void;
@@ -47,7 +49,8 @@ export class Interactable {
     onInteract: () => void,
     {
       radius = DEFAULT_RADIUS,
-      markerRadius = DEFAULT_MARKER_RADIUS,
+      iconKey = ASSET.LOCK_ICON,
+      iconSize = DEFAULT_ICON_SIZE,
       color = DEFAULT_COLOR,
       promptText = DEFAULT_PROMPT_TEXT,
     }: InteractableConfig = {}
@@ -58,9 +61,10 @@ export class Interactable {
     this.radius = radius;
     this.onInteract = onInteract;
 
-    this.marker = scene.add
-      .circle(0, 0, markerRadius, color, 0.15)
-      .setStrokeStyle(2, color)
+    this.icon = scene.add
+      .image(0, 0, iconKey)
+      .setDisplaySize(iconSize, iconSize)
+      .setTint(color)
       .setDepth(DEPTH.INTERACTABLE);
 
     this.label = new CustomText(scene, 0, 0, name, {
@@ -82,12 +86,12 @@ export class Interactable {
   }
 
   public destroy() {
-    this.marker.destroy();
+    this.icon.destroy();
     this.label.destroy();
     this.prompt.destroy();
   }
 
-  /** Repositions the marker to fit the given dimensions */
+  /** Repositions the icon to fit the given dimensions */
   public resize(width: number, height: number) {
     // center the capped layout area within the actual screen so things don't spread out on large screens
     const layoutWidth = Math.min(width, MAX_LAYOUT_WIDTH);
@@ -97,7 +101,7 @@ export class Interactable {
 
     this.x = offsetX + layoutWidth * this.xFrac;
     this.y = offsetY + layoutHeight * this.yFrac;
-    this.marker.setPosition(this.x, this.y);
+    this.icon.setPosition(this.x, this.y);
     this.label.setPosition(this.x, this.y - 60);
     this.prompt.setPosition(this.x, this.y + 60);
   }

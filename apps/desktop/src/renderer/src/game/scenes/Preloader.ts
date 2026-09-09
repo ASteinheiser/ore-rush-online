@@ -1,6 +1,11 @@
 import * as Phaser from 'phaser';
 import { PLAYER_FRAME_RATE, PLAYER_SIZE } from '@repo/core-game';
 import player from '../../assets/ship-sprite.png';
+import lockIcon from '../../assets/basic-lock.png';
+import cogIcon from '../../assets/basic-cog.png';
+import profileIcon from '../../assets/basic-profile.png';
+import chestIcon from '../../assets/basic-chest.png';
+import drillIcon from '../../assets/basic-drill-down.png';
 import { PLAYER_ANIM } from '../objects/Player';
 import { StarBackground } from '../objects/StarBackground';
 import { ASSET, SCENE } from '../constants';
@@ -33,6 +38,11 @@ export class Preloader extends Phaser.Scene {
       frameWidth: PLAYER_SIZE.width,
       frameHeight: PLAYER_SIZE.height,
     });
+    this.load.image(ASSET.LOCK_ICON, lockIcon);
+    this.load.image(ASSET.COG_ICON, cogIcon);
+    this.load.image(ASSET.PROFILE_ICON, profileIcon);
+    this.load.image(ASSET.CHEST_ICON, chestIcon);
+    this.load.image(ASSET.DRILL_ICON, drillIcon);
   }
 
   create() {

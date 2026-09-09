@@ -51,23 +51,28 @@ export class HomeBase extends Phaser.Scene {
     });
 
     this.interactables = [
-      new Interactable(this, 'Settings', 0.3, 0.625, () => {
-        EventBus.emit(EVENT_BUS.SETTINGS_OPEN);
+      new Interactable(this, 'Settings', 0.3, 0.625, () => EventBus.emit(EVENT_BUS.SETTINGS_OPEN), {
+        iconKey: ASSET.COG_ICON,
       }),
-      new Interactable(this, 'Profile', 0.3, 0.375, () => {
-        EventBus.emit(EVENT_BUS.PROFILE_OPEN);
+      new Interactable(this, 'Profile', 0.3, 0.375, () => EventBus.emit(EVENT_BUS.PROFILE_OPEN), {
+        iconKey: ASSET.PROFILE_ICON,
       }),
       new Interactable(this, 'Ship Bay', 0.5, 0.25, () => {
         EventBus.emit(EVENT_BUS.TOAST_INFO, 'Ship upgrades coming soon...');
       }),
-      new Interactable(this, 'Inventory', 0.7, 0.375, () => {
-        EventBus.emit(EVENT_BUS.TOAST_INFO, 'Inventory UI coming soon...');
-      }),
+      new Interactable(
+        this,
+        'Inventory',
+        0.7,
+        0.375,
+        () => EventBus.emit(EVENT_BUS.TOAST_INFO, 'Inventory UI coming soon...'),
+        { iconKey: ASSET.CHEST_ICON }
+      ),
       new Interactable(this, 'Marketplace', 0.7, 0.625, () => {
         EventBus.emit(EVENT_BUS.TOAST_INFO, 'Marketplace coming soon...');
       }),
-      new Interactable(this, 'Start', 0.5, 0.75, () => {
-        EventBus.emit(EVENT_BUS.GAME_START);
+      new Interactable(this, 'Start', 0.5, 0.75, () => EventBus.emit(EVENT_BUS.GAME_START), {
+        iconKey: ASSET.DRILL_ICON,
       }),
     ];
 

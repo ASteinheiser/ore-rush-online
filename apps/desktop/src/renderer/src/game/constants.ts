@@ -10,6 +10,11 @@ export const SCENE = {
 
 export const ASSET = {
   PLAYER: 'player',
+  LOCK_ICON: 'lock-icon',
+  COG_ICON: 'cog-icon',
+  PROFILE_ICON: 'profile-icon',
+  CHEST_ICON: 'chest-icon',
+  DRILL_ICON: 'drill-icon',
 } as const;
 
 export const SOUND = {
