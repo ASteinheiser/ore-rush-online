@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
+import { ORE } from '@repo/core-game';
 import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
@@ -23,14 +24,11 @@ interface StashModalProps {
 export const StashModal = ({ isOpen, onOpenChange }: StashModalProps) => {
   const { session } = useSession();
 
-  const { data, loading, error } = useQuery<
-    Desktop_GetProfileStashQuery,
-    Desktop_GetProfileStashQueryVariables
-  >(GET_PROFILE_STASH, {
-    context: { headers: { Authorization: session?.access_token } },
-  });
-
-  console.log(data, loading, error);
+  const queryResult = useQuery<Desktop_GetProfileStashQuery, Desktop_GetProfileStashQueryVariables>(
+    GET_PROFILE_STASH,
+    { context: { headers: { Authorization: session?.access_token } } }
+  );
+  const stashItems = queryResult.data?.profile?.stash ?? [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -44,7 +42,18 @@ export const StashModal = ({ isOpen, onOpenChange }: StashModalProps) => {
         </DialogHeader>
 
         <div className="flex flex-col gap-6 px-2 pt-6 pb-4">
-          <p className="font-title text-xl text-center text-muted-foreground">Stash UI coming soon...</p>
+          {stashItems.length > 0 ? (
+            stashItems.map((item) => (
+              <div key={item.id} className="flex flex-row justify-between">
+                <p className="font-title text-xl text-muted-foreground">
+                  {Object.values(ORE).find(({ id }) => id === item.id)?.name}
+                </p>
+                <p className="font-label text-xl text-muted-foreground">{item.quantity}</p>
+              </div>
+            ))
+          ) : (
+            <p className="font-title text-xl text-center text-muted-foreground">Empty...</p>
+          )}
         </div>
       </DialogContent>
     </Dialog>
