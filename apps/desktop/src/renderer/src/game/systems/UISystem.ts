@@ -7,12 +7,16 @@ import {
   isInExtractionZone,
 } from '@repo/core-game';
 import { CustomText } from '../objects/CustomText';
+import { StarBackground } from '../objects/StarBackground';
 import { FogOverlay } from '../objects/FogOverlay';
 import { FpsDisplay } from '../objects/FpsDisplay';
 import { PingDisplay } from '../objects/PingDisplay';
-import { StarBackground } from '../objects/StarBackground';
+import { OrbDisplay } from '../objects/OrbDisplay';
 import { DEPTH } from '../constants';
 import type { Game } from '../scenes/Game';
+
+const ORB_RADIUS = 100;
+const ORB_MARGIN = 24;
 
 export interface InventorySnapshot {
   coal: number;
@@ -21,17 +25,14 @@ export interface InventorySnapshot {
 }
 
 export class UISystem {
+  public starBackground: StarBackground;
   public fogOverlay: FogOverlay;
   public fpsDisplay: FpsDisplay;
   public pingDisplay: PingDisplay;
-  public starBackground: StarBackground;
-  private fuelText: CustomText;
-  private capacityText: CustomText;
-  private coalCountText: CustomText;
-  private ironCountText: CustomText;
-  private copperCountText: CustomText;
-  private extractText: CustomText;
   private remotePlayerList: CustomText;
+  private extractText: CustomText;
+  private fuelOrb: OrbDisplay;
+  private inventoryOrb: OrbDisplay;
   private inventorySnapshot?: InventorySnapshot;
 
   constructor(private scene: Game) {
@@ -45,40 +46,17 @@ export class UISystem {
       fixedToCamera: true,
     });
 
-    this.fuelText = new CustomText(this.scene, 0, 0, 'Fuel: -%', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    })
-      .setScrollFactor(0)
-      .setDepth(DEPTH.HUD_FOREGROUND);
+    this.fuelOrb = new OrbDisplay(this.scene, {
+      radius: ORB_RADIUS,
+      fillColor: 0x3b82f6,
+      label: 'FUEL',
+    });
 
-    this.capacityText = new CustomText(this.scene, 0, 0, 'Weight: -%', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    })
-      .setScrollFactor(0)
-      .setDepth(DEPTH.HUD_FOREGROUND);
-
-    this.coalCountText = new CustomText(this.scene, 0, 0, 'Coal: 0', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    })
-      .setScrollFactor(0)
-      .setDepth(DEPTH.HUD_FOREGROUND);
-
-    this.ironCountText = new CustomText(this.scene, 0, 0, 'Iron: 0', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    })
-      .setScrollFactor(0)
-      .setDepth(DEPTH.HUD_FOREGROUND);
-
-    this.copperCountText = new CustomText(this.scene, 0, 0, 'Copper: 0', {
-      fontFamily: 'Tiny5',
-      fontSize: 20,
-    })
-      .setScrollFactor(0)
-      .setDepth(DEPTH.HUD_FOREGROUND);
+    this.inventoryOrb = new OrbDisplay(this.scene, {
+      radius: ORB_RADIUS,
+      fillColor: 0x22c55e,
+      label: 'WEIGHT',
+    });
 
     this.extractText = new CustomText(this.scene, 0, 0, 'Press <SHIFT> to extract', {
       fontFamily: 'Tiny5',
@@ -92,22 +70,18 @@ export class UISystem {
     this.remotePlayerList = new CustomText(this.scene, 0, 0, 'no signals detected', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-      align: 'right',
+      align: 'left',
     })
       .setScrollFactor(0)
-      .setOrigin(1, 0)
       .setDepth(DEPTH.HUD_FOREGROUND);
 
     const layout = () => {
       const { width, height } = this.scene.scale;
       this.starBackground?.resize(width, height);
-      this.fuelText?.setPosition(20, 10);
-      this.capacityText?.setPosition(20, 30);
-      this.coalCountText?.setPosition(20, 60);
-      this.ironCountText?.setPosition(20, 80);
-      this.copperCountText?.setPosition(20, 100);
-      this.extractText?.setPosition(20, 130);
-      this.remotePlayerList?.setPosition(width - 16, 100);
+      this.fuelOrb?.setPosition(ORB_MARGIN + ORB_RADIUS, height - ORB_MARGIN - ORB_RADIUS);
+      this.inventoryOrb?.setPosition(width - ORB_MARGIN - ORB_RADIUS, height - ORB_MARGIN - ORB_RADIUS);
+      this.extractText?.setPosition(20, 16);
+      this.remotePlayerList?.setPosition(20, 56);
     };
 
     layout();
@@ -126,11 +100,8 @@ export class UISystem {
     this.fpsDisplay.destroy();
     this.pingDisplay.destroy();
     this.starBackground.destroy();
-    this.fuelText.destroy();
-    this.capacityText.destroy();
-    this.coalCountText.destroy();
-    this.ironCountText.destroy();
-    this.copperCountText.destroy();
+    this.fuelOrb.destroy();
+    this.inventoryOrb.destroy();
     this.extractText.destroy();
     this.remotePlayerList.destroy();
     this.inventorySnapshot = undefined;
@@ -149,18 +120,9 @@ export class UISystem {
 
     const usedCapacity = calculateInventoryWeight(inventory);
     const capacityPercent = calculatePercentage(usedCapacity, inventory.capacity);
-    if (capacityPercent > 70) {
-      this.capacityText.setColor('#ef4444');
-    } else if (capacityPercent > 30) {
-      this.capacityText.setColor('#eab308');
-    } else {
-      this.capacityText.setColor('#22c55e');
-    }
+    const weightColor = capacityPercent > 75 ? 0xef4444 : capacityPercent > 40 ? 0xeab308 : 0x22c55e;
 
-    this.capacityText.setText(`Weight: ${capacityPercent}%`);
-    this.coalCountText.setText(`Coal: ${inventory.coal}`);
-    this.ironCountText.setText(`Iron: ${inventory.iron}`);
-    this.copperCountText.setText(`Copper: ${inventory.copper}`);
+    this.inventoryOrb.setPercent(capacityPercent, weightColor);
 
     const playerEntity = this.scene.playerSystem.currentPlayer?.entity;
     // show extract help text once player has items and is within extraction zone
@@ -173,15 +135,9 @@ export class UISystem {
 
   public updateFuel(current: number, total: number) {
     const fuelPercent = calculatePercentage(current, total);
-    if (fuelPercent > 70) {
-      this.fuelText.setColor('#22c55e');
-    } else if (fuelPercent > 30) {
-      this.fuelText.setColor('#eab308');
-    } else {
-      this.fuelText.setColor('#ef4444');
-    }
+    const fuelColor = fuelPercent > 60 ? 0x3b82f6 : fuelPercent > 30 ? 0xeab308 : 0xef4444;
 
-    this.fuelText.setText(`Fuel: ${fuelPercent}%`);
+    this.fuelOrb.setPercent(fuelPercent, fuelColor);
   }
 
   public updateRemotePlayerList() {
