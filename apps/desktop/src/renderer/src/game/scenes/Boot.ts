@@ -1,10 +1,7 @@
 import * as Phaser from 'phaser';
-import { StarBackground } from '../objects/StarBackground';
 import { SCENE } from '../constants';
 
 export class Boot extends Phaser.Scene {
-  private starBackground!: StarBackground;
-
   constructor() {
     super(SCENE.BOOT);
   }
@@ -15,19 +12,9 @@ export class Boot extends Phaser.Scene {
   }
 
   create() {
-    this.starBackground = new StarBackground(this, { fixedToCamera: true, showStars: false });
-
-    const layout = () => {
-      const { width, height } = this.scale;
-      this.starBackground.resize(width, height);
-    };
-
-    layout();
-    this.scale.on(Phaser.Scale.Events.RESIZE, layout);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.scale.off(Phaser.Scale.Events.RESIZE, layout);
-      this.starBackground.destroy();
-    });
+    // launch the persistent backdrop once here; it stays active behind every other scene for the rest of the game's lifetime
+    this.scene.launch(SCENE.BACKGROUND);
+    this.scene.sendToBack(SCENE.BACKGROUND);
 
     this.scene.start(SCENE.PRELOADER);
   }

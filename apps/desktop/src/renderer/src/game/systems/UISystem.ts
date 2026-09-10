@@ -7,7 +7,6 @@ import {
   isInExtractionZone,
 } from '@repo/core-game';
 import { CustomText } from '../objects/CustomText';
-import { StarBackground } from '../objects/StarBackground';
 import { FogOverlay } from '../objects/FogOverlay';
 import { FpsDisplay } from '../objects/FpsDisplay';
 import { PingDisplay } from '../objects/PingDisplay';
@@ -25,7 +24,6 @@ export interface InventorySnapshot {
 }
 
 export class UISystem {
-  public starBackground: StarBackground;
   public fogOverlay: FogOverlay;
   public fpsDisplay: FpsDisplay;
   public pingDisplay: PingDisplay;
@@ -38,13 +36,6 @@ export class UISystem {
   constructor(private scene: Game) {
     // set the camera bounds to the map size
     this.scene.cameras.main.setBounds(0, 0, MAP_SIZE.width, MAP_SIZE.height);
-
-    // space backdrop behind everything, fixed to the screen since the map is much bigger than the window
-    this.starBackground = new StarBackground(this.scene, {
-      gradientTop: 0x160a1e,
-      gradientBottom: 0x000000,
-      fixedToCamera: true,
-    });
 
     this.fuelOrb = new OrbDisplay(this.scene, {
       radius: ORB_RADIUS,
@@ -76,7 +67,6 @@ export class UISystem {
 
     const layout = () => {
       const { width, height } = this.scene.scale;
-      this.starBackground?.resize(width, height);
       this.fuelOrb?.setPosition(ORB_MARGIN + ORB_RADIUS, height - ORB_MARGIN - ORB_RADIUS);
       this.inventoryOrb?.setPosition(width - ORB_MARGIN - ORB_RADIUS, height - ORB_MARGIN - ORB_RADIUS);
       this.extractText?.setPosition(20, 16);
@@ -98,7 +88,6 @@ export class UISystem {
     this.fogOverlay.destroy();
     this.fpsDisplay.destroy();
     this.pingDisplay.destroy();
-    this.starBackground.destroy();
     this.fuelOrb.destroy();
     this.inventoryOrb.destroy();
     this.extractText.destroy();

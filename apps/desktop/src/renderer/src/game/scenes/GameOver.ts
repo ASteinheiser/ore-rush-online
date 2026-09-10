@@ -1,9 +1,9 @@
 import * as Phaser from 'phaser';
+import { ORE } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { CustomText } from '../objects/CustomText';
-import { StarBackground } from '../objects/StarBackground';
 import { DEPTH, SCENE } from '../constants';
-import { ORE } from '@repo/core-game';
+import { revealScene, transitionToScene } from '../transitions';
 import type { InventorySnapshot } from '../systems/UISystem';
 
 export interface GameOverSceneData {
@@ -13,7 +13,7 @@ export interface GameOverSceneData {
 
 export class GameOver extends Phaser.Scene {
   private cursorKeys?: Phaser.Types.Input.Keyboard.CursorKeys;
-  private starBackground!: StarBackground;
+  private texts: CustomText[] = [];
 
   constructor() {
     super(SCENE.GAME_OVER);
@@ -24,8 +24,6 @@ export class GameOver extends Phaser.Scene {
   }
 
   create({ success, inventory }: GameOverSceneData) {
-    this.starBackground = new StarBackground(this);
-
     // filter out items that have no quantity for display purposes
     const heldItems = Object.entries(inventory ?? {}).filter(([, count]) => count > 0);
 
@@ -75,9 +73,11 @@ export class GameOver extends Phaser.Scene {
       itemTexts.push(text);
     });
 
+    // used for the fade transition back to HomeBase
+    this.texts = [continueText, titleText, bodyText, ...itemTexts];
+
     const layout = () => {
       const { width, height } = this.scale;
-      this.starBackground.resize(width, height);
 
       continueText.setPosition((width - continueText.width) / 2, 20);
 
@@ -93,21 +93,19 @@ export class GameOver extends Phaser.Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, layout);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, layout);
-      this.starBackground.destroy();
     });
 
+    revealScene(this, 'up');
     EventBus.emit(EVENT_BUS.CURRENT_SCENE_READY, this);
   }
 
-  update(_time: number, delta: number) {
-    this.starBackground.update(delta);
-
+  update() {
     if (this.cursorKeys?.shift.isDown) {
       this.changeScene();
     }
   }
 
   public changeScene() {
-    this.scene.start(SCENE.HOME_BASE);
+    transitionToScene(this, SCENE.HOME_BASE, undefined, this.texts);
   }
 }

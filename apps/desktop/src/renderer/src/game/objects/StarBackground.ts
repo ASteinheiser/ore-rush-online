@@ -14,22 +14,9 @@ interface Star {
   speed: number;
 }
 
-interface StarBackgroundConfig {
-  /** When `false`, no stars are created and only the gradient fill is shown. Defaults to `true` */
-  showStars?: boolean;
-  /** Number of stars scattered across the background */
-  starCount?: number;
-  /** Gradient color at the top of the screen */
-  gradientTop?: number;
-  /** Gradient color at the bottom of the screen */
-  gradientBottom?: number;
-  /** When `true`, the backdrop stays fixed to the camera/screen instead of scrolling with the world. Defaults to `false` */
-  fixedToCamera?: boolean;
-}
-
-const DEFAULT_GRADIENT_TOP = 0x000000;
-const DEFAULT_GRADIENT_BOTTOM = 0x1a051a;
-const DEFAULT_STAR_COUNT = 140;
+export const GRADIENT_TOP = 0x000000;
+export const GRADIENT_BOTTOM = 0x1a051a;
+const STAR_COUNT = 140;
 /** Range of star sizes (px) */
 const MIN_STAR_SIZE = 2;
 const MAX_STAR_SIZE = 5;
@@ -40,34 +27,20 @@ const MAX_DRIFT_SPEED = 8;
 /** A reusable "deep space" backdrop: a top-to-bottom gradient fill with a field of stars scattered across it. */
 export class StarBackground {
   private initialized = false;
+  private transitioning = false;
   private stars: Star[];
   private gradient: Phaser.GameObjects.Graphics;
   private gradientTop: number;
   private gradientBottom: number;
   private width = 0;
   private height = 0;
-  private fixedToCamera: boolean;
 
-  constructor(
-    private scene: Phaser.Scene,
-    {
-      showStars = true,
-      starCount = DEFAULT_STAR_COUNT,
-      gradientTop = DEFAULT_GRADIENT_TOP,
-      gradientBottom = DEFAULT_GRADIENT_BOTTOM,
-      fixedToCamera = false,
-    }: StarBackgroundConfig = {}
-  ) {
-    this.gradientTop = gradientTop;
-    this.gradientBottom = gradientBottom;
-    this.fixedToCamera = fixedToCamera;
+  constructor(private scene: Phaser.Scene) {
+    this.gradientTop = GRADIENT_TOP;
+    this.gradientBottom = GRADIENT_BOTTOM;
+    this.gradient = scene.add.graphics().setDepth(DEPTH.BACKGROUND).setScrollFactor(0);
 
-    this.gradient = scene.add
-      .graphics()
-      .setDepth(DEPTH.BACKGROUND)
-      .setScrollFactor(fixedToCamera ? 0 : 1);
-
-    this.stars = showStars ? Array.from({ length: starCount }, () => this.createStar()) : [];
+    this.stars = Array.from({ length: STAR_COUNT }, () => this.createStar());
   }
 
   public destroy() {
@@ -82,15 +55,7 @@ export class StarBackground {
     this.width = width;
     this.height = height;
 
-    this.gradient.clear();
-    this.gradient.fillGradientStyle(
-      this.gradientTop,
-      this.gradientTop,
-      this.gradientBottom,
-      this.gradientBottom,
-      1
-    );
-    this.gradient.fillRect(0, 0, width, height);
+    this.redrawGradient();
 
     this.stars.forEach((star) => {
       if (!this.initialized) {
@@ -107,7 +72,7 @@ export class StarBackground {
 
   /** Drifts stars slowly upward, wrapping back to the bottom when they fully exit the top */
   public update(delta: number) {
-    if (!this.initialized) return;
+    if (!this.initialized || this.transitioning) return;
 
     this.stars.forEach((star) => {
       star.y -= star.speed * (delta / 1000);
@@ -122,6 +87,83 @@ export class StarBackground {
     });
   }
 
+  /** Recolors the gradient to `top`/`bottom`, sliding a second gradient+star sheet in from `direction` when `duration` is given. Instant when `duration` is 0 */
+  public async setGradientColors(top: number, bottom: number, direction: 'up' | 'down' = 'up', duration = 0) {
+    const unchanged = top === this.gradientTop && bottom === this.gradientBottom;
+
+    if (duration <= 0 || unchanged) {
+      this.gradientTop = top;
+      this.gradientBottom = bottom;
+      this.redrawGradient();
+      return;
+    }
+
+    // the incoming sheet starts a full screen-height off-screen, in the opposite direction it'll travel
+    const delta = direction === 'up' ? -this.height : this.height;
+    const incomingGradient = this.createGradientGraphic(top, bottom);
+    const incomingStars = this.createStarField();
+    [incomingGradient, ...incomingStars.map((star) => star.shape)].forEach((object) => {
+      object.y -= delta;
+    });
+
+    const outgoingGradient = this.gradient;
+    const outgoingStars = this.stars;
+
+    this.transitioning = true;
+
+    await new Promise<void>((resolve) => {
+      this.scene.tweens.add({
+        targets: [
+          outgoingGradient,
+          incomingGradient,
+          ...outgoingStars.map((star) => star.shape),
+          ...incomingStars.map((star) => star.shape),
+        ],
+        y: (_target: unknown, _key: string, value: number) => value + delta,
+        duration,
+        ease: 'Sine.easeInOut',
+        onComplete: () => resolve(),
+      });
+    });
+
+    this.transitioning = false;
+    outgoingGradient.destroy();
+    outgoingStars.forEach((star) => star.shape.destroy());
+
+    this.gradient = incomingGradient;
+    this.gradientTop = top;
+    this.gradientBottom = bottom;
+    this.stars = incomingStars;
+  }
+
+  /** Fills the background gradient using the current gradient colors */
+  private redrawGradient() {
+    this.fillGradientRect(this.gradient, this.gradientTop, this.gradientBottom);
+  }
+
+  /** Creates a standalone gradient rect the size of the screen, used to animate `setGradientColors` */
+  private createGradientGraphic(top: number, bottom: number) {
+    const graphic = this.scene.add.graphics().setDepth(DEPTH.BACKGROUND).setScrollFactor(0);
+    this.fillGradientRect(graphic, top, bottom);
+    return graphic;
+  }
+
+  /** Creates a full field of stars scattered across the current screen dimensions */
+  private createStarField(): Star[] {
+    return Array.from({ length: STAR_COUNT }, () => {
+      const star = this.createStar();
+      star.y = Phaser.Math.Between(0, this.height);
+      star.shape.setPosition(this.width * star.xFrac, star.y);
+      return star;
+    });
+  }
+
+  private fillGradientRect(graphic: Phaser.GameObjects.Graphics, top: number, bottom: number) {
+    graphic.clear();
+    graphic.fillGradientStyle(top, top, bottom, bottom, 1);
+    graphic.fillRect(0, 0, this.width, this.height);
+  }
+
   /** Creates a single star, drawn as a small white diamond at a random size and "twinkle" rate */
   private createStar(): Star {
     const size = Phaser.Math.Between(MIN_STAR_SIZE, MAX_STAR_SIZE);
@@ -132,7 +174,7 @@ export class StarBackground {
       .setAlpha(baseAlpha)
       .setRotation(Math.PI / 4)
       .setDepth(DEPTH.BACKGROUND_STARS)
-      .setScrollFactor(this.fixedToCamera ? 0 : 1);
+      .setScrollFactor(1);
 
     this.scene.tweens.add({
       targets: shape,

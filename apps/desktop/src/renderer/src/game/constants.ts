@@ -2,6 +2,7 @@ export const GAME_CONTAINER_ID = 'game-container';
 
 export const SCENE = {
   BOOT: 'boot',
+  BACKGROUND: 'background',
   PRELOADER: 'preloader',
   HOME_BASE: 'home_base',
   GAME: 'game',

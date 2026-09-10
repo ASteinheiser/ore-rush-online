@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { FIXED_TIME_STEP, type AuthPayload } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { SCENE } from '../constants';
+import { fadeSceneIn, slideBackdrop, transitionToScene } from '../transitions';
 import { RoomSystem } from '../systems/RoomSystem';
 import { InputSystem } from '../systems/InputSystem';
 import { UISystem } from '../systems/UISystem';
@@ -38,7 +39,12 @@ export class Game extends Phaser.Scene {
       return this.sendToHomeBase('Failed to join room');
     }
 
+    // wait for the backdrop to slide into place before spawning the fog/player/blocks
+    await slideBackdrop(this, 'down');
+    // spawn the fog/player/blocks
     this.setupStateListeners();
+    // then fade this scene in over them
+    fadeSceneIn(this);
 
     EventBus.emit(EVENT_BUS.CURRENT_SCENE_READY, this);
   }
@@ -91,7 +97,6 @@ export class Game extends Phaser.Scene {
     this.remotePlayerSystem.interpolateRemotePlayers(delta);
 
     this.uiSystem?.fpsDisplay.update(delta);
-    this.uiSystem?.starBackground.update(delta);
     this.uiSystem?.fogOverlay.update(this.playerSystem.currentPlayer.entity);
   }
 
@@ -112,7 +117,7 @@ export class Game extends Phaser.Scene {
     console.error(message);
     EventBus.emit(EVENT_BUS.TOAST_ERROR, message);
 
-    this.scene.start(SCENE.HOME_BASE);
+    transitionToScene(this, SCENE.HOME_BASE);
   }
 
   public sendToGameOver(success = false) {
@@ -121,6 +126,6 @@ export class Game extends Phaser.Scene {
       inventory: this.uiSystem?.getInventorySnapshot(),
     };
 
-    this.scene.start(SCENE.GAME_OVER, sceneData);
+    transitionToScene(this, SCENE.GAME_OVER, sceneData);
   }
 }

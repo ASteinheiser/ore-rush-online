@@ -7,30 +7,11 @@ import profileIcon from '../../assets/basic-profile.png';
 import chestIcon from '../../assets/basic-chest.png';
 import drillIcon from '../../assets/basic-drill-down.png';
 import { PLAYER_ANIM } from '../objects/Player';
-import { StarBackground } from '../objects/StarBackground';
 import { ASSET, SCENE } from '../constants';
 
 export class Preloader extends Phaser.Scene {
-  private starBackground!: StarBackground;
-
   constructor() {
     super(SCENE.PRELOADER);
-  }
-
-  init() {
-    this.starBackground = new StarBackground(this, { fixedToCamera: true, showStars: false });
-
-    const layout = () => {
-      const { width, height } = this.scale;
-      this.starBackground.resize(width, height);
-    };
-
-    layout();
-    this.scale.on(Phaser.Scale.Events.RESIZE, layout);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.scale.off(Phaser.Scale.Events.RESIZE, layout);
-      this.starBackground.destroy();
-    });
   }
 
   preload() {
