@@ -9,11 +9,12 @@ import { PhaserGame, type PhaserGameRef } from '../game/PhaserGame';
 import type { HomeBase } from '../game/scenes/HomeBase';
 import type { Game as GameScene } from '../game/scenes/Game';
 import { EventBus, EVENT_BUS } from '../game/EventBus';
+import { SCENE } from '../game/constants';
 import type { Desktop_GetTotalPlayersQuery, Desktop_GetTotalPlayersQueryVariables } from '../graphql';
 import { ProfileModal } from '../modals/ProfileModal';
 import { NewPasswordModal } from '../modals/NewPasswordModal';
 import { SettingsModal } from '../modals/SettingsModal';
-import { CoinModal } from '../modals/CoinModal';
+import { HomeBaseOverlay } from '../components/HomeBaseOverlay';
 import { SEARCH_PARAMS } from '../router/constants';
 import { useAudioSettings } from '../providers/AudioSettingsProvider';
 
@@ -34,21 +35,21 @@ export const Game = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useSearchParamFlag(SEARCH_PARAMS.PROFILE);
   const [isNewPasswordModalOpen, setIsNewPasswordModalOpen] = useSearchParamFlag(SEARCH_PARAMS.NEW_PASSWORD);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useSearchParamFlag(SEARCH_PARAMS.SETTINGS);
-  const [isCoinModalOpen, setIsCoinModalOpen] = useState(false);
+  const [isHomeBaseActive, setIsHomeBaseActive] = useState(false);
 
   const setPhaserInputEnabled = useCallback(() => {
-    const disabled = isProfileModalOpen || isNewPasswordModalOpen || isSettingsModalOpen || isCoinModalOpen;
+    const disabled = isProfileModalOpen || isNewPasswordModalOpen || isSettingsModalOpen;
 
     if (phaserRef?.current?.game?.input) {
       phaserRef.current.game.input.enabled = !disabled;
     }
-  }, [isProfileModalOpen, isNewPasswordModalOpen, isSettingsModalOpen, isCoinModalOpen, phaserRef?.current]);
+  }, [isProfileModalOpen, isNewPasswordModalOpen, isSettingsModalOpen, phaserRef?.current]);
 
   useEffect(() => {
     setPhaserInputEnabled();
   }, [setPhaserInputEnabled]);
 
-  const onCurrentSceneChange = (_scene: Phaser.Scene) => {
+  const onCurrentSceneChange = (scene: Phaser.Scene) => {
     // ensure that new scenes have the correct "input enabled" setting
     // for example, handles the case where the scene changes with a modal open
     setPhaserInputEnabled();
@@ -57,7 +58,8 @@ export const Game = () => {
     setIsProfileModalOpen(false);
     setIsNewPasswordModalOpen(false);
     setIsSettingsModalOpen(false);
-    setIsCoinModalOpen(false);
+
+    setIsHomeBaseActive(scene.scene.key === SCENE.HOME_BASE);
   };
 
   // NOTE: the server will kick any clients with an expired token, however
@@ -85,7 +87,6 @@ export const Game = () => {
   useEffect(() => {
     EventBus.on(EVENT_BUS.PROFILE_OPEN, () => setIsProfileModalOpen(true));
     EventBus.on(EVENT_BUS.SETTINGS_OPEN, () => setIsSettingsModalOpen(true));
-    EventBus.on(EVENT_BUS.COIN_OPEN, () => setIsCoinModalOpen(true));
     EventBus.on(EVENT_BUS.TOAST_INFO, (message: string) => toast.info(message));
     EventBus.on(EVENT_BUS.TOAST_SUCCESS, (message: string) => toast.success(message));
     EventBus.on(EVENT_BUS.TOAST_ERROR, (message: string) => toast.error(message));
@@ -93,7 +94,6 @@ export const Game = () => {
     return () => {
       EventBus.off(EVENT_BUS.PROFILE_OPEN);
       EventBus.off(EVENT_BUS.SETTINGS_OPEN);
-      EventBus.off(EVENT_BUS.COIN_OPEN);
       EventBus.off(EVENT_BUS.TOAST_INFO);
       EventBus.off(EVENT_BUS.TOAST_SUCCESS);
       EventBus.off(EVENT_BUS.TOAST_ERROR);
@@ -129,10 +129,11 @@ export const Game = () => {
     <>
       <PhaserGame ref={phaserRef} currentActiveScene={onCurrentSceneChange} />
 
+      <HomeBaseOverlay isVisible={isHomeBaseActive} />
+
       <SettingsModal isOpen={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen} />
       <ProfileModal isOpen={isProfileModalOpen} onOpenChange={setIsProfileModalOpen} />
       <NewPasswordModal isOpen={isNewPasswordModalOpen} onOpenChange={setIsNewPasswordModalOpen} />
-      <CoinModal isOpen={isCoinModalOpen} onOpenChange={setIsCoinModalOpen} />
     </>
   );
 };
