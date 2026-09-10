@@ -11,6 +11,7 @@ export const EVENT_BUS = {
   GAME_START: 'game-start',
   PROFILE_OPEN: 'menu-open__profile',
   SETTINGS_OPEN: 'menu-open__settings',
+  STASH_OPEN: 'menu-open__stash',
   TOAST_INFO: 'toast-info',
   TOAST_SUCCESS: 'toast-success',
   TOAST_ERROR: 'toast-error',

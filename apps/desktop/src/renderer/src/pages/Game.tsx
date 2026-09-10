@@ -14,6 +14,7 @@ import type { Desktop_GetTotalPlayersQuery, Desktop_GetTotalPlayersQueryVariable
 import { ProfileModal } from '../modals/ProfileModal';
 import { NewPasswordModal } from '../modals/NewPasswordModal';
 import { SettingsModal } from '../modals/SettingsModal';
+import { StashModal } from '../modals/StashModal';
 import { HomeBaseOverlay } from '../components/HomeBaseOverlay';
 import { SEARCH_PARAMS } from '../router/constants';
 import { useAudioSettings } from '../providers/AudioSettingsProvider';
@@ -35,15 +36,16 @@ export const Game = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useSearchParamFlag(SEARCH_PARAMS.PROFILE);
   const [isNewPasswordModalOpen, setIsNewPasswordModalOpen] = useSearchParamFlag(SEARCH_PARAMS.NEW_PASSWORD);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useSearchParamFlag(SEARCH_PARAMS.SETTINGS);
+  const [isStashModalOpen, setIsStashModalOpen] = useSearchParamFlag(SEARCH_PARAMS.STASH);
   const [isHomeBaseActive, setIsHomeBaseActive] = useState(false);
 
   const setPhaserInputEnabled = useCallback(() => {
-    const disabled = isProfileModalOpen || isNewPasswordModalOpen || isSettingsModalOpen;
+    const disabled = isProfileModalOpen || isNewPasswordModalOpen || isSettingsModalOpen || isStashModalOpen;
 
     if (phaserRef?.current?.game?.input) {
       phaserRef.current.game.input.enabled = !disabled;
     }
-  }, [isProfileModalOpen, isNewPasswordModalOpen, isSettingsModalOpen, phaserRef?.current]);
+  }, [isProfileModalOpen, isNewPasswordModalOpen, isSettingsModalOpen, isStashModalOpen, phaserRef?.current]);
 
   useEffect(() => {
     setPhaserInputEnabled();
@@ -58,6 +60,7 @@ export const Game = () => {
     setIsProfileModalOpen(false);
     setIsNewPasswordModalOpen(false);
     setIsSettingsModalOpen(false);
+    setIsStashModalOpen(false);
 
     setIsHomeBaseActive(scene.scene.key === SCENE.HOME_BASE);
   };
@@ -87,6 +90,7 @@ export const Game = () => {
   useEffect(() => {
     EventBus.on(EVENT_BUS.PROFILE_OPEN, () => setIsProfileModalOpen(true));
     EventBus.on(EVENT_BUS.SETTINGS_OPEN, () => setIsSettingsModalOpen(true));
+    EventBus.on(EVENT_BUS.STASH_OPEN, () => setIsStashModalOpen(true));
     EventBus.on(EVENT_BUS.TOAST_INFO, (message: string) => toast.info(message));
     EventBus.on(EVENT_BUS.TOAST_SUCCESS, (message: string) => toast.success(message));
     EventBus.on(EVENT_BUS.TOAST_ERROR, (message: string) => toast.error(message));
@@ -94,6 +98,7 @@ export const Game = () => {
     return () => {
       EventBus.off(EVENT_BUS.PROFILE_OPEN);
       EventBus.off(EVENT_BUS.SETTINGS_OPEN);
+      EventBus.off(EVENT_BUS.STASH_OPEN);
       EventBus.off(EVENT_BUS.TOAST_INFO);
       EventBus.off(EVENT_BUS.TOAST_SUCCESS);
       EventBus.off(EVENT_BUS.TOAST_ERROR);
@@ -134,6 +139,7 @@ export const Game = () => {
       <SettingsModal isOpen={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen} />
       <ProfileModal isOpen={isProfileModalOpen} onOpenChange={setIsProfileModalOpen} />
       <NewPasswordModal isOpen={isNewPasswordModalOpen} onOpenChange={setIsNewPasswordModalOpen} />
+      <StashModal isOpen={isStashModalOpen} onOpenChange={setIsStashModalOpen} />
     </>
   );
 };

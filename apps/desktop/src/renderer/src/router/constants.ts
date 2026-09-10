@@ -2,6 +2,7 @@ export const SEARCH_PARAMS = {
   SETTINGS: 'settings',
   PROFILE: 'editProfile',
   NEW_PASSWORD: 'newPassword',
+  STASH: 'stash',
 } as const;
 
 export const APP_ROUTES = {
