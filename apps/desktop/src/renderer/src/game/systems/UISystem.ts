@@ -61,10 +61,9 @@ export class UISystem {
     this.extractText = new CustomText(this.scene, 0, 0, 'Press <SHIFT> to extract', {
       fontFamily: 'Tiny5',
       fontSize: 20,
-      color: '#007bff',
+      color: '#9ca3af',
     })
       .setScrollFactor(0)
-      .setAlpha(0)
       .setDepth(DEPTH.HUD_FOREGROUND);
 
     this.remotePlayerList = new CustomText(this.scene, 0, 0, 'no signals detected', {
@@ -125,11 +124,12 @@ export class UISystem {
     this.inventoryOrb.setPercent(capacityPercent, weightColor);
 
     const playerEntity = this.scene.playerSystem.currentPlayer?.entity;
-    // show extract help text once player has items and is within extraction zone
-    if (usedCapacity > 0 && playerEntity && isInExtractionZone(playerEntity)) {
-      this.extractText.fadeIn(150);
-    } else if (this.extractText.visible) {
-      this.extractText.fadeOut(150);
+    if (!playerEntity || !isInExtractionZone(playerEntity)) {
+      this.extractText.setText('Ascend to extract').setColor('#9ca3af');
+    } else if (usedCapacity > 0) {
+      this.extractText.setText('Press <SHIFT> to extract').setColor('#007bff');
+    } else {
+      this.extractText.setText('Press <SHIFT> to extract').setColor('#9ca3af');
     }
   }
 
