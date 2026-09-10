@@ -28,6 +28,11 @@ export class Game extends Phaser.Scene {
   }
 
   async create({ token }: AuthPayload) {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.roomSystem.cleanupRoom();
+      this.cleanupScene();
+    });
+
     await this.roomSystem.joinRoom(token);
     if (!this.roomSystem.room) {
       return this.sendToHomeBase('Failed to join room');
@@ -41,6 +46,7 @@ export class Game extends Phaser.Scene {
   private setupStateListeners() {
     if (!this.roomSystem.room) return;
 
+    // reconnects call this again mid-scene; cleanup before setting up new listeners
     this.cleanupScene();
     this.uiSystem = new UISystem(this);
 
@@ -106,8 +112,6 @@ export class Game extends Phaser.Scene {
     console.error(message);
     EventBus.emit(EVENT_BUS.TOAST_ERROR, message);
 
-    this.roomSystem.cleanupRoom();
-    this.cleanupScene();
     this.scene.start(SCENE.HOME_BASE);
   }
 
@@ -117,8 +121,6 @@ export class Game extends Phaser.Scene {
       inventory: this.uiSystem?.getInventorySnapshot(),
     };
 
-    this.roomSystem.cleanupRoom();
-    this.cleanupScene();
     this.scene.start(SCENE.GAME_OVER, sceneData);
   }
 }
