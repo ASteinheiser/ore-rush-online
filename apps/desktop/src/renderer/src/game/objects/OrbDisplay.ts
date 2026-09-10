@@ -7,6 +7,7 @@ const DEFAULT_FILL_COLOR = 0x22c55e;
 const BACKGROUND_COLOR = 0x14141c;
 const BORDER_COLOR = 0x14141c;
 const BORDER_THICKNESS = 4;
+const FILL_ANIMATION_DURATION = 300;
 
 interface OrbDisplayOptions {
   radius?: number;
@@ -20,7 +21,10 @@ export class OrbDisplay {
   private x = 0;
   private y = 0;
   private fillColor: number;
+  /** The target percent, set immediately via setPercent() */
   private percent = 0;
+  /** The animated percent currently being rendered by drawFill(), chases `percent` via a tween */
+  private displayPercent = 0;
   private lastRenderedPercent = -1;
   private background: Phaser.GameObjects.Graphics;
   private fill: Phaser.GameObjects.Graphics;
@@ -63,6 +67,7 @@ export class OrbDisplay {
   }
 
   public destroy() {
+    this.scene.tweens.killTweensOf(this);
     this.background.destroy();
     this.fill.destroy();
     this.percentText.destroy();
@@ -91,8 +96,16 @@ export class OrbDisplay {
       }
       this.lastRenderedPercent = rounded;
       this.percentText.setText(`${rounded}%`);
-      this.drawFill();
     }
+
+    this.scene.tweens.killTweensOf(this);
+    this.scene.tweens.add({
+      targets: this,
+      displayPercent: this.percent,
+      duration: FILL_ANIMATION_DURATION,
+      ease: 'Sine.easeOut',
+      onUpdate: () => this.drawFill(),
+    });
 
     return this;
   }
@@ -105,11 +118,11 @@ export class OrbDisplay {
 
   private drawFill() {
     this.fill.clear();
-    if (this.percent <= 0) return;
+    if (this.displayPercent <= 0) return;
 
     const { x, y } = this;
     const r = this.radius;
-    const fillHeight = Phaser.Math.Clamp((r * 2 * this.percent) / 100, 0, r * 2);
+    const fillHeight = Phaser.Math.Clamp((r * 2 * this.displayPercent) / 100, 0, r * 2);
 
     this.fill.fillStyle(this.fillColor, 0.9);
 
