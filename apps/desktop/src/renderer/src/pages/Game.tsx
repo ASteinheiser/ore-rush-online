@@ -1,7 +1,5 @@
 import type * as Phaser from 'phaser';
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/client/react';
 import { useSession } from '@repo/client-auth/provider';
 import { useSearchParamFlag } from '@repo/ui/hooks';
 import { toast } from '@repo/ui';
@@ -10,7 +8,6 @@ import type { HomeBase } from '../game/scenes/HomeBase';
 import type { Game as GameScene } from '../game/scenes/Game';
 import { EventBus, EVENT_BUS } from '../game/EventBus';
 import { SCENE } from '../game/constants';
-import type { Desktop_GetTotalPlayersQuery, Desktop_GetTotalPlayersQueryVariables } from '../graphql';
 import { ProfileModal } from '../modals/ProfileModal';
 import { NewPasswordModal } from '../modals/NewPasswordModal';
 import { SettingsModal } from '../modals/SettingsModal';
@@ -19,19 +16,11 @@ import { HomeBaseOverlay } from '../components/HomeBaseOverlay';
 import { SEARCH_PARAMS } from '../router/constants';
 import { useAudioSettings } from '../providers/AudioSettingsProvider';
 
-const GET_TOTAL_PLAYERS = gql`
-  query Desktop_GetTotalPlayers {
-    totalPlayers
-  }
-`;
-
 export const Game = () => {
   const { session } = useSession();
   const { isMuted, volume } = useAudioSettings();
 
   const phaserRef = useRef<PhaserGameRef | null>(null);
-  // TODO: remove this query once we create a real query
-  useQuery<Desktop_GetTotalPlayersQuery, Desktop_GetTotalPlayersQueryVariables>(GET_TOTAL_PLAYERS);
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useSearchParamFlag(SEARCH_PARAMS.PROFILE);
   const [isNewPasswordModalOpen, setIsNewPasswordModalOpen] = useSearchParamFlag(SEARCH_PARAMS.NEW_PASSWORD);
