@@ -1,5 +1,6 @@
 // Disable linting errors for Three props on primitives
 /* eslint react/no-unknown-property: "off" */
+import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Person } from '@repo/ui/icons';
 import { SpinningCoin } from './SpinningCoin';
@@ -8,11 +9,35 @@ interface HomeBaseOverlayProps {
   isVisible: boolean;
 }
 
+/** How long the fade in/out transition takes (ms) */
+const FADE_DURATION_MS = 500;
+
 export const HomeBaseOverlay = ({ isVisible }: HomeBaseOverlayProps) => {
-  if (!isVisible) return null;
+  // keep the overlay mounted for the duration of the fade-out before removing it
+  const [shouldRender, setShouldRender] = useState(isVisible);
+  // drives the opacity transition; toggled a frame after mount so fade-in animates
+  const [isShown, setIsShown] = useState(isVisible);
+
+  useEffect(() => {
+    if (isVisible) {
+      setShouldRender(true);
+      const raf = requestAnimationFrame(() => setIsShown(true));
+      return () => cancelAnimationFrame(raf);
+    }
+
+    setIsShown(false);
+    const timeout = setTimeout(() => setShouldRender(false), FADE_DURATION_MS);
+    return () => clearTimeout(timeout);
+  }, [isVisible]);
+
+  if (!shouldRender) return null;
 
   return (
-    <div className="fixed top-6 inset-x-0 z-2 flex items-center justify-between px-8 pointer-events-none">
+    <div
+      className={`fixed top-6 inset-x-0 z-2 flex items-center justify-between px-8 pointer-events-none transition-opacity duration-${FADE_DURATION_MS} ${
+        isShown ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
       <div className="flex items-center gap-2">
         <Person className="text-muted" size={32} />
         <span className="font-label text-lg">PlayerName</span>
