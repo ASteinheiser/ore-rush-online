@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
+import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import type { Desktop_GetProfileStashQuery, Desktop_GetProfileStashQueryVariables } from '../graphql';
@@ -20,10 +21,14 @@ interface StashModalProps {
 }
 
 export const StashModal = ({ isOpen, onOpenChange }: StashModalProps) => {
+  const { session } = useSession();
+
   const { data, loading, error } = useQuery<
     Desktop_GetProfileStashQuery,
     Desktop_GetProfileStashQueryVariables
-  >(GET_PROFILE_STASH);
+  >(GET_PROFILE_STASH, {
+    context: { headers: { Authorization: session?.access_token } },
+  });
 
   console.log(data, loading, error);
 
