@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { gql } from 'graphql-tag';
 import { server } from '../../src/graphql';
 import { ProfilesRepository } from '../../src/repo/Profiles';
+import { StashRepository } from '../../src/repo/Stash';
 import type { GoTrueAdminApi } from '@supabase/supabase-js';
 import type { User } from '../../src/auth/jwt';
 import { prisma } from '../../src/repo/client';
@@ -28,6 +29,7 @@ describe('GQLServer', () => {
     contextValue: {
       dataSources: {
         profilesDb: new ProfilesRepository(prisma),
+        stashDb: new StashRepository(prisma),
       },
       authClient: null as unknown as GoTrueAdminApi,
       user: null as unknown as User,

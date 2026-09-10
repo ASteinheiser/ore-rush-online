@@ -1,4 +1,18 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
+import { gql } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
+import type { Desktop_GetProfileStashQuery, Desktop_GetProfileStashQueryVariables } from '../graphql';
+
+const GET_PROFILE_STASH = gql`
+  query Desktop_GetProfileStash {
+    profile {
+      stash {
+        id
+        quantity
+      }
+    }
+  }
+`;
 
 interface StashModalProps {
   isOpen: boolean;
@@ -6,6 +20,13 @@ interface StashModalProps {
 }
 
 export const StashModal = ({ isOpen, onOpenChange }: StashModalProps) => {
+  const { data, loading, error } = useQuery<
+    Desktop_GetProfileStashQuery,
+    Desktop_GetProfileStashQueryVariables
+  >(GET_PROFILE_STASH);
+
+  console.log(data, loading, error);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent

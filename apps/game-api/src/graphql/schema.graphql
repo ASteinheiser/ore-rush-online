@@ -1,11 +1,11 @@
 type Profile {
   userName: String!
+  stash: [Item!]
 }
 
-type GameResult {
-  username: String!
-  attackCount: Int!
-  killCount: Int!
+type Item {
+  id: String!
+  quantity: Int!
 }
 
 type Query {
@@ -13,7 +13,6 @@ type Query {
   profile: Profile
   userExists(userName: String!): Boolean
   totalPlayers: Int
-  gameResults(roomId: String!): [GameResult!]
 }
 
 type Mutation {

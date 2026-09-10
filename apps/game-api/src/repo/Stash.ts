@@ -9,11 +9,8 @@ export class StashRepository {
     this.prisma = prisma;
   }
 
-  getStashByUserId(userId: string) {
-    return this.prisma.profile.findUnique({
-      where: { userId },
-      include: { stash: true },
-    });
+  getItemsByProfileId(profileId: string) {
+    return this.prisma.item.findMany({ where: { profileId } });
   }
 
   storeItemInStash(item: ItemWithoutTimestamps) {

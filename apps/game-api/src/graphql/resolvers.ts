@@ -18,7 +18,12 @@ export const resolvers: Resolvers<Context> = {
     totalPlayers: async (_, __, { dataSources }) => {
       return dataSources.profilesDb.getTotalPlayers();
     },
-    gameResults: () => [],
+  },
+  Profile: {
+    stash: async (_, __, { dataSources, user }) => {
+      if (!user) return null;
+      return dataSources.stashDb.getItemsByProfileId(user.id);
+    },
   },
   Mutation: {
     createProfile: async (_, { userName }, { dataSources, user }) => {

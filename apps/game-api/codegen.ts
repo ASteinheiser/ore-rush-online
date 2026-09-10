@@ -9,6 +9,9 @@ const config: CodegenConfig = {
     './src/graphql/generated-types.ts': {
       config: {
         useIndexSignature: true,
+        mappers: {
+          Profile: '../repo/prisma-client/client#Profile as ProfileMapper',
+        },
       },
       plugins: ['typescript', 'typescript-resolvers'],
     },

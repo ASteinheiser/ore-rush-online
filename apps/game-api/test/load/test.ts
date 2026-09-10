@@ -17,7 +17,6 @@ export async function main(options: Options) {
   await new Promise((resolve) => setTimeout(resolve, JOIN_DELAY_MS));
 
   const websocketUrl = `${IS_PROD ? 'wss' : 'ws'}://${options.endpoint}`;
-  const graphqlUrl = `${IS_PROD ? 'https' : 'http'}://${options.endpoint}/graphql`;
 
   const client = new Client(websocketUrl);
   client.auth.token = generateTestJWT({
@@ -57,30 +56,6 @@ export async function main(options: Options) {
 
   room.onLeave(async (code) => {
     console.log(`leaving room with code: ${code}`);
-
-    const results = await fetch(graphqlUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `
-          query Test_GetGameResults {
-            gameResults(roomId: "${room.roomId}") {
-              username
-              attackCount
-              killCount
-            }
-          }
-        `,
-      }),
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response: any = await results.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    response.data.gameResults.forEach((result: any) => {
-      const accuracy = (result.killCount / result.attackCount).toFixed(2);
-      console.log(`${result.username} - kill count: ${result.killCount} (accuracy ${accuracy}%)`);
-    });
   });
 }
 

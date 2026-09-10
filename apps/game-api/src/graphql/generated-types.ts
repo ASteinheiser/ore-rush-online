@@ -1,4 +1,5 @@
 import { GraphQLResolveInfo } from 'graphql';
+import { Profile as ProfileMapper } from '../repo/prisma-client/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
@@ -11,11 +12,10 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
-export type GameResult = {
-  __typename?: 'GameResult';
-  attackCount: Scalars['Int']['output'];
-  killCount: Scalars['Int']['output'];
-  username: Scalars['String']['output'];
+export type Item = {
+  __typename?: 'Item';
+  id: Scalars['String']['output'];
+  quantity: Scalars['Int']['output'];
 };
 
 export type Mutation = {
@@ -37,21 +37,16 @@ export type MutationUpdateProfileArgs = {
 
 export type Profile = {
   __typename?: 'Profile';
+  stash?: Maybe<Array<Item>>;
   userName: Scalars['String']['output'];
 };
 
 export type Query = {
   __typename?: 'Query';
-  gameResults?: Maybe<Array<GameResult>>;
   healthCheck?: Maybe<Scalars['Boolean']['output']>;
   profile?: Maybe<Profile>;
   totalPlayers?: Maybe<Scalars['Int']['output']>;
   userExists?: Maybe<Scalars['Boolean']['output']>;
-};
-
-
-export type QueryGameResultsArgs = {
-  roomId: Scalars['String']['input'];
 };
 
 
@@ -134,10 +129,10 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
-  GameResult: ResolverTypeWrapper<GameResult>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
+  Item: ResolverTypeWrapper<Item>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
-  Profile: ResolverTypeWrapper<Profile>;
+  Profile: ResolverTypeWrapper<ProfileMapper>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
 }>;
@@ -145,18 +140,17 @@ export type ResolversTypes = ResolversObject<{
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
   Boolean: Scalars['Boolean']['output'];
-  GameResult: GameResult;
   Int: Scalars['Int']['output'];
+  Item: Item;
   Mutation: Record<PropertyKey, never>;
-  Profile: Profile;
+  Profile: ProfileMapper;
   Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
 }>;
 
-export type GameResultResolvers<ContextType = any, ParentType extends ResolversParentTypes['GameResult'] = ResolversParentTypes['GameResult']> = ResolversObject<{
-  attackCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  killCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+export type ItemResolvers<ContextType = any, ParentType extends ResolversParentTypes['Item'] = ResolversParentTypes['Item']> = ResolversObject<{
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  quantity?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 }>;
 
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = ResolversObject<{
@@ -166,11 +160,11 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
 }>;
 
 export type ProfileResolvers<ContextType = any, ParentType extends ResolversParentTypes['Profile'] = ResolversParentTypes['Profile']> = ResolversObject<{
+  stash?: Resolver<Maybe<Array<ResolversTypes['Item']>>, ParentType, ContextType>;
   userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
-  gameResults?: Resolver<Maybe<Array<ResolversTypes['GameResult']>>, ParentType, ContextType, RequireFields<QueryGameResultsArgs, 'roomId'>>;
   healthCheck?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   profile?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType>;
   totalPlayers?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -178,7 +172,7 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
 }>;
 
 export type Resolvers<ContextType = any> = ResolversObject<{
-  GameResult?: GameResultResolvers<ContextType>;
+  Item?: ItemResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Profile?: ProfileResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
