@@ -1,8 +1,9 @@
 // Disable linting errors for Three props on primitives
 /* eslint react/no-unknown-property: "off" */
 import { useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useSession } from '@repo/client-auth/provider';
 import { Person } from '@repo/ui/icons';
+import { Canvas } from '@react-three/fiber';
 import { SpinningCoin } from './SpinningCoin';
 
 interface HomeBaseOverlayProps {
@@ -13,6 +14,8 @@ interface HomeBaseOverlayProps {
 const FADE_DURATION_MS = 500;
 
 export const HomeBaseOverlay = ({ isVisible }: HomeBaseOverlayProps) => {
+  const { profile } = useSession();
+
   // keep the overlay mounted for the duration of the fade-out before removing it
   const [shouldRender, setShouldRender] = useState(isVisible);
   // drives the opacity transition; toggled a frame after mount so fade-in animates
@@ -40,7 +43,7 @@ export const HomeBaseOverlay = ({ isVisible }: HomeBaseOverlayProps) => {
     >
       <div className="flex items-center gap-2">
         <Person className="text-muted" size={32} />
-        <span className="font-label text-lg">PlayerName</span>
+        <span className="font-label text-lg">{profile?.userName}</span>
       </div>
 
       <div className="flex items-center gap-2">
