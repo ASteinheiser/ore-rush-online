@@ -16,6 +16,9 @@ export const ASSET = {
   PROFILE_ICON: 'profile-icon',
   CHEST_ICON: 'chest-icon',
   DRILL_ICON: 'drill-icon',
+  STOCKS_ICON: 'stocks-icon',
+  ORE_BG: 'ore-bg',
+  ORE_FG: 'ore-fg',
 } as const;
 
 export const SOUND = {

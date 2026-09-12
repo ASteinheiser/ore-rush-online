@@ -6,6 +6,9 @@ import cogIcon from '../../assets/basic-cog.png';
 import profileIcon from '../../assets/basic-profile.png';
 import chestIcon from '../../assets/basic-chest.png';
 import drillIcon from '../../assets/basic-drill-down.png';
+import stocksIcon from '../../assets/basic-stocks.png';
+import oreBg from '../../assets/basic-ore-bg.png';
+import oreFg from '../../assets/basic-ore-fg.png';
 import { PLAYER_ANIM } from '../objects/Player';
 import { ASSET, SCENE } from '../constants';
 
@@ -24,6 +27,9 @@ export class Preloader extends Phaser.Scene {
     this.load.image(ASSET.PROFILE_ICON, profileIcon);
     this.load.image(ASSET.CHEST_ICON, chestIcon);
     this.load.image(ASSET.DRILL_ICON, drillIcon);
+    this.load.image(ASSET.STOCKS_ICON, stocksIcon);
+    this.load.image(ASSET.ORE_BG, oreBg);
+    this.load.image(ASSET.ORE_FG, oreFg);
   }
 
   create() {
