@@ -41,7 +41,7 @@ export const StashModal = ({ isOpen, onOpenChange }: StashModalProps) => {
           <DialogTitle className="pt-2 font-pixel text-4xl text-muted-foreground">Stash</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-row flex-wrap gap-y-4 gap-x-14 px-2 py-4">
+        <div className="flex flex-row flex-wrap justify-between gap-y-4 px-2 py-4">
           {stashItems.length > 0 ? (
             stashItems.map((item) => <OreItem key={item.id} oreId={item.id} quantity={item.quantity} />)
           ) : (
