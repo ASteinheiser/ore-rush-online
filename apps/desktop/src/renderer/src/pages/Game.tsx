@@ -59,14 +59,16 @@ export const Game = () => {
     // for example, handles the case where the scene changes with a modal open
     setPhaserInputEnabled();
 
-    // handle closing modals when leaving a scene
+    setIsHomeBaseActive(scene.scene.key === SCENE.HOME_BASE);
+    handleCloseModals();
+  };
+
+  const handleCloseModals = () => {
     setIsProfileModalOpen(false);
     setIsNewPasswordModalOpen(false);
     setIsSettingsModalOpen(false);
     setIsStashModalOpen(false);
     setIsMarketplaceModalOpen(false);
-
-    setIsHomeBaseActive(scene.scene.key === SCENE.HOME_BASE);
   };
 
   // NOTE: the server will kick any clients with an expired token, however
@@ -83,6 +85,7 @@ export const Game = () => {
       if (!session?.access_token) return;
       const scene = phaserRef?.current?.scene as HomeBase;
 
+      handleCloseModals();
       scene?.startGame?.({ token: session.access_token });
     });
 
