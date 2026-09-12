@@ -3,6 +3,7 @@ export const SEARCH_PARAMS = {
   PROFILE: 'editProfile',
   NEW_PASSWORD: 'newPassword',
   STASH: 'stash',
+  MARKETPLACE: 'marketplace',
 } as const;
 
 export const APP_ROUTES = {

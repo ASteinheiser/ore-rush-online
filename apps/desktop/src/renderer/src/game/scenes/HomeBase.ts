@@ -60,16 +60,9 @@ export class HomeBase extends Phaser.Scene {
       new Interactable(this, 'Stash', 0.7, 0.375, () => EventBus.emit(EVENT_BUS.STASH_OPEN), {
         iconKey: ASSET.CHEST_ICON,
       }),
-      new Interactable(
-        this,
-        'Marketplace',
-        0.7,
-        0.625,
-        () => {
-          EventBus.emit(EVENT_BUS.TOAST_INFO, 'Marketplace coming soon...');
-        },
-        { iconKey: ASSET.STOCKS_ICON },
-      ),
+      new Interactable(this, 'Marketplace', 0.7, 0.625, () => EventBus.emit(EVENT_BUS.MARKETPLACE_OPEN), {
+        iconKey: ASSET.STOCKS_ICON,
+      }),
       new Interactable(this, 'Start', 0.5, 0.75, () => EventBus.emit(EVENT_BUS.GAME_START), {
         iconKey: ASSET.DRILL_ICON,
       }),
