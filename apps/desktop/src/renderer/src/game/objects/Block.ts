@@ -2,10 +2,12 @@ import * as Phaser from 'phaser';
 import { BLOCK_SIZE, BLOCK_TYPES, type BLOCK_TYPE } from '@repo/core-game';
 import { DEPTH } from '../constants';
 
-export const DIRT_SHADES = [0x8b4513, 0x95491a, 0x82400f];
-export const COAL_COLOR = 0x1c1c1c;
-export const IRON_COLOR = 0xa19d94;
-export const COPPER_COLOR = 0xcd7f32;
+export const DIRT_COLORS = [0x8b4513, 0x95491a, 0x82400f] as const;
+export const ORE_COLORS = {
+  [BLOCK_TYPES.COAL]: 0x1c1c1c,
+  [BLOCK_TYPES.IRON]: 0xa19d94,
+  [BLOCK_TYPES.COPPER]: 0xcd7f32,
+} as const;
 
 const CRACK_COLOR = 0x1a1a1a;
 const MAX_CRACKS = 12;
@@ -63,24 +65,16 @@ export class Block {
     this.hitbox.setStrokeStyle(1, dirtShade).setFillStyle(dirtShade);
     this.block.clear();
 
-    switch (type) {
-      case BLOCK_TYPES.COAL:
-        this.drawOre(COAL_COLOR);
-        break;
-      case BLOCK_TYPES.IRON:
-        this.drawOre(IRON_COLOR);
-        break;
-      case BLOCK_TYPES.COPPER:
-        this.drawOre(COPPER_COLOR);
-        break;
+    if (type !== BLOCK_TYPES.DIRT) {
+      this.drawOre(ORE_COLORS[type]);
     }
   }
 
   /** Picks a deterministic dirt shade based on block position */
   private getDirtShade(): number {
     const seed = this.x * 5 + this.y * 3;
-    const index = Math.floor(seeded(seed) * DIRT_SHADES.length);
-    return DIRT_SHADES[index];
+    const index = Math.floor(seeded(seed) * DIRT_COLORS.length);
+    return DIRT_COLORS[index];
   }
 
   private drawOre(color: number) {
