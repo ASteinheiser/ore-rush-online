@@ -40,7 +40,7 @@ export const OreItem = ({ oreId, quantity }: OreItemProps) => {
         />
 
         <p className="absolute bottom-0 right-0 font-label text-lg leading-none text-muted-foreground">
-          {quantity}
+          {quantity === Infinity ? '∞' : quantity}
         </p>
       </div>
 
