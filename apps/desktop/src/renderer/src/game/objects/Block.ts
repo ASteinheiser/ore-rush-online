@@ -2,10 +2,10 @@ import * as Phaser from 'phaser';
 import { BLOCK_SIZE, BLOCK_TYPES, type BLOCK_TYPE } from '@repo/core-game';
 import { DEPTH } from '../constants';
 
-const DIRT_SHADES = [0x8b4513, 0x95491a, 0x82400f];
-const COAL_COLOR = 0x1c1c1c;
-const IRON_COLOR = 0xa19d94;
-const COPPER_COLOR = 0xcd7f32;
+export const DIRT_SHADES = [0x8b4513, 0x95491a, 0x82400f];
+export const COAL_COLOR = 0x1c1c1c;
+export const IRON_COLOR = 0xa19d94;
+export const COPPER_COLOR = 0xcd7f32;
 
 const CRACK_COLOR = 0x1a1a1a;
 const MAX_CRACKS = 12;
