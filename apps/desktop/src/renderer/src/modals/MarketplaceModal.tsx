@@ -34,7 +34,7 @@ interface MarketplaceModalProps {
 }
 
 export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps) => {
-  const { refetch: refetchStash } = useStash();
+  const { stashItems, refetch: refetchStash } = useStash();
 
   const { session } = useSession();
   const authHeaders = { headers: { Authorization: session?.access_token } };
@@ -117,6 +117,13 @@ export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps
                 >
                   10
                 </Button>
+              </div>
+
+              <div className="flex flex-row items-center gap-2">
+                <span className="text-lg font-pixel text-muted">In Stash:</span>
+                <span className="text-xl font-label text-muted-foreground">
+                  {stashItems.find((item) => item.id === ore.id)?.quantity}
+                </span>
               </div>
             </div>
           ))}
