@@ -65,6 +65,8 @@ export const Game = () => {
     if (scene.scene.key === SCENE.HOME_BASE) {
       setIsHomeBaseActive(true);
       await refetchStash();
+    } else {
+      setIsHomeBaseActive(false);
     }
   };
 
