@@ -51,5 +51,13 @@ export const resolvers: Resolvers<Context> = {
         return false;
       }
     },
+    sellItem: async (_, { itemId, quantity }, { dataSources, user }) => {
+      if (!user) return null;
+      return dataSources.marketplaceDb.sellItem({ profileId: user.id, itemId, quantity });
+    },
+    buyItem: async (_, { itemId, quantity }, { dataSources, user }) => {
+      if (!user) return null;
+      return dataSources.marketplaceDb.buyItem({ profileId: user.id, itemId, quantity });
+    },
   },
 };

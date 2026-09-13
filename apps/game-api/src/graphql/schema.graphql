@@ -20,4 +20,6 @@ type Mutation {
   createProfile(userName: String!): Profile
   updateProfile(userName: String!): Profile
   deleteProfile: Boolean
+  sellItem(itemId: String!, quantity: Int!): Profile
+  buyItem(itemId: String!, quantity: Int!): Profile
 }
