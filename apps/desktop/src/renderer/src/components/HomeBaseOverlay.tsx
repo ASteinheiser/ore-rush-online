@@ -37,7 +37,7 @@ export const HomeBaseOverlay = ({ isVisible }: HomeBaseOverlayProps) => {
 
   return (
     <div
-      className={`fixed top-6 inset-x-0 z-2 flex items-center justify-between px-8 pointer-events-none transition-opacity duration-${FADE_DURATION_MS} ${
+      className={`fixed top-6 inset-x-0 z-99 flex items-center justify-between px-8 pointer-events-none transition-opacity duration-${FADE_DURATION_MS} ${
         isShown ? 'opacity-100' : 'opacity-0'
       }`}
     >
