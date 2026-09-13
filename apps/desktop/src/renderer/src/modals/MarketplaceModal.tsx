@@ -1,6 +1,7 @@
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
 import { ORE } from '@repo/core-game';
 import { OreItem } from '../components/OreItem';
+import { useStash } from '../providers/StashProvider';
 import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
@@ -33,6 +34,8 @@ interface MarketplaceModalProps {
 }
 
 export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps) => {
+  const { refetch: refetchStash } = useStash();
+
   const { session } = useSession();
   const authHeaders = { headers: { Authorization: session?.access_token } };
 
@@ -51,6 +54,7 @@ export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps
   const handleBuyItem = async (itemId: string, quantity: number) => {
     try {
       await buyItem({ variables: { itemId, quantity } });
+      await refetchStash();
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : 'Unknown error');
@@ -60,6 +64,7 @@ export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps
   const handleSellItem = async (itemId: string, quantity: number) => {
     try {
       await sellItem({ variables: { itemId, quantity } });
+      await refetchStash();
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : 'Unknown error');

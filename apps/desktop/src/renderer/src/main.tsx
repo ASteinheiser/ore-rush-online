@@ -9,6 +9,7 @@ import { router } from './router';
 import { AudioSettingsProvider } from './providers/AudioSettingsProvider';
 import { AutoUpdateProvider } from './providers/AutoUpdateProvider';
 import { SplashProvider } from './providers/SplashProvider';
+import { StashProvider } from './providers/StashProvider';
 import { VideoSettingsProvider } from './providers/VideoSettingsProvider';
 import './theme.css';
 
@@ -24,7 +25,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <AudioSettingsProvider>
             <SplashProvider>
               <SessionProvider healthCheckEnabled isDesktop>
-                <RouterProvider router={router} />
+                <StashProvider>
+                  <RouterProvider router={router} />
+                </StashProvider>
               </SessionProvider>
             </SplashProvider>
           </AudioSettingsProvider>

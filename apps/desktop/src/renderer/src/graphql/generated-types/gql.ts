@@ -16,12 +16,12 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
 type Documents = {
     "\n  mutation Desktop_BuyItem($itemId: String!, $quantity: Int!) {\n    buyItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": typeof types.Desktop_BuyItemDocument,
     "\n  mutation Desktop_SellItem($itemId: String!, $quantity: Int!) {\n    sellItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": typeof types.Desktop_SellItemDocument,
-    "\n  query Desktop_GetProfileStash {\n    profile {\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n": typeof types.Desktop_GetProfileStashDocument,
+    "\n  query Desktop_GetProfileStash {\n    profile {\n      coins\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n": typeof types.Desktop_GetProfileStashDocument,
 };
 const documents: Documents = {
     "\n  mutation Desktop_BuyItem($itemId: String!, $quantity: Int!) {\n    buyItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": types.Desktop_BuyItemDocument,
     "\n  mutation Desktop_SellItem($itemId: String!, $quantity: Int!) {\n    sellItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": types.Desktop_SellItemDocument,
-    "\n  query Desktop_GetProfileStash {\n    profile {\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n": types.Desktop_GetProfileStashDocument,
+    "\n  query Desktop_GetProfileStash {\n    profile {\n      coins\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n": types.Desktop_GetProfileStashDocument,
 };
 
 /**
@@ -49,7 +49,7 @@ export function graphql(source: "\n  mutation Desktop_SellItem($itemId: String!,
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query Desktop_GetProfileStash {\n    profile {\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n"): (typeof documents)["\n  query Desktop_GetProfileStash {\n    profile {\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query Desktop_GetProfileStash {\n    profile {\n      coins\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n"): (typeof documents)["\n  query Desktop_GetProfileStash {\n    profile {\n      coins\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

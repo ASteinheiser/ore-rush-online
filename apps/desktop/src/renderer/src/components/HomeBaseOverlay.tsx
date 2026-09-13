@@ -5,6 +5,7 @@ import { useSession } from '@repo/client-auth/provider';
 import { Person } from '@repo/ui/icons';
 import { Canvas } from '@react-three/fiber';
 import { SpinningCoin } from './SpinningCoin';
+import { useStash } from '../providers/StashProvider';
 
 interface HomeBaseOverlayProps {
   isVisible: boolean;
@@ -15,6 +16,7 @@ const FADE_DURATION_MS = 500;
 
 export const HomeBaseOverlay = ({ isVisible }: HomeBaseOverlayProps) => {
   const { profile } = useSession();
+  const { coins } = useStash();
 
   // keep the overlay mounted for the duration of the fade-out before removing it
   const [shouldRender, setShouldRender] = useState(isVisible);
@@ -47,7 +49,7 @@ export const HomeBaseOverlay = ({ isVisible }: HomeBaseOverlayProps) => {
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="font-pixel text-2xl">0</span>
+        <span className="font-pixel text-2xl">{coins}</span>
         <div className="h-12 w-12">
           <Canvas camera={{ position: [0, 0, 5] }}>
             <ambientLight intensity={1.2} />

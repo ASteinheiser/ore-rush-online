@@ -1,20 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
-import { useSession } from '@repo/client-auth/provider';
-import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/client/react';
-import type { Desktop_GetProfileStashQuery, Desktop_GetProfileStashQueryVariables } from '../graphql';
+import { useStash } from '../providers/StashProvider';
 import { OreItem } from '../components/OreItem';
-
-const GET_PROFILE_STASH = gql`
-  query Desktop_GetProfileStash {
-    profile {
-      stash {
-        id
-        quantity
-      }
-    }
-  }
-`;
 
 interface StashModalProps {
   isOpen: boolean;
@@ -22,13 +8,7 @@ interface StashModalProps {
 }
 
 export const StashModal = ({ isOpen, onOpenChange }: StashModalProps) => {
-  const { session } = useSession();
-
-  const queryResult = useQuery<Desktop_GetProfileStashQuery, Desktop_GetProfileStashQueryVariables>(
-    GET_PROFILE_STASH,
-    { context: { headers: { Authorization: session?.access_token } } }
-  );
-  const stashItems = queryResult.data?.profile?.stash ?? [];
+  const { stashItems } = useStash();
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
