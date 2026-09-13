@@ -122,7 +122,7 @@ export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps
               <div className="flex flex-row items-center gap-2">
                 <span className="text-lg font-pixel text-muted">In Stash:</span>
                 <span className="text-xl font-label text-muted-foreground">
-                  {stashItems.find((item) => item.id === ore.id)?.quantity}
+                  {stashItems.find((item) => item.id === ore.id)?.quantity ?? 0}
                 </span>
               </div>
             </div>
