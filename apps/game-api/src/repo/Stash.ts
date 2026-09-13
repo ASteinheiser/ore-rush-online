@@ -44,6 +44,12 @@ export class StashRepository {
     if (item.quantity <= 0) {
       throw new Error('Quantity must be greater than 0');
     }
+    const dbItem = await this.prisma.item.findUnique({
+      where: { profileId_id: { profileId: item.profileId, id: item.id } },
+    });
+    if (!dbItem || dbItem.quantity < item.quantity) {
+      throw new Error('Not enough items in stash');
+    }
 
     const [updated] = await this.prisma.$transaction([
       this.prisma.item.updateManyAndReturn({

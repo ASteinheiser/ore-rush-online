@@ -23,7 +23,7 @@ export class ProfilesRepository {
     return this.prisma.profile.count();
   }
 
-  async createProfile({ userId, userName }: Profile) {
+  async createProfile({ userId, userName }: Pick<Profile, 'userId' | 'userName'>) {
     return this.prisma.profile.create({
       data: {
         userId,
@@ -32,7 +32,7 @@ export class ProfilesRepository {
     });
   }
 
-  async updateProfile({ userId, userName }: Profile) {
+  async updateProfile({ userId, userName }: Pick<Profile, 'userId' | 'userName'>) {
     return this.prisma.profile.update({
       where: { userId },
       data: { userName },

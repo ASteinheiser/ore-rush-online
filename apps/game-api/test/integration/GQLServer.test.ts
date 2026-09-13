@@ -3,6 +3,7 @@ import { gql } from 'graphql-tag';
 import { server } from '../../src/graphql';
 import { ProfilesRepository } from '../../src/repo/Profiles';
 import { StashRepository } from '../../src/repo/Stash';
+import { MarketplaceRepository } from '../../src/repo/Marketplace';
 import type { GoTrueAdminApi } from '@supabase/supabase-js';
 import type { User } from '../../src/auth/jwt';
 import { prisma } from '../../src/repo/client';
@@ -30,6 +31,7 @@ describe('GQLServer', () => {
       dataSources: {
         profilesDb: new ProfilesRepository(prisma),
         stashDb: new StashRepository(prisma),
+        marketplaceDb: new MarketplaceRepository(prisma),
       },
       authClient: null as unknown as GoTrueAdminApi,
       user: null as unknown as User,

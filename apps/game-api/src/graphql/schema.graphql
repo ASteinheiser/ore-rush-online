@@ -1,5 +1,6 @@
 type Profile {
   userName: String!
+  coins: Int!
   stash: [Item!]
 }
 

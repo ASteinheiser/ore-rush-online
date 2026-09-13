@@ -37,6 +37,7 @@ export type MutationUpdateProfileArgs = {
 
 export type Profile = {
   __typename?: 'Profile';
+  coins: Scalars['Int']['output'];
   stash?: Maybe<Array<Item>>;
   userName: Scalars['String']['output'];
 };
@@ -160,6 +161,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
 }>;
 
 export type ProfileResolvers<ContextType = any, ParentType extends ResolversParentTypes['Profile'] = ResolversParentTypes['Profile']> = ResolversObject<{
+  coins?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   stash?: Resolver<Maybe<Array<ResolversTypes['Item']>>, ParentType, ContextType>;
   userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;

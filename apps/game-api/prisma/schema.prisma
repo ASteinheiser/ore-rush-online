@@ -11,6 +11,7 @@ model Profile {
   userId   String @id
   userName String @unique @db.VarChar(255)
   stash    Item[]
+  coins    Int    @default(0)
 }
 
 model Item {

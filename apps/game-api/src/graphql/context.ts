@@ -2,6 +2,7 @@ import type { ContextFunction } from '@apollo/server';
 import { type GoTrueAdminApi } from '@supabase/supabase-js';
 import { ProfilesRepository } from '../repo/Profiles';
 import { StashRepository } from '../repo/Stash';
+import { MarketplaceRepository } from '../repo/Marketplace';
 import type { PrismaClient } from '../repo/prisma-client/client';
 import { validateJwt, type User } from '../auth/jwt';
 
@@ -17,6 +18,7 @@ export interface Context {
   dataSources: {
     profilesDb: ProfilesRepository;
     stashDb: StashRepository;
+    marketplaceDb: MarketplaceRepository;
   };
 }
 
@@ -33,6 +35,7 @@ export const createContext: ContextFunction<[CreateContextArgs], Context> = asyn
     dataSources: {
       profilesDb: new ProfilesRepository(prisma),
       stashDb: new StashRepository(prisma),
+      marketplaceDb: new MarketplaceRepository(prisma),
     },
   };
 };
