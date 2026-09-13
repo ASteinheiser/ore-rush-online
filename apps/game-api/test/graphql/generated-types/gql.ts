@@ -16,10 +16,18 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
 type Documents = {
     "\n          query Test_GetTotalPlayers {\n            totalPlayers\n          }\n        ": typeof types.Test_GetTotalPlayersDocument,
     "\n          query Test_GetUserProfile {\n            profile {\n              userName\n            }\n          }\n        ": typeof types.Test_GetUserProfileDocument,
+    "\n          query Test_GetUserProfileCoins {\n            profile {\n              coins\n            }\n          }\n        ": typeof types.Test_GetUserProfileCoinsDocument,
+    "\n          query Test_GetProfileStash {\n            profile {\n              stash {\n                id\n                quantity\n              }\n            }\n          }\n        ": typeof types.Test_GetProfileStashDocument,
+    "\n          mutation Test_SellItem($itemId: String!, $quantity: Int!) {\n            sellItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": typeof types.Test_SellItemDocument,
+    "\n          mutation Test_BuyItem($itemId: String!, $quantity: Int!) {\n            buyItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": typeof types.Test_BuyItemDocument,
 };
 const documents: Documents = {
     "\n          query Test_GetTotalPlayers {\n            totalPlayers\n          }\n        ": types.Test_GetTotalPlayersDocument,
     "\n          query Test_GetUserProfile {\n            profile {\n              userName\n            }\n          }\n        ": types.Test_GetUserProfileDocument,
+    "\n          query Test_GetUserProfileCoins {\n            profile {\n              coins\n            }\n          }\n        ": types.Test_GetUserProfileCoinsDocument,
+    "\n          query Test_GetProfileStash {\n            profile {\n              stash {\n                id\n                quantity\n              }\n            }\n          }\n        ": types.Test_GetProfileStashDocument,
+    "\n          mutation Test_SellItem($itemId: String!, $quantity: Int!) {\n            sellItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": types.Test_SellItemDocument,
+    "\n          mutation Test_BuyItem($itemId: String!, $quantity: Int!) {\n            buyItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": types.Test_BuyItemDocument,
 };
 
 /**
@@ -44,6 +52,22 @@ export function graphql(source: "\n          query Test_GetTotalPlayers {\n     
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          query Test_GetUserProfile {\n            profile {\n              userName\n            }\n          }\n        "): (typeof documents)["\n          query Test_GetUserProfile {\n            profile {\n              userName\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query Test_GetUserProfileCoins {\n            profile {\n              coins\n            }\n          }\n        "): (typeof documents)["\n          query Test_GetUserProfileCoins {\n            profile {\n              coins\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          query Test_GetProfileStash {\n            profile {\n              stash {\n                id\n                quantity\n              }\n            }\n          }\n        "): (typeof documents)["\n          query Test_GetProfileStash {\n            profile {\n              stash {\n                id\n                quantity\n              }\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          mutation Test_SellItem($itemId: String!, $quantity: Int!) {\n            sellItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        "): (typeof documents)["\n          mutation Test_SellItem($itemId: String!, $quantity: Int!) {\n            sellItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          mutation Test_BuyItem($itemId: String!, $quantity: Int!) {\n            buyItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        "): (typeof documents)["\n          mutation Test_BuyItem($itemId: String!, $quantity: Int!) {\n            buyItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        "];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
