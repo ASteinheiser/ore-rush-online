@@ -1,6 +1,31 @@
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
 import { ORE } from '@repo/core-game';
 import { OreItem } from '../components/OreItem';
+import { useSession } from '@repo/client-auth/provider';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+import type {
+  Desktop_BuyItemMutation,
+  Desktop_BuyItemMutationVariables,
+  Desktop_SellItemMutation,
+  Desktop_SellItemMutationVariables,
+} from '../graphql';
+
+const BUY_ITEM = gql`
+  mutation Desktop_BuyItem($itemId: String!, $quantity: Int!) {
+    buyItem(itemId: $itemId, quantity: $quantity) {
+      coins
+    }
+  }
+`;
+
+const SELL_ITEM = gql`
+  mutation Desktop_SellItem($itemId: String!, $quantity: Int!) {
+    sellItem(itemId: $itemId, quantity: $quantity) {
+      coins
+    }
+  }
+`;
 
 interface MarketplaceModalProps {
   isOpen: boolean;
@@ -8,6 +33,39 @@ interface MarketplaceModalProps {
 }
 
 export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps) => {
+  const { session } = useSession();
+  const authHeaders = { headers: { Authorization: session?.access_token } };
+
+  const [buyItem, { loading: isBuying }] = useMutation<
+    Desktop_BuyItemMutation,
+    Desktop_BuyItemMutationVariables
+  >(BUY_ITEM, { context: authHeaders });
+
+  const [sellItem, { loading: isSelling }] = useMutation<
+    Desktop_SellItemMutation,
+    Desktop_SellItemMutationVariables
+  >(SELL_ITEM, { context: authHeaders });
+
+  const loading = isBuying || isSelling;
+
+  const handleBuyItem = async (itemId: string, quantity: number) => {
+    try {
+      await buyItem({ variables: { itemId, quantity } });
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const handleSellItem = async (itemId: string, quantity: number) => {
+    try {
+      await sellItem({ variables: { itemId, quantity } });
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
@@ -26,15 +84,32 @@ export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps
 
               <div className="flex flex-row items-center gap-2">
                 <span className="text-md font-pixel text-muted">BUY:</span>
-                <Button size="icon">1</Button>
-                <Button size="icon">10</Button>
-              </div>
-              <div className="flex flex-row items-center gap-2">
-                <span className="text-md font-pixel text-muted">SELL:</span>
-                <Button variant="secondary" size="icon">
+
+                <Button size="icon" disabled={loading} onClick={() => handleBuyItem(ore.id, 1)}>
                   1
                 </Button>
-                <Button variant="secondary" size="icon">
+                <Button size="icon" disabled={loading} onClick={() => handleBuyItem(ore.id, 10)}>
+                  10
+                </Button>
+              </div>
+
+              <div className="flex flex-row items-center gap-2">
+                <span className="text-md font-pixel text-muted">SELL:</span>
+
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  disabled={loading}
+                  onClick={() => handleSellItem(ore.id, 1)}
+                >
+                  1
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  disabled={loading}
+                  onClick={() => handleSellItem(ore.id, 10)}
+                >
                   10
                 </Button>
               </div>
