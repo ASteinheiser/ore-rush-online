@@ -16,10 +16,12 @@ import { MarketplaceModal } from '../modals/MarketplaceModal';
 import { HomeBaseOverlay } from '../components/HomeBaseOverlay';
 import { SEARCH_PARAMS } from '../router/constants';
 import { useAudioSettings } from '../providers/AudioSettingsProvider';
+import { useStash } from '../providers/StashProvider';
 
 export const Game = () => {
   const { session } = useSession();
   const { isMuted, volume } = useAudioSettings();
+  const { refetch: refetchStash } = useStash();
 
   const phaserRef = useRef<PhaserGameRef | null>(null);
 
@@ -54,13 +56,16 @@ export const Game = () => {
     setPhaserInputEnabled();
   }, [setPhaserInputEnabled]);
 
-  const onCurrentSceneChange = (scene: Phaser.Scene) => {
+  const onCurrentSceneChange = async (scene: Phaser.Scene) => {
     // ensure that new scenes have the correct "input enabled" setting
     // for example, handles the case where the scene changes with a modal open
     setPhaserInputEnabled();
-
-    setIsHomeBaseActive(scene.scene.key === SCENE.HOME_BASE);
     handleCloseModals();
+
+    if (scene.scene.key === SCENE.HOME_BASE) {
+      setIsHomeBaseActive(true);
+      await refetchStash();
+    }
   };
 
   const handleCloseModals = () => {
