@@ -8,7 +8,14 @@ import { ORE } from '@repo/core-game';
 import type { GoTrueAdminApi } from '@supabase/supabase-js';
 import type { User } from '../../src/auth/jwt';
 import { prisma } from '../../src/repo/client';
-import { TEST_USERS, makeTestContextUser, parseGQLData, setupTestDb, cleanupTestDb } from './utils';
+import {
+  TEST_USERS,
+  makeTestContextUser,
+  parseGQLData,
+  setupTestDb,
+  cleanupTestDb,
+  POSTGRES_INT_MAX,
+} from './utils';
 import type {
   Test_GetTotalPlayersQuery,
   Test_GetTotalPlayersQueryVariables,
@@ -326,5 +333,97 @@ describe('GQLServer', () => {
     expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
       'Invalid item ID'
     );
+  });
+
+  it('should roll back the coin payout if the sellItem transaction fails', async () => {
+    const testUser = TEST_USERS[7];
+    const itemId = ORE.coal.id;
+    const itemQuantity = 10;
+    const sellQuantity = 5;
+    // placeholder: sell value is tied to quantity
+    const sellValue = sellQuantity;
+    // seeded so that crediting `sellQuantity` coins overflows the `coins` column
+    const initialCoins = POSTGRES_INT_MAX - sellValue + 1;
+
+    await Promise.all([
+      prisma.item.create({ data: { profileId: testUser.id, id: itemId, quantity: itemQuantity } }),
+      prisma.profile.update({ where: { userId: testUser.id }, data: { coins: initialCoins } }),
+    ]);
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_SellItemMutation, Test_SellItemMutationVariables>(
+      {
+        query: gql`
+          mutation Test_SellItem($itemId: String!, $quantity: Int!) {
+            sellItem(itemId: $itemId, quantity: $quantity) {
+              coins
+            }
+          }
+        `,
+        variables: { itemId, quantity: sellQuantity },
+      },
+      context
+    );
+
+    // the coin credit (2nd op) fails, so the whole transaction should have rolled back
+    const errors = result.body.kind === 'single' ? result.body.singleResult.errors : undefined;
+    expect(errors?.length).toBeGreaterThan(0);
+
+    // the item removal (1st op) should NOT have been persisted
+    const item = await prisma.item.findUnique({
+      where: { profileId_id: { profileId: testUser.id, id: itemId } },
+    });
+    expect(item?.quantity).toBe(itemQuantity);
+
+    const profile = await prisma.profile.findUnique({ where: { userId: testUser.id } });
+    expect(profile?.coins).toBe(initialCoins);
+  });
+
+  it('should roll back the coin deduction if the buyItem transaction fails', async () => {
+    const testUser = TEST_USERS[8];
+    const itemId = ORE.coal.id;
+    const buyQuantity = 5;
+    // placeholder: buy value is tied to `weight`
+    const totalCost = buyQuantity * ORE.coal.weight;
+    const initialCoins = totalCost;
+    // seeded so that adding `buyQuantity` to the stash overflows the item's `quantity` column
+    const initialItemQuantity = POSTGRES_INT_MAX - buyQuantity + 1;
+
+    await Promise.all([
+      prisma.profile.update({ where: { userId: testUser.id }, data: { coins: initialCoins } }),
+      prisma.item.create({ data: { profileId: testUser.id, id: itemId, quantity: initialItemQuantity } }),
+    ]);
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyItemMutation, Test_BuyItemMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyItem($itemId: String!, $quantity: Int!) {
+            buyItem(itemId: $itemId, quantity: $quantity) {
+              coins
+            }
+          }
+        `,
+        variables: { itemId, quantity: buyQuantity },
+      },
+      context
+    );
+
+    // storing the item (2nd op) fails, so the whole transaction should have rolled back
+    const errors = result.body.kind === 'single' ? result.body.singleResult.errors : undefined;
+    expect(errors?.length).toBeGreaterThan(0);
+
+    // the coin deduction (1st op) should NOT have been persisted
+    const profile = await prisma.profile.findUnique({ where: { userId: testUser.id } });
+    expect(profile?.coins).toBe(initialCoins);
+
+    const item = await prisma.item.findUnique({
+      where: { profileId_id: { profileId: testUser.id, id: itemId } },
+    });
+    expect(item?.quantity).toBe(initialItemQuantity);
   });
 });

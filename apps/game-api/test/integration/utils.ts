@@ -99,3 +99,7 @@ export const setupTestDb = async (prisma: PrismaClient) => {
 export const cleanupTestDb = async (prisma: PrismaClient) => {
   await prisma.profile.deleteMany();
 };
+
+/** Postgres `Int` columns are 4-byte signed integers, so incrementing past this causes a
+ * "value out of range for type integer" DB error we can use to force a mid-transaction failure. */
+export const POSTGRES_INT_MAX = 2147483647;
