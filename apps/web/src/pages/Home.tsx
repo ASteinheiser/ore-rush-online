@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { OroIntro } from '@repo/ui';
 import { ChevronDown } from '@repo/ui/icons';
 import { cn } from '@repo/ui/utils';
 
@@ -13,14 +14,7 @@ export const Home = () => {
   return (
     <div className="flex flex-col items-center">
       <div className="flex flex-col md:flex-row justify-center items-center gap-8 h-screen mt-nav">
-        <img src="/logo.svg" alt="logo" className="w-40 h-40 md:w-50 md:h-50 hover:animate-ping" />
-
-        <div className="w-[2px] h-40 bg-secondary hidden md:block" />
-
-        <div className="flex flex-col gap-4 text-center md:text-left">
-          <h1 className="text-5xl font-pixel text-primary">Ore Rush</h1>
-          <h1 className="text-4xl font-isometric text-muted">Online</h1>
-        </div>
+        <OroIntro fade={false} />
 
         <button
           className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer"
@@ -33,15 +27,16 @@ export const Home = () => {
       <div className="flex flex-col items-center gap-20 px-6 py-8" ref={homeContentRef}>
         <div className="text-center max-w-lg px-4 pt-14">
           <p className="text-xl text-muted pb-2">
-            {`Welcome! This is the template's "marketing site", which comes with a sample landing page, developer log, download page, and user login. To get started,`}
+            {`Ore Rush Online (ORO: "gold" in Spanish) is a real-time online mining game. It's `}
+            <Link
+              to="https://github.com/asteinheiser/ore-rush-online"
+              target="_blank"
+              className="font-pixel text-xl text-primary underline"
+            >
+              source available on GitHub
+            </Link>
+            {`, meaning first-class support for private (and possibly modded) servers. You'll always be able to play!`}
           </p>
-          <Link
-            to="https://github.com/asteinheiser/ore-rush-online"
-            target="_blank"
-            className="font-pixel text-primary text-3xl underline"
-          >
-            clone it on GitHub
-          </Link>
         </div>
 
         <HomeSection
