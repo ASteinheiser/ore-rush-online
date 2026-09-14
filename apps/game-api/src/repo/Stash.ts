@@ -51,27 +51,25 @@ export class StashRepository {
       throw new Error('Not enough items in stash');
     }
 
-    const [updated] = await this.prisma.$transaction([
-      this.prisma.item.updateManyAndReturn({
-        where: {
-          profileId: item.profileId,
-          id: item.id,
-          quantity: { gte: item.quantity },
-        },
-        data: {
-          quantity: { decrement: item.quantity },
-        },
-      }),
-      this.prisma.item.deleteMany({
-        where: {
-          profileId: item.profileId,
-          id: item.id,
-          quantity: { lte: 0 },
-        },
-      }),
-    ]);
+    const [updated] = await this.prisma.item.updateManyAndReturn({
+      where: {
+        profileId: item.profileId,
+        id: item.id,
+        quantity: { gte: item.quantity },
+      },
+      data: {
+        quantity: { decrement: item.quantity },
+      },
+    });
+    // remove items with quantity 0 or less
+    await this.prisma.item.deleteMany({
+      where: {
+        profileId: item.profileId,
+        id: item.id,
+        quantity: { lte: 0 },
+      },
+    });
 
-    const remaining = updated[0];
-    return remaining?.quantity > 0 ? remaining : null;
+    return updated?.quantity > 0 ? updated : null;
   }
 }
