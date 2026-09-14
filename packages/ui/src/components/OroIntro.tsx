@@ -14,25 +14,25 @@ export const OroIntro = ({ fade = true }: OroIntroProps) => {
       className={cn('h-screen flex flex-col items-center justify-center', fadeClass)}
       style={{ userSelect: 'none' }}
     >
-      <div className="oro-intro-letter-container font-pixel text-primary">
+      <div className="oro-intro-letter-container font-pixel text-primary pl-4">
         <div className="oro-intro-letter-group">
           <span className="oro-intro-letter">O</span>
-          <span className="oro-intro-subtext text-5xl text-muted">R</span>
-          <span className="oro-intro-subtext text-5xl text-muted">E</span>
+          <span className="oro-intro-subtext text-muted">R</span>
+          <span className="oro-intro-subtext text-muted">E</span>
         </div>
         <div className="oro-intro-letter-group">
           <span className="oro-intro-letter">R</span>
-          <span className="oro-intro-subtext text-5xl text-muted">U</span>
-          <span className="oro-intro-subtext text-5xl text-muted">S</span>
-          <span className="oro-intro-subtext text-5xl text-muted">H</span>
+          <span className="oro-intro-subtext text-muted">U</span>
+          <span className="oro-intro-subtext text-muted">S</span>
+          <span className="oro-intro-subtext text-muted">H</span>
         </div>
         <div className="oro-intro-letter-group">
           <span className="oro-intro-letter">O</span>
-          <span className="oro-intro-subtext text-5xl text-muted">N</span>
-          <span className="oro-intro-subtext text-5xl text-muted">L</span>
-          <span className="oro-intro-subtext text-5xl text-muted">I</span>
-          <span className="oro-intro-subtext text-5xl text-muted">N</span>
-          <span className="oro-intro-subtext text-5xl text-muted">E</span>
+          <span className="oro-intro-subtext text-muted">N</span>
+          <span className="oro-intro-subtext text-muted">L</span>
+          <span className="oro-intro-subtext text-muted">I</span>
+          <span className="oro-intro-subtext text-muted">N</span>
+          <span className="oro-intro-subtext text-muted">E</span>
         </div>
       </div>
     </div>

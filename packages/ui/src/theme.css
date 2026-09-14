@@ -134,7 +134,12 @@
 .oro-intro-letter-container {
   display: flex;
   align-items: flex-start;
-  gap: 64px;
+  gap: 24px;
+}
+@media (min-width: 640px) {
+  .oro-intro-letter-container {
+    gap: 64px;
+  }
 }
 
 .oro-intro-letter-group {
@@ -147,10 +152,15 @@
 .oro-intro-letter {
   display: block;
   line-height: 1;
-  font-size: 200px;
+  font-size: 150px;
   opacity: 0;
   transform: scale(0.4);
   animation: oro-intro-letter-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@media (min-width: 640px) {
+  .oro-intro-letter {
+    font-size: 200px;
+  }
 }
 .oro-intro-letter-group:nth-child(1) .oro-intro-letter {
   animation-delay: 0.3s;
@@ -169,11 +179,19 @@
 /* Once all letters have landed (~1.6s in), the rest of each word fades in underneath its letter, sliding down into place. */
 .oro-intro-subtext {
   display: block;
-  margin-top: 8px;
-  margin-right: 16px;
+  font-size: 36px;
+  margin-top: 4px;
+  margin-right: 10px;
   opacity: 0;
   transform: translateY(-12px);
   animation: oro-intro-subtext-in 0.6s ease-out 1.6s forwards;
+}
+@media (min-width: 640px) {
+  .oro-intro-subtext {
+    font-size: 48px;
+    margin-top: 8px;
+    margin-right: 16px;
+  }
 }
 @keyframes oro-intro-subtext-in {
   0% { opacity: 0; transform: translateY(-12px); }
