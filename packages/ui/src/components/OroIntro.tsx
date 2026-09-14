@@ -1,14 +1,17 @@
 import { cn } from '../utils';
 
 interface OroIntroProps {
-  className?: string;
+  /** Default: `true` */
+  fade?: boolean;
 }
 
 /** Animated "ORE RUSH ONLINE" title reveal (O / R / O columns pop in, then the rest of each word fades in underneath) */
-export const OroIntro = ({ className }: OroIntroProps) => {
+export const OroIntro = ({ fade = true }: OroIntroProps) => {
+  const fadeClass = fade ? 'oro-intro-fade' : '';
+
   return (
     <div
-      className={cn('h-screen flex flex-col items-center justify-center oro-intro-fade', className)}
+      className={cn('h-screen flex flex-col items-center justify-center', fadeClass)}
       style={{ userSelect: 'none' }}
     >
       <div className="oro-intro-letter-container font-pixel text-primary">
