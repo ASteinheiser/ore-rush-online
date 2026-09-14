@@ -11,10 +11,14 @@ interface ProfileModalProps {
 export const ProfileModal = ({ isOpen, onOpenChange }: ProfileModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} aria-describedby={undefined}>
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        aria-describedby={undefined}
+        className="max-w-sm"
+      >
         <DialogTitle className="hidden">Profile</DialogTitle>
 
-        <div className="py-6">
+        <div className="py-2">
           <ProfileForm
             logoutRedirectPath={AUTH_ROUTES.LOGIN}
             newPasswordRedirectPath={APP_ROUTES.NEW_PASSWORD}

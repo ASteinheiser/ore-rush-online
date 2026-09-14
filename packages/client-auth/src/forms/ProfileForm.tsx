@@ -32,13 +32,16 @@ const DELETE_ACCOUNT = gql`
 
 interface ProfileFormProps {
   logoutRedirectPath: string;
-  /** This will default to use `AUTH_ROUTES.NEW_PASSWORD` */
+  /** Default: `AUTH_ROUTES.NEW_PASSWORD` */
   newPasswordRedirectPath?: string;
+  /** Default: `Profile` */
+  title?: string;
 }
 
 export const ProfileForm = ({
   logoutRedirectPath,
   newPasswordRedirectPath = AUTH_ROUTES.NEW_PASSWORD,
+  title = 'Profile',
 }: ProfileFormProps) => {
   const navigate = useNavigate();
   const { session, profile, logout, changeEmail, refetchProfile } = useSession();
@@ -161,7 +164,7 @@ export const ProfileForm = ({
   return (
     <>
       <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
-        <h1 className="text-4xl font-pixel text-center text-muted-foreground">Your Profile</h1>
+        <h1 className="text-4xl font-pixel text-center text-muted-foreground">{title}</h1>
 
         <form onSubmit={handleUpdateUserName}>
           <div className="flex flex-col gap-2">

@@ -63,7 +63,7 @@ export const router = createBrowserRouter([
           },
           {
             path: AUTH_ROUTES.PROFILE,
-            element: <ProfileForm logoutRedirectPath={APP_ROUTES.HOME} />,
+            element: <ProfileForm logoutRedirectPath={APP_ROUTES.HOME} title="Your Profile" />,
           },
         ],
       },
