@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { OroIntro } from '@repo/ui';
 import logo from '../assets/logo.png';
 
 /** This is how long to show the developer screen. Should match 'developer-fade' animation in theme.css (4s) */
 const DEVELOPER_DURATION = 4 * 1000;
-/** This is how long to show the title screen. Should match 'title-fade' animation in theme.css (6s) */
+/** This is how long to show the title screen. Should match 'oro-intro-fade' animation in @repo/ui (6s) */
 const TITLE_DURATION = 6 * 1000;
 
 interface SplashProviderProps {
@@ -41,33 +42,7 @@ export const SplashProvider = ({ children }: SplashProviderProps) => {
     );
   }
 
-  if (isTitleVisible) {
-    return (
-      <div className="fullscreen-center title-fade" style={{ userSelect: 'none' }}>
-        <div className="title-letter-container font-pixel text-primary">
-          <div className="title-letter-group">
-            <span className="title-letter">O</span>
-            <span className="title-subtext text-5xl text-muted">R</span>
-            <span className="title-subtext text-5xl text-muted">E</span>
-          </div>
-          <div className="title-letter-group">
-            <span className="title-letter">R</span>
-            <span className="title-subtext text-5xl text-muted">U</span>
-            <span className="title-subtext text-5xl text-muted">S</span>
-            <span className="title-subtext text-5xl text-muted">H</span>
-          </div>
-          <div className="title-letter-group">
-            <span className="title-letter">O</span>
-            <span className="title-subtext text-5xl text-muted">N</span>
-            <span className="title-subtext text-5xl text-muted">L</span>
-            <span className="title-subtext text-5xl text-muted">I</span>
-            <span className="title-subtext text-5xl text-muted">N</span>
-            <span className="title-subtext text-5xl text-muted">E</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (isTitleVisible) return <OroIntro />;
 
   return children;
 };

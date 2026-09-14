@@ -5,6 +5,7 @@ export * from './Dialog';
 export * from './Input';
 export * from './Label';
 export * from './LoadingSpinner';
+export * from './OroIntro';
 export * from './Select';
 export * from './Sheet';
 export * from './Slider';
