@@ -13,6 +13,7 @@ export const EVENT_BUS = {
   SETTINGS_OPEN: 'menu-open__settings',
   STASH_OPEN: 'menu-open__stash',
   MARKETPLACE_OPEN: 'menu-open__marketplace',
+  HANGAR_OPEN: 'menu-open__hangar',
   TOAST_INFO: 'toast-info',
   TOAST_SUCCESS: 'toast-success',
   TOAST_ERROR: 'toast-error',

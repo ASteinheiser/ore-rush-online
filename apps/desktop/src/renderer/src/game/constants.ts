@@ -17,6 +17,7 @@ export const ASSET = {
   CHEST_ICON: 'chest-icon',
   DRILL_ICON: 'drill-icon',
   STOCKS_ICON: 'stocks-icon',
+  CRANE_ICON: 'crane-icon',
   ORE_BG: 'ore-bg',
   ORE_FG: 'ore-fg',
 } as const;

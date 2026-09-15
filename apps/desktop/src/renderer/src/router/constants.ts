@@ -4,6 +4,7 @@ export const SEARCH_PARAMS = {
   NEW_PASSWORD: 'newPassword',
   STASH: 'stash',
   MARKETPLACE: 'marketplace',
+  HANGAR: 'hangar',
 } as const;
 
 export const APP_ROUTES = {

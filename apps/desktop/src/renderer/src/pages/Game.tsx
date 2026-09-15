@@ -13,6 +13,7 @@ import { NewPasswordModal } from '../modals/NewPasswordModal';
 import { SettingsModal } from '../modals/SettingsModal';
 import { StashModal } from '../modals/StashModal';
 import { MarketplaceModal } from '../modals/MarketplaceModal';
+import { HangarModal } from '../modals/HangarModal';
 import { HomeBaseOverlay } from '../components/HomeBaseOverlay';
 import { SEARCH_PARAMS } from '../router/constants';
 import { useAudioSettings } from '../providers/AudioSettingsProvider';
@@ -30,6 +31,7 @@ export const Game = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useSearchParamFlag(SEARCH_PARAMS.SETTINGS);
   const [isStashModalOpen, setIsStashModalOpen] = useSearchParamFlag(SEARCH_PARAMS.STASH);
   const [isMarketplaceModalOpen, setIsMarketplaceModalOpen] = useSearchParamFlag(SEARCH_PARAMS.MARKETPLACE);
+  const [isHangarModalOpen, setIsHangarModalOpen] = useSearchParamFlag(SEARCH_PARAMS.HANGAR);
   const [isHomeBaseActive, setIsHomeBaseActive] = useState(false);
 
   const setPhaserInputEnabled = useCallback(() => {
@@ -38,7 +40,8 @@ export const Game = () => {
       isNewPasswordModalOpen ||
       isSettingsModalOpen ||
       isStashModalOpen ||
-      isMarketplaceModalOpen;
+      isMarketplaceModalOpen ||
+      isHangarModalOpen;
 
     if (phaserRef?.current?.game?.input) {
       phaserRef.current.game.input.enabled = !disabled;
@@ -49,6 +52,7 @@ export const Game = () => {
     isSettingsModalOpen,
     isStashModalOpen,
     isMarketplaceModalOpen,
+    isHangarModalOpen,
     phaserRef?.current,
   ]);
 
@@ -76,6 +80,7 @@ export const Game = () => {
     setIsSettingsModalOpen(false);
     setIsStashModalOpen(false);
     setIsMarketplaceModalOpen(false);
+    setIsHangarModalOpen(false);
   };
 
   // NOTE: the server will kick any clients with an expired token, however
@@ -106,6 +111,7 @@ export const Game = () => {
     EventBus.on(EVENT_BUS.SETTINGS_OPEN, () => setIsSettingsModalOpen(true));
     EventBus.on(EVENT_BUS.STASH_OPEN, () => setIsStashModalOpen(true));
     EventBus.on(EVENT_BUS.MARKETPLACE_OPEN, () => setIsMarketplaceModalOpen(true));
+    EventBus.on(EVENT_BUS.HANGAR_OPEN, () => setIsHangarModalOpen(true));
     EventBus.on(EVENT_BUS.TOAST_INFO, (message: string) => toast.info(message));
     EventBus.on(EVENT_BUS.TOAST_SUCCESS, (message: string) => toast.success(message));
     EventBus.on(EVENT_BUS.TOAST_ERROR, (message: string) => toast.error(message));
@@ -115,6 +121,7 @@ export const Game = () => {
       EventBus.off(EVENT_BUS.SETTINGS_OPEN);
       EventBus.off(EVENT_BUS.STASH_OPEN);
       EventBus.off(EVENT_BUS.MARKETPLACE_OPEN);
+      EventBus.off(EVENT_BUS.HANGAR_OPEN);
       EventBus.off(EVENT_BUS.TOAST_INFO);
       EventBus.off(EVENT_BUS.TOAST_SUCCESS);
       EventBus.off(EVENT_BUS.TOAST_ERROR);
@@ -157,6 +164,7 @@ export const Game = () => {
       <NewPasswordModal isOpen={isNewPasswordModalOpen} onOpenChange={setIsNewPasswordModalOpen} />
       <StashModal isOpen={isStashModalOpen} onOpenChange={setIsStashModalOpen} />
       <MarketplaceModal isOpen={isMarketplaceModalOpen} onOpenChange={setIsMarketplaceModalOpen} />
+      <HangarModal isOpen={isHangarModalOpen} onOpenChange={setIsHangarModalOpen} />
     </>
   );
 };
