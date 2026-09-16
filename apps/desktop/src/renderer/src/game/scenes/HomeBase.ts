@@ -1,13 +1,13 @@
 import * as Phaser from 'phaser';
-import { type AuthPayload, PLAYER_VX_PER_TICK, TICKS_PER_SECOND } from '@repo/core-game';
+import { type AuthPayload, PLAYER_VX_PER_TICK } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
-import { PLAYER_ANIM } from '../objects/Player';
+import { Player, PLAYER_ANIM } from '../objects/Player';
 import { Interactable } from '../objects/Interactable';
-import { ASSET, DEPTH, SCENE } from '../constants';
+import { ASSET, SCENE } from '../constants';
 import { revealScene, transitionToScene } from '../transitions';
 
 /** Constant movement speed (px/s), derived from the player's VX tick constant */
-const PLAYER_SPEED = 1.5 * PLAYER_VX_PER_TICK * TICKS_PER_SECOND;
+const PLAYER_SPEED = 1.5 * PLAYER_VX_PER_TICK;
 
 interface InputKeys {
   W: Phaser.Input.Keyboard.Key;
@@ -23,7 +23,7 @@ interface InputKeys {
 
 /** Single-player hub scene: a zero-gravity room the player can float around in and interact with menu objects (inventory, ship bay, etc) */
 export class HomeBase extends Phaser.Scene {
-  private player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  private player!: Player;
   private inputKeys!: InputKeys;
   private interactables: Interactable[] = [];
   private activeInteractable?: Interactable;
@@ -35,11 +35,9 @@ export class HomeBase extends Phaser.Scene {
   create() {
     this.physics.world.gravity.set(0, 0);
 
-    this.player = this.physics.add
-      .sprite(0, 0, ASSET.PLAYER)
-      .setCollideWorldBounds(true)
-      .setDepth(DEPTH.PLAYER)
-      .play(PLAYER_ANIM.FLY);
+    this.player = new Player(this, '', 0, 0);
+    // lock the player in the "fly" animation
+    this.player.entity.anims.play(PLAYER_ANIM.FLY);
 
     this.inputKeys = this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as InputKeys;
 
@@ -77,7 +75,7 @@ export class HomeBase extends Phaser.Scene {
     };
 
     layout();
-    this.player.setPosition(this.scale.width / 2, this.scale.height / 2);
+    this.player.forceMove({ x: this.scale.width / 2, y: this.scale.height / 2 });
 
     this.scale.on(Phaser.Scale.Events.RESIZE, layout);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -100,17 +98,14 @@ export class HomeBase extends Phaser.Scene {
 
   /** Moves the player at a constant velocity in the direction(s) held down */
   private handleMovement() {
-    const direction = new Phaser.Math.Vector2(0, 0);
+    const direction = { x: 0, y: 0 };
 
-    if (this.inputKeys.LEFT.isDown || this.inputKeys.A.isDown) direction.x -= 1;
-    if (this.inputKeys.RIGHT.isDown || this.inputKeys.D.isDown) direction.x += 1;
-    if (this.inputKeys.UP.isDown || this.inputKeys.W.isDown) direction.y -= 1;
-    if (this.inputKeys.DOWN.isDown || this.inputKeys.S.isDown) direction.y += 1;
+    if (this.inputKeys.LEFT.isDown || this.inputKeys.A.isDown) direction.x -= PLAYER_SPEED;
+    if (this.inputKeys.RIGHT.isDown || this.inputKeys.D.isDown) direction.x += PLAYER_SPEED;
+    if (this.inputKeys.UP.isDown || this.inputKeys.W.isDown) direction.y -= PLAYER_SPEED;
+    if (this.inputKeys.DOWN.isDown || this.inputKeys.S.isDown) direction.y += PLAYER_SPEED;
 
-    if (direction.lengthSq() > 0) {
-      direction.normalize().scale(PLAYER_SPEED);
-    }
-    this.player.setVelocity(direction.x, direction.y);
+    this.player.forceMove({ x: this.player.entity.x + direction.x, y: this.player.entity.y + direction.y });
   }
 
   /** Finds the nearest interactable within range, shows a prompt, and handles the interact key */
@@ -119,8 +114,11 @@ export class HomeBase extends Phaser.Scene {
     let nearestDistance = Infinity;
 
     for (const interactable of this.interactables) {
-      const distance = interactable.distanceTo(this.player.x, this.player.y);
-      if (interactable.isWithinRange(this.player.x, this.player.y) && distance < nearestDistance) {
+      const distance = interactable.distanceTo(this.player.entity.x, this.player.entity.y);
+      if (
+        interactable.isWithinRange(this.player.entity.x, this.player.entity.y) &&
+        distance < nearestDistance
+      ) {
         nearest = interactable;
         nearestDistance = distance;
       }

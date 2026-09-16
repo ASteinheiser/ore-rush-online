@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { PLAYER_FRAME_RATE, PLAYER_SIZE } from '@repo/core-game';
-import player from '../../assets/ship-sprite.png';
+import shipFill from '../../assets/basic-ship-fill.png';
+import shipOutline from '../../assets/basic-ship-outline.png';
 import lockIcon from '../../assets/basic-lock.png';
 import cogIcon from '../../assets/basic-cog.png';
 import profileIcon from '../../assets/basic-profile.png';
@@ -19,7 +20,11 @@ export class Preloader extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet(ASSET.PLAYER, player, {
+    this.load.spritesheet(ASSET.SHIP_FILL, shipFill, {
+      frameWidth: PLAYER_SIZE.width,
+      frameHeight: PLAYER_SIZE.height,
+    });
+    this.load.spritesheet(ASSET.SHIP_OUTLINE, shipOutline, {
       frameWidth: PLAYER_SIZE.width,
       frameHeight: PLAYER_SIZE.height,
     });
@@ -40,37 +45,37 @@ export class Preloader extends Phaser.Scene {
 
     this.anims.create({
       key: PLAYER_ANIM.IDLE,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [0] }),
+      frames: this.anims.generateFrameNumbers(ASSET.SHIP_FILL, { frames: [0] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: 0,
     });
     this.anims.create({
       key: PLAYER_ANIM.ROLL,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [0, 0, 5, 5] }),
+      frames: this.anims.generateFrameNumbers(ASSET.SHIP_FILL, { frames: [0, 0, 5, 5] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,
     });
     this.anims.create({
       key: PLAYER_ANIM.FLY,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [0, 1, 2, 3, 4, 3, 2, 1] }),
+      frames: this.anims.generateFrameNumbers(ASSET.SHIP_FILL, { frames: [0, 1, 2, 3, 4, 3, 2, 1] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,
     });
     this.anims.create({
       key: PLAYER_ANIM.DRILL_RIGHT,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [6, 7, 8] }),
+      frames: this.anims.generateFrameNumbers(ASSET.SHIP_FILL, { frames: [6, 7, 8] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,
     });
     this.anims.create({
       key: PLAYER_ANIM.DRILL_LEFT,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [9, 10, 11] }),
+      frames: this.anims.generateFrameNumbers(ASSET.SHIP_FILL, { frames: [9, 10, 11] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,
     });
     this.anims.create({
       key: PLAYER_ANIM.DRILL_DOWN,
-      frames: this.anims.generateFrameNumbers(ASSET.PLAYER, { frames: [12, 13, 14] }),
+      frames: this.anims.generateFrameNumbers(ASSET.SHIP_FILL, { frames: [12, 13, 14] }),
       frameRate: PLAYER_FRAME_RATE,
       repeat: -1,
     });

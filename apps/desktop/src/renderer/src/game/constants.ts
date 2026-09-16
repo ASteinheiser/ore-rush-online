@@ -10,7 +10,8 @@ export const SCENE = {
 } as const;
 
 export const ASSET = {
-  PLAYER: 'player',
+  SHIP_FILL: 'ship-fill',
+  SHIP_OUTLINE: 'ship-outline',
   LOCK_ICON: 'lock-icon',
   COG_ICON: 'cog-icon',
   PROFILE_ICON: 'profile-icon',

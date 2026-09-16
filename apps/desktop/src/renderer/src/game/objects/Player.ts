@@ -3,6 +3,8 @@ import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '@re
 import { ASSET, DEPTH } from '../constants';
 import { CustomText } from './CustomText';
 
+const FALLBACK_FILL_COLOR = 0x666666;
+const FALLBACK_OUTLINE_COLOR = 0x999999;
 const DEBUG_BOX_COLOR = 0x00ff00; // green
 const DEBUG_BOX_FLASH_COLOR = 0xff0000; // red
 const DEBUG_BOX_FLASH_MS = 500;
@@ -26,6 +28,7 @@ export const PLAYER_ANIM = {
 
 export class Player {
   public entity: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  private outline: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   public nameText: CustomText;
   public debugBox?: Phaser.GameObjects.Rectangle;
   private debugFlashTimer?: Phaser.Time.TimerEvent;
@@ -44,7 +47,19 @@ export class Player {
     x: number,
     y: number
   ) {
-    this.entity = scene.physics.add.sprite(x, y, ASSET.PLAYER).setDepth(DEPTH.PLAYER);
+    this.entity = scene.physics.add
+      .sprite(x, y, ASSET.SHIP_FILL)
+      .setDepth(DEPTH.PLAYER)
+      .setTint(FALLBACK_FILL_COLOR);
+    this.outline = scene.physics.add
+      .sprite(x, y, ASSET.SHIP_OUTLINE)
+      .setDepth(DEPTH.PLAYER)
+      .setTint(FALLBACK_OUTLINE_COLOR);
+
+    // keep the outline layer animations in sync with the fill layer
+    this.entity.on(Phaser.Animations.Events.ANIMATION_UPDATE, (_anim, frame) => {
+      this.outline.setFrame(frame.textureFrame);
+    });
 
     this.nameText = new CustomText(scene, x, y, username, {
       fontFamily: 'Tiny5',
@@ -89,6 +104,7 @@ export class Player {
 
   public destroy() {
     this.entity.destroy();
+    this.outline.destroy();
     this.nameText.destroy();
     this.debugBox?.destroy();
     this.debugFlashTimer?.remove(false);
@@ -96,10 +112,7 @@ export class Player {
 
   /** Force the player to move to a specific position (skips animations) */
   public forceMove({ x, y }: EntityPosition) {
-    this.entity.x = x;
-    this.entity.y = y;
-    this.nameText.x = x;
-    this.nameText.y = y;
+    this.setPosition(x, y);
 
     if (!this.debugBox) return;
     this.debugBox.setStrokeStyle(1, DEBUG_BOX_FLASH_COLOR);
@@ -133,19 +146,16 @@ export class Player {
       }
     }
 
-    this.entity.x = x;
-    this.entity.y = y;
-    this.nameText.x = x;
-    this.nameText.y = y;
+    this.setPosition(x, y);
 
     if (!this.displayedMoving && isGrounded && !this.isDrilling()) {
-      this.entity.play(PLAYER_ANIM.IDLE);
+      this.entity.anims.play(PLAYER_ANIM.IDLE);
     }
     if (this.displayedMoving && isGrounded && !(this.isRolling() || this.isDrilling())) {
-      this.entity.play(PLAYER_ANIM.ROLL);
+      this.entity.anims.play(PLAYER_ANIM.ROLL);
     }
     if (!isGrounded && !this.isFlying()) {
-      this.entity.play(PLAYER_ANIM.FLY);
+      this.entity.anims.play(PLAYER_ANIM.FLY);
     }
   }
 
@@ -195,5 +205,15 @@ export class Player {
 
   private isDrillingDown() {
     return this.entity.anims.isPlaying && this.entity.anims.currentAnim?.key === PLAYER_ANIM.DRILL_DOWN;
+  }
+
+  /** internal method for setting the position of all related game objects (ie: fill, outline, name text) */
+  private setPosition(x: number, y: number) {
+    this.entity.x = x;
+    this.entity.y = y;
+    this.outline.x = x;
+    this.outline.y = y;
+    this.nameText.x = x;
+    this.nameText.y = y;
   }
 }
