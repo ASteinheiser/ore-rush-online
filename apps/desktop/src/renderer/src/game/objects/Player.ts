@@ -142,20 +142,20 @@ export class Player {
       this.drillIdleAccumulator += delta;
       if (this.drillIdleAccumulator >= Player.DRILL_IDLE_BUFFER_MS) {
         this.drillIdleAccumulator = 0;
-        if (this.isDrilling()) this.entity.anims.stop();
+        if (this.isDrilling()) this.stopAnimation();
       }
     }
 
     this.setPosition(x, y);
 
     if (!this.displayedMoving && isGrounded && !this.isDrilling()) {
-      this.entity.anims.play(PLAYER_ANIM.IDLE);
+      this.playAnimation(PLAYER_ANIM.IDLE);
     }
     if (this.displayedMoving && isGrounded && !(this.isRolling() || this.isDrilling())) {
-      this.entity.anims.play(PLAYER_ANIM.ROLL);
+      this.playAnimation(PLAYER_ANIM.ROLL);
     }
     if (!isGrounded && !this.isFlying()) {
-      this.entity.anims.play(PLAYER_ANIM.FLY);
+      this.playAnimation(PLAYER_ANIM.FLY);
     }
   }
 
@@ -164,17 +164,17 @@ export class Player {
       case DRILL_DIRECTIONS.LEFT:
         this.logicalDrilling = true;
         if (this.isDrillingLeft()) return;
-        this.entity.anims.play(PLAYER_ANIM.DRILL_LEFT);
+        this.playAnimation(PLAYER_ANIM.DRILL_LEFT);
         break;
       case DRILL_DIRECTIONS.RIGHT:
         this.logicalDrilling = true;
         if (this.isDrillingRight()) return;
-        this.entity.anims.play(PLAYER_ANIM.DRILL_RIGHT);
+        this.playAnimation(PLAYER_ANIM.DRILL_RIGHT);
         break;
       case DRILL_DIRECTIONS.DOWN:
         this.logicalDrilling = true;
         if (this.isDrillingDown()) return;
-        this.entity.anims.play(PLAYER_ANIM.DRILL_DOWN);
+        this.playAnimation(PLAYER_ANIM.DRILL_DOWN);
         break;
       case DRILL_DIRECTIONS.IDLE:
       default:
@@ -215,5 +215,17 @@ export class Player {
     this.outline.y = y;
     this.nameText.x = x;
     this.nameText.y = y;
+  }
+
+  /** internal method for playing an animation on the all relevant game objects (ie: fill, outline) */
+  public playAnimation(animation: string) {
+    this.entity.anims.play(animation);
+    this.outline.setFrame(this.entity.frame.name);
+  }
+
+  /** internal method for stopping the current animation on the all relevant game objects (ie: fill, outline) */
+  private stopAnimation() {
+    this.entity.anims.stop();
+    this.outline.setFrame(this.entity.frame.name);
   }
 }

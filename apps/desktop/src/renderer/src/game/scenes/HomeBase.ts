@@ -37,7 +37,7 @@ export class HomeBase extends Phaser.Scene {
 
     this.player = new Player(this, '', 0, 0);
     // lock the player in the "fly" animation
-    this.player.entity.anims.play(PLAYER_ANIM.FLY);
+    this.player.playAnimation(PLAYER_ANIM.FLY);
 
     this.inputKeys = this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE') as InputKeys;
 
