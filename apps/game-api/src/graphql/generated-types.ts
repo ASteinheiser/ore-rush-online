@@ -52,6 +52,7 @@ export type MutationUpdateProfileArgs = {
 export type Profile = {
   __typename?: 'Profile';
   coins: Scalars['Int']['output'];
+  ships?: Maybe<Array<Ship>>;
   stash?: Maybe<Array<Item>>;
   userName: Scalars['String']['output'];
 };
@@ -67,6 +68,12 @@ export type Query = {
 
 export type QueryUserExistsArgs = {
   userName: Scalars['String']['input'];
+};
+
+export type Ship = {
+  __typename?: 'Ship';
+  id: Scalars['String']['output'];
+  shipId: Scalars['String']['output'];
 };
 
 export type WithIndex<TObject> = TObject & Record<string, any>;
@@ -149,6 +156,7 @@ export type ResolversTypes = ResolversObject<{
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Profile: ResolverTypeWrapper<ProfileMapper>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  Ship: ResolverTypeWrapper<Ship>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
 }>;
 
@@ -160,6 +168,7 @@ export type ResolversParentTypes = ResolversObject<{
   Mutation: Record<PropertyKey, never>;
   Profile: ProfileMapper;
   Query: Record<PropertyKey, never>;
+  Ship: Ship;
   String: Scalars['String']['output'];
 }>;
 
@@ -178,6 +187,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
 
 export type ProfileResolvers<ContextType = any, ParentType extends ResolversParentTypes['Profile'] = ResolversParentTypes['Profile']> = ResolversObject<{
   coins?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  ships?: Resolver<Maybe<Array<ResolversTypes['Ship']>>, ParentType, ContextType>;
   stash?: Resolver<Maybe<Array<ResolversTypes['Item']>>, ParentType, ContextType>;
   userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
@@ -189,10 +199,16 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   userExists?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<QueryUserExistsArgs, 'userName'>>;
 }>;
 
+export type ShipResolvers<ContextType = any, ParentType extends ResolversParentTypes['Ship'] = ResolversParentTypes['Ship']> = ResolversObject<{
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  shipId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+}>;
+
 export type Resolvers<ContextType = any> = ResolversObject<{
   Item?: ItemResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Profile?: ProfileResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  Ship?: ShipResolvers<ContextType>;
 }>;
 

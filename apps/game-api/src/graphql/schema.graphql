@@ -2,11 +2,17 @@ type Profile {
   userName: String!
   coins: Int!
   stash: [Item!]
+  ships: [Ship!]
 }
 
 type Item {
   id: String!
   quantity: Int!
+}
+
+type Ship {
+  id: String!
+  shipId: String!
 }
 
 type Query {

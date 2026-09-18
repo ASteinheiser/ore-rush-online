@@ -24,6 +24,10 @@ export const resolvers: Resolvers<Context> = {
       if (!user) return null;
       return dataSources.stashDb.getItemsByProfileId(user.id);
     },
+    ships: async (_, __, { dataSources, user }) => {
+      if (!user) return null;
+      return dataSources.shipsDb.getShipsByProfileId(user.id);
+    },
   },
   Mutation: {
     createProfile: async (_, { userName }, { dataSources, user }) => {
