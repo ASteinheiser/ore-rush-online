@@ -4,6 +4,7 @@ import { server } from '../../src/graphql';
 import { ProfilesRepository } from '../../src/repo/Profiles';
 import { StashRepository } from '../../src/repo/Stash';
 import { MarketplaceRepository } from '../../src/repo/Marketplace';
+import { ShipsRepository } from '../../src/repo/Ships';
 import { ORE } from '@repo/core-game';
 import type { GoTrueAdminApi } from '@supabase/supabase-js';
 import type { User } from '../../src/auth/jwt';
@@ -48,6 +49,7 @@ describe('GQLServer', () => {
         profilesDb: new ProfilesRepository(prisma),
         stashDb: new StashRepository(prisma),
         marketplaceDb: new MarketplaceRepository(prisma),
+        shipsDb: new ShipsRepository(prisma),
       },
       authClient: null as unknown as GoTrueAdminApi,
       user: null as unknown as User,

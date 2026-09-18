@@ -10,8 +10,9 @@ datasource db {
 model Profile {
   userId   String @id
   userName String @unique @db.VarChar(255)
-  stash    Item[]
   coins    Int    @default(0)
+  stash    Item[]
+  ships    Ship[]
 }
 
 model Item {
@@ -23,4 +24,13 @@ model Item {
   quantity  Int
 
   @@id([profileId, id])
+}
+
+model Ship {
+  id        String   @id
+  shipId    String
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [userId], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
