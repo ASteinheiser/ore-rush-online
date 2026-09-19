@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
