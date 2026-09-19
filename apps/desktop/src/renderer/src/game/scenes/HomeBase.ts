@@ -1,13 +1,19 @@
 import * as Phaser from 'phaser';
-import { type AuthPayload, type EntityPosition, PLAYER_SIZE, PLAYER_VX_PER_TICK } from '@repo/core-game';
+import {
+  type AuthPayload,
+  type EntityPosition,
+  PLAYER_SIZE,
+  PLAYER_VX_PER_TICK,
+  TICKS_PER_SECOND,
+} from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { Player, PLAYER_ANIM } from '../objects/Player';
 import { Interactable } from '../objects/Interactable';
 import { ASSET, SCENE } from '../constants';
 import { revealScene, transitionToScene } from '../transitions';
 
-/** Constant movement speed (px/s), derived from the player's VX tick constant */
-const PLAYER_SPEED = 1.5 * PLAYER_VX_PER_TICK;
+/** Constant movement speed (px/s) set equal to 1.5 times the standard x-axis velocity */
+const PLAYER_SPEED = 1.5 * PLAYER_VX_PER_TICK * TICKS_PER_SECOND;
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -90,8 +96,8 @@ export class HomeBase extends Phaser.Scene {
     EventBus.emit(EVENT_BUS.CURRENT_SCENE_READY, this);
   }
 
-  update() {
-    this.handleMovement();
+  update(_time: number, delta: number) {
+    this.handleMovement(delta);
     this.handleInteraction();
   }
 
@@ -100,17 +106,21 @@ export class HomeBase extends Phaser.Scene {
   }
 
   /** Moves the player at a constant velocity in the direction(s) held down */
-  private handleMovement() {
+  private handleMovement(delta: number) {
     const direction = { x: 0, y: 0 };
 
-    if (this.inputKeys.LEFT.isDown || this.inputKeys.A.isDown) direction.x -= PLAYER_SPEED;
-    if (this.inputKeys.RIGHT.isDown || this.inputKeys.D.isDown) direction.x += PLAYER_SPEED;
-    if (this.inputKeys.UP.isDown || this.inputKeys.W.isDown) direction.y -= PLAYER_SPEED;
-    if (this.inputKeys.DOWN.isDown || this.inputKeys.S.isDown) direction.y += PLAYER_SPEED;
+    if (this.inputKeys.LEFT.isDown || this.inputKeys.A.isDown) direction.x -= 1;
+    if (this.inputKeys.RIGHT.isDown || this.inputKeys.D.isDown) direction.x += 1;
+    if (this.inputKeys.UP.isDown || this.inputKeys.W.isDown) direction.y -= 1;
+    if (this.inputKeys.DOWN.isDown || this.inputKeys.S.isDown) direction.y += 1;
+
+    if (direction.x === 0 && direction.y === 0) return;
+
+    const distance = PLAYER_SPEED * (delta / 1000);
 
     this.movePlayer({
-      x: this.player.entity.x + direction.x,
-      y: this.player.entity.y + direction.y,
+      x: this.player.entity.x + direction.x * distance,
+      y: this.player.entity.y + direction.y * distance,
     });
   }
 
