@@ -1,4 +1,13 @@
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, LoadingSpinner, toast } from '@repo/ui';
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  LoadingSpinner,
+  toast,
+} from '@repo/ui';
 import { ORE, SHIPS } from '@repo/core-game';
 import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
@@ -93,7 +102,7 @@ export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip
           <DialogTitle className="pt-2 font-pixel text-4xl text-muted-foreground">Hangar</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-y-6">
+        <DialogBody className="flex flex-col gap-y-6">
           <section className="flex flex-col gap-y-3">
             <h3 className="font-label text-xl text-muted">Owned Ships</h3>
 
@@ -158,7 +167,7 @@ export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip
               ))}
             </ul>
           </section>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

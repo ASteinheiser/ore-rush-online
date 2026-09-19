@@ -2,6 +2,7 @@ import {
   Checkbox,
   Label,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -42,7 +43,7 @@ export const SettingsModal = ({ isOpen, onOpenChange }: SettingsModalProps) => {
           <DialogTitle className="pt-2 font-pixel text-4xl text-muted-foreground">Settings</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 px-2 pt-6 pb-4">
+        <DialogBody className="flex flex-col gap-6 px-2 pt-6 pb-4">
           <div className="flex items-center justify-between">
             <Label className="font-title text-xl">Fullscreen</Label>
             <Checkbox
@@ -83,7 +84,7 @@ export const SettingsModal = ({ isOpen, onOpenChange }: SettingsModalProps) => {
               disabled={isMuted}
             />
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter className="flex flex-col items-center gap-6">
           <Button

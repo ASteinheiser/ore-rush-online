@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle } from '@repo/ui';
+import { Dialog, DialogBody, DialogContent, DialogTitle } from '@repo/ui';
 import { NewPasswordForm } from '@repo/client-auth/forms';
 import { APP_ROUTES } from '../router/constants';
 
@@ -13,9 +13,9 @@ export const NewPasswordModal = ({ isOpen, onOpenChange }: NewPasswordModalProps
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} aria-describedby={undefined}>
         <DialogTitle className="hidden">New Password</DialogTitle>
 
-        <div className="py-6">
+        <DialogBody className="py-6">
           <NewPasswordForm profileRedirectPath={APP_ROUTES.PROFILE} />
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

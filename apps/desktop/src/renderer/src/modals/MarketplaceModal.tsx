@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
 import { ORE } from '@repo/core-game';
 import { OreItem } from '../components/OreItem';
 import { useStash } from '../providers/StashProvider';
@@ -82,7 +82,7 @@ export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps
           <DialogTitle className="pt-2 font-pixel text-4xl text-muted-foreground">Marketplace</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-row flex-wrap justify-between gap-y-4 px-2 py-4">
+        <DialogBody className="flex flex-row flex-wrap justify-between gap-y-4 px-2 py-4">
           {Object.values(ORE).map((ore) => (
             <div key={ore.id} className="flex flex-col items-center gap-6">
               <OreItem oreId={ore.id} quantity={Infinity} />
@@ -127,7 +127,7 @@ export const MarketplaceModal = ({ isOpen, onOpenChange }: MarketplaceModalProps
               </div>
             </div>
           ))}
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
