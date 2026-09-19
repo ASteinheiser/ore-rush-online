@@ -95,7 +95,7 @@ export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip
 
         <div className="flex flex-col gap-y-6">
           <section className="flex flex-col gap-y-3">
-            <h3 className="font-pixel text-2xl text-muted">Ships You Own</h3>
+            <h3 className="font-label text-xl text-muted">Owned Ships</h3>
 
             {isLoadingShips ? (
               <div className="flex items-center justify-center">
@@ -113,11 +113,13 @@ export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip
                   return (
                     <li
                       key={ship.id}
-                      className="font-title text-xl text-muted-foreground flex justify-between border border-secondary rounded-xl py-2 px-4"
+                      className="flex justify-between border border-secondary rounded-xl py-2 px-4"
                     >
                       <div className="flex flex-row items-center gap-2">
-                        {SHIPS.find((s) => s.id === ship.shipId)?.name}
-                        <span className="text-sm text-muted">({ship.id.slice(-4)})</span>
+                        <span className="font-pixel text-2xl text-muted-foreground">
+                          {SHIPS.find((s) => s.id === ship.shipId)?.name}
+                        </span>
+                        <span className="font-title text-sm text-muted">({ship.id.slice(-4)})</span>
                       </div>
 
                       <Button
@@ -136,15 +138,15 @@ export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip
           </section>
 
           <section className="flex flex-col gap-y-3">
-            <h3 className="font-pixel text-2xl text-muted">Buy Ships</h3>
+            <h3 className="font-label text-xl text-muted">Buy Ships</h3>
 
             <ul className="flex flex-col gap-y-3">
               {BUYABLE_SHIPS.map((ship, index) => (
                 <>
                   <li key={ship.id} className="flex flex-row items-center justify-between gap-x-3 px-2">
                     <div className="flex flex-col">
-                      <span className="font-title text-xl text-muted-foreground">{ship.name}</span>
-                      <span className="font-pixel text-md text-muted">{formatPrice(ship.price)}</span>
+                      <span className="font-pixel text-2xl text-muted-foreground">{ship.name}</span>
+                      <span className="font-title text-md text-muted">{formatPrice(ship.price)}</span>
                     </div>
 
                     <Button size="sm" disabled={loading} onClick={() => handleBuyShip(ship.id)}>
