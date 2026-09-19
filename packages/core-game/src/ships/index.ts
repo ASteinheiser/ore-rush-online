@@ -2,8 +2,8 @@
 export const SHIPS = [
   /** The free ship provided to players with no resources */
   {
-    id: 'S-CR49',
-    name: 'S-CR49',
+    id: '5C-R4P',
+    name: '5C-R4P',
     description: "It's... uh... it's a ship.",
     fuelCapacity: 2000,
     weightCapacity: 40,
@@ -32,8 +32,8 @@ export const SHIPS = [
     },
   },
   {
-    id: 'G0LD3N',
-    name: 'G0LD3N',
+    id: 'G0LD3-N',
+    name: 'G0LD3-N',
     description: "It's f*king gold!",
     fuelCapacity: 10000,
     weightCapacity: 200,
