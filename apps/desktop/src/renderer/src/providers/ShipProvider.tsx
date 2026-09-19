@@ -1,13 +1,38 @@
 import { createContext, useContext, useState } from 'react';
+import { useSession } from '@repo/client-auth/provider';
+import { gql } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
+import type { Desktop_GetProfileShipsQuery, Desktop_GetProfileShipsQueryVariables } from '../graphql';
+
+const GET_PROFILE_SHIPS = gql`
+  query Desktop_GetProfileShips {
+    profile {
+      ships {
+        id
+        shipId
+      }
+    }
+  }
+`;
+
+type OwnedShip = NonNullable<NonNullable<Desktop_GetProfileShipsQuery['profile']>['ships']>[number];
 
 interface ShipContextType {
   selectedShipId: string | null;
   setSelectedShipId: (shipId: string | null) => void;
+  ownedShips: Array<OwnedShip>;
+  loading: boolean;
+  error: Error | undefined;
+  refetch: () => Promise<unknown>;
 }
 
 const ShipContext = createContext<ShipContextType>({
   selectedShipId: null,
   setSelectedShipId: () => {},
+  ownedShips: [],
+  loading: false,
+  error: undefined,
+  refetch: () => Promise.resolve(),
 });
 
 export const useShip = () => {
@@ -19,9 +44,22 @@ export const useShip = () => {
 };
 
 export const ShipProvider = ({ children }: { children: React.ReactNode }) => {
+  const { session } = useSession();
   const [selectedShipId, setSelectedShipId] = useState<string | null>(null);
 
+  const { data, loading, error, refetch } = useQuery<
+    Desktop_GetProfileShipsQuery,
+    Desktop_GetProfileShipsQueryVariables
+  >(GET_PROFILE_SHIPS, {
+    skip: !session?.access_token,
+    context: { headers: { Authorization: session?.access_token } },
+  });
+
+  const ownedShips = data?.profile?.ships ?? [];
+
   return (
-    <ShipContext.Provider value={{ selectedShipId, setSelectedShipId }}>{children}</ShipContext.Provider>
+    <ShipContext.Provider value={{ selectedShipId, setSelectedShipId, ownedShips, loading, error, refetch }}>
+      {children}
+    </ShipContext.Provider>
   );
 };

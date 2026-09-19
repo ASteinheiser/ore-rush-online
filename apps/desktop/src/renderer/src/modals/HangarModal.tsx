@@ -9,28 +9,12 @@ import {
   toast,
 } from '@repo/ui';
 import { ORE, SHIPS } from '@repo/core-game';
-import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
-import { useMutation, useQuery } from '@apollo/client/react';
-import type {
-  Desktop_BuyShipMutation,
-  Desktop_BuyShipMutationVariables,
-  Desktop_GetProfileShipsQuery,
-  Desktop_GetProfileShipsQueryVariables,
-} from '../graphql';
+import { useMutation } from '@apollo/client/react';
+import type { Desktop_BuyShipMutation, Desktop_BuyShipMutationVariables } from '../graphql';
+import { useSession } from '@repo/client-auth/provider';
 import { useShip } from '../providers/ShipProvider';
 import { useStash } from '../providers/StashProvider';
-
-const GET_PROFILE_SHIPS = gql`
-  query Desktop_GetProfileShips {
-    profile {
-      ships {
-        id
-        shipId
-      }
-    }
-  }
-`;
 
 const BUY_SHIP = gql`
   mutation Desktop_BuyShip($shipId: String!) {
@@ -59,26 +43,22 @@ interface HangarModalProps {
 }
 
 export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
-  const { selectedShipId, setSelectedShipId } = useShip();
+  const {
+    selectedShipId,
+    setSelectedShipId,
+    ownedShips,
+    loading: isLoadingShips,
+    refetch: refetchShips,
+  } = useShip();
   const { refetch: refetchStash } = useStash();
   const { session } = useSession();
   const authHeaders = { headers: { Authorization: session?.access_token } };
-
-  const {
-    data,
-    loading: isLoadingShips,
-    refetch: refetchShips,
-  } = useQuery<Desktop_GetProfileShipsQuery, Desktop_GetProfileShipsQueryVariables>(GET_PROFILE_SHIPS, {
-    skip: !isOpen || !session?.access_token,
-    context: authHeaders,
-  });
 
   const [buyShip, { loading: isBuying }] = useMutation<
     Desktop_BuyShipMutation,
     Desktop_BuyShipMutationVariables
   >(BUY_SHIP, { context: authHeaders });
 
-  const ownedShips = data?.profile?.ships ?? [];
   const loading = isLoadingShips || isBuying;
 
   const handleBuyShip = async (shipId: string) => {
