@@ -28,4 +28,5 @@ type Mutation {
   deleteProfile: Boolean
   sellItem(itemId: String!, quantity: Int!): Profile
   buyItem(itemId: String!, quantity: Int!): Profile
+  buyShip(shipId: String!): Ship
 }

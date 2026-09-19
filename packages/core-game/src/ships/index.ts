@@ -7,7 +7,7 @@ export const SHIPS = [
     description: "It's... uh... it's a ship.",
     fuelCapacity: 2000,
     weightCapacity: 40,
-    price: [],
+    price: null,
   },
   {
     id: '5T33-L',
@@ -15,12 +15,10 @@ export const SHIPS = [
     description: 'Made of super strong steel.',
     fuelCapacity: 4000,
     weightCapacity: 60,
-    price: [
-      {
-        type: 'ore-iron',
-        amount: 20,
-      },
-    ],
+    price: {
+      type: 'ore-iron',
+      amount: 20,
+    },
   },
   {
     id: 'C0-993R',
@@ -28,12 +26,10 @@ export const SHIPS = [
     description: 'Slick looking copper extraction vessel.',
     fuelCapacity: 6000,
     weightCapacity: 100,
-    price: [
-      {
-        type: 'ore-copper',
-        amount: 30,
-      },
-    ],
+    price: {
+      type: 'ore-copper',
+      amount: 30,
+    },
   },
   {
     id: 'G0LD3N',
@@ -41,11 +37,9 @@ export const SHIPS = [
     description: "It's f*king gold!",
     fuelCapacity: 10000,
     weightCapacity: 200,
-    price: [
-      {
-        type: 'coins',
-        amount: 250,
-      },
-    ],
+    price: {
+      type: 'coins',
+      amount: 250,
+    },
   },
-];
+] as const;

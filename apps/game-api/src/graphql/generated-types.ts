@@ -21,6 +21,7 @@ export type Item = {
 export type Mutation = {
   __typename?: 'Mutation';
   buyItem?: Maybe<Profile>;
+  buyShip?: Maybe<Ship>;
   createProfile?: Maybe<Profile>;
   deleteProfile?: Maybe<Scalars['Boolean']['output']>;
   sellItem?: Maybe<Profile>;
@@ -31,6 +32,11 @@ export type Mutation = {
 export type MutationBuyItemArgs = {
   itemId: Scalars['String']['input'];
   quantity: Scalars['Int']['input'];
+};
+
+
+export type MutationBuyShipArgs = {
+  shipId: Scalars['String']['input'];
 };
 
 
@@ -179,6 +185,7 @@ export type ItemResolvers<ContextType = any, ParentType extends ResolversParentT
 
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = ResolversObject<{
   buyItem?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType, RequireFields<MutationBuyItemArgs, 'itemId' | 'quantity'>>;
+  buyShip?: Resolver<Maybe<ResolversTypes['Ship']>, ParentType, ContextType, RequireFields<MutationBuyShipArgs, 'shipId'>>;
   createProfile?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType, RequireFields<MutationCreateProfileArgs, 'userName'>>;
   deleteProfile?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   sellItem?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType, RequireFields<MutationSellItemArgs, 'itemId' | 'quantity'>>;

@@ -27,7 +27,7 @@ model Item {
 }
 
 model Ship {
-  id        String   @id
+  id        String   @id @default(uuid())
   shipId    String
   profileId String
   profile   Profile  @relation(fields: [profileId], references: [userId], onDelete: Cascade)
