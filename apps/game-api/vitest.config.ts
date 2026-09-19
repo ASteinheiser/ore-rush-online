@@ -9,5 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text'],
     },
+    // allow tests to run sequentially since API and game rooms both use test DB
+    fileParallelism: false,
   },
 });

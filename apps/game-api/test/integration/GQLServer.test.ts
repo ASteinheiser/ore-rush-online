@@ -5,7 +5,7 @@ import { ProfilesRepository } from '../../src/repo/Profiles';
 import { StashRepository } from '../../src/repo/Stash';
 import { MarketplaceRepository } from '../../src/repo/Marketplace';
 import { ShipsRepository } from '../../src/repo/Ships';
-import { ORE } from '@repo/core-game';
+import { ORE, SHIPS } from '@repo/core-game';
 import type { GoTrueAdminApi } from '@supabase/supabase-js';
 import type { User } from '../../src/auth/jwt';
 import { prisma } from '../../src/repo/client';
@@ -26,10 +26,14 @@ import type {
   Test_GetUserProfileCoinsQueryVariables,
   Test_GetProfileStashQuery,
   Test_GetProfileStashQueryVariables,
+  Test_GetProfileShipsQuery,
+  Test_GetProfileShipsQueryVariables,
   Test_SellItemMutation,
   Test_SellItemMutationVariables,
   Test_BuyItemMutation,
   Test_BuyItemMutationVariables,
+  Test_BuyShipMutation,
+  Test_BuyShipMutationVariables,
 } from '../graphql';
 
 describe('GQLServer', () => {
@@ -427,5 +431,268 @@ describe('GQLServer', () => {
       where: { profileId_id: { profileId: testUser.id, id: itemId } },
     });
     expect(item?.quantity).toBe(initialItemQuantity);
+  });
+
+  it("should fetch a user profile's ships", async () => {
+    const testUser = TEST_USERS[9];
+    const ships = [{ shipId: SHIPS[0].id }, { shipId: SHIPS[1].id }];
+
+    await Promise.all([
+      prisma.ship.create({ data: { profileId: testUser.id, ...ships[0] } }),
+      prisma.ship.create({ data: { profileId: testUser.id, ...ships[1] } }),
+    ]);
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<
+      Test_GetProfileShipsQuery,
+      Test_GetProfileShipsQueryVariables
+    >(
+      {
+        query: gql`
+          query Test_GetProfileShips {
+            profile {
+              ships {
+                id
+                shipId
+              }
+            }
+          }
+        `,
+      },
+      context
+    );
+
+    const { profile } = parseGQLData(result);
+
+    expect(profile?.ships).toEqual(
+      expect.arrayContaining(ships.map((ship) => expect.objectContaining(ship)))
+    );
+  });
+
+  it('should give a free ship to a player with no ships', async () => {
+    const testUser = TEST_USERS[10];
+    const freeShip = SHIPS[0];
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyShipMutation, Test_BuyShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyShip($shipId: String!) {
+            buyShip(shipId: $shipId) {
+              id
+              shipId
+            }
+          }
+        `,
+        variables: { shipId: freeShip.id },
+      },
+      context
+    );
+
+    const ship = parseGQLData(result).buyShip;
+
+    expect(ship?.shipId).toBe(freeShip.id);
+    expect(ship?.id).toBeTruthy();
+
+    const ships = await prisma.ship.findMany({ where: { profileId: testUser.id } });
+    expect(ships).toHaveLength(1);
+    expect(ships[0].shipId).toBe(freeShip.id);
+  });
+
+  it('should not give a free ship when the player already has a ship', async () => {
+    const testUser = TEST_USERS[11];
+    const freeShip = SHIPS[0];
+
+    await prisma.ship.create({ data: { profileId: testUser.id, shipId: freeShip.id } });
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyShipMutation, Test_BuyShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyShip($shipId: String!) {
+            buyShip(shipId: $shipId) {
+              id
+              shipId
+            }
+          }
+        `,
+        variables: { shipId: freeShip.id },
+      },
+      context
+    );
+
+    expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
+      'player already has a ship'
+    );
+  });
+
+  it('should buy a ship with coins', async () => {
+    const testUser = TEST_USERS[12];
+    const coinShip = SHIPS[3];
+    const initialCoins = coinShip.price.amount + 50;
+    const expectedFinalCoins = initialCoins - coinShip.price.amount;
+
+    await prisma.profile.update({ where: { userId: testUser.id }, data: { coins: initialCoins } });
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyShipMutation, Test_BuyShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyShip($shipId: String!) {
+            buyShip(shipId: $shipId) {
+              id
+              shipId
+            }
+          }
+        `,
+        variables: { shipId: coinShip.id },
+      },
+      context
+    );
+
+    const ship = parseGQLData(result).buyShip;
+
+    expect(ship?.shipId).toBe(coinShip.id);
+    expect(ship?.id).toBeTruthy();
+
+    const profile = await prisma.profile.findUnique({ where: { userId: testUser.id } });
+    expect(profile?.coins).toBe(expectedFinalCoins);
+
+    const ships = await prisma.ship.findMany({ where: { profileId: testUser.id } });
+    expect(ships).toHaveLength(1);
+    expect(ships[0].shipId).toBe(coinShip.id);
+  });
+
+  it('should not buy a ship when there are not enough coins', async () => {
+    const testUser = TEST_USERS[13];
+    const coinShip = SHIPS[3];
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyShipMutation, Test_BuyShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyShip($shipId: String!) {
+            buyShip(shipId: $shipId) {
+              id
+              shipId
+            }
+          }
+        `,
+        variables: { shipId: coinShip.id },
+      },
+      context
+    );
+
+    expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
+      'Not enough coins to buy this ship'
+    );
+  });
+
+  it('should buy a ship with ore from the stash', async () => {
+    const testUser = TEST_USERS[14];
+    const oreShip = SHIPS[1];
+    const oreId = oreShip.price.type;
+    const oreCost = oreShip.price.amount;
+    const initialOreQuantity = oreCost + 5;
+    const expectedFinalOreQuantity = initialOreQuantity - oreCost;
+
+    await prisma.item.create({
+      data: { profileId: testUser.id, id: oreId, quantity: initialOreQuantity },
+    });
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyShipMutation, Test_BuyShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyShip($shipId: String!) {
+            buyShip(shipId: $shipId) {
+              id
+              shipId
+            }
+          }
+        `,
+        variables: { shipId: oreShip.id },
+      },
+      context
+    );
+
+    const ship = parseGQLData(result).buyShip;
+
+    expect(ship?.shipId).toBe(oreShip.id);
+    expect(ship?.id).toBeTruthy();
+
+    const item = await prisma.item.findUnique({
+      where: { profileId_id: { profileId: testUser.id, id: oreId } },
+    });
+    expect(item?.quantity).toBe(expectedFinalOreQuantity);
+
+    const ships = await prisma.ship.findMany({ where: { profileId: testUser.id } });
+    expect(ships).toHaveLength(1);
+    expect(ships[0].shipId).toBe(oreShip.id);
+  });
+
+  it('should not buy a ship when there is not enough ore in the stash', async () => {
+    const testUser = TEST_USERS[15];
+    const oreShip = SHIPS[1];
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyShipMutation, Test_BuyShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyShip($shipId: String!) {
+            buyShip(shipId: $shipId) {
+              id
+              shipId
+            }
+          }
+        `,
+        variables: { shipId: oreShip.id },
+      },
+      context
+    );
+
+    expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
+      'Not enough items in stash'
+    );
+  });
+
+  it('should not buy a ship with an invalid ship id', async () => {
+    const testUser = TEST_USERS[16];
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_BuyShipMutation, Test_BuyShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_BuyShip($shipId: String!) {
+            buyShip(shipId: $shipId) {
+              id
+              shipId
+            }
+          }
+        `,
+        variables: { shipId: 'invalid-ship-id' },
+      },
+      context
+    );
+
+    expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
+      'invalid shipId'
+    );
   });
 });
