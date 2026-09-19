@@ -18,8 +18,8 @@ const GET_PROFILE_SHIPS = gql`
 type OwnedShip = NonNullable<NonNullable<Desktop_GetProfileShipsQuery['profile']>['ships']>[number];
 
 interface ShipContextType {
-  selectedShipId: string | null;
-  setSelectedShipId: (shipId: string | null) => void;
+  selectedShip: OwnedShip | null;
+  setSelectedShip: (ship: OwnedShip | null) => void;
   ownedShips: Array<OwnedShip>;
   loading: boolean;
   error: Error | undefined;
@@ -27,8 +27,8 @@ interface ShipContextType {
 }
 
 const ShipContext = createContext<ShipContextType>({
-  selectedShipId: null,
-  setSelectedShipId: () => {},
+  selectedShip: null,
+  setSelectedShip: () => {},
   ownedShips: [],
   loading: false,
   error: undefined,
@@ -45,7 +45,7 @@ export const useShip = () => {
 
 export const ShipProvider = ({ children }: { children: React.ReactNode }) => {
   const { session } = useSession();
-  const [selectedShipId, setSelectedShipId] = useState<string | null>(null);
+  const [selectedShip, setSelectedShip] = useState<OwnedShip | null>(null);
 
   const { data, loading, error, refetch } = useQuery<
     Desktop_GetProfileShipsQuery,
@@ -58,7 +58,7 @@ export const ShipProvider = ({ children }: { children: React.ReactNode }) => {
   const ownedShips = data?.profile?.ships ?? [];
 
   return (
-    <ShipContext.Provider value={{ selectedShipId, setSelectedShipId, ownedShips, loading, error, refetch }}>
+    <ShipContext.Provider value={{ selectedShip, setSelectedShip, ownedShips, loading, error, refetch }}>
       {children}
     </ShipContext.Provider>
   );

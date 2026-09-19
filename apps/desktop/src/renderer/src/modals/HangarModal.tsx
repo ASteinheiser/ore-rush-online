@@ -44,8 +44,8 @@ interface HangarModalProps {
 
 export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
   const {
-    selectedShipId,
-    setSelectedShipId,
+    selectedShip,
+    setSelectedShip,
     ownedShips,
     loading: isLoadingShips,
     refetch: refetchShips,
@@ -97,7 +97,7 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
             ) : (
               <ul className="flex flex-col gap-y-2">
                 {ownedShips.map((ship) => {
-                  const isSelected = selectedShipId === ship.id;
+                  const isSelected = selectedShip?.id === ship.id;
 
                   return (
                     <li
@@ -115,7 +115,7 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
                         size="sm"
                         variant={isSelected ? 'secondary' : 'default'}
                         disabled={isSelected}
-                        onClick={() => setSelectedShipId(ship.id)}
+                        onClick={() => setSelectedShip(ship)}
                       >
                         {isSelected ? 'Active' : 'Select'}
                       </Button>
