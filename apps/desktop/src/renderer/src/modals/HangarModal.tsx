@@ -18,6 +18,7 @@ import type {
   Desktop_GetProfileShipsQuery,
   Desktop_GetProfileShipsQueryVariables,
 } from '../graphql';
+import { useShip } from '../providers/ShipProvider';
 import { useStash } from '../providers/StashProvider';
 
 const GET_PROFILE_SHIPS = gql`
@@ -55,13 +56,12 @@ const formatPrice = (price: { type: string; amount: number }) => {
 interface HangarModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedShipId: string | null;
-  onSelectShip: (shipId: string) => void;
 }
 
-export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip }: HangarModalProps) => {
-  const { session } = useSession();
+export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
+  const { selectedShipId, setSelectedShipId } = useShip();
   const { refetch: refetchStash } = useStash();
+  const { session } = useSession();
   const authHeaders = { headers: { Authorization: session?.access_token } };
 
   const {
@@ -135,7 +135,7 @@ export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip
                         size="sm"
                         variant={isSelected ? 'secondary' : 'default'}
                         disabled={isSelected}
-                        onClick={() => onSelectShip(ship.id)}
+                        onClick={() => setSelectedShipId(ship.id)}
                       >
                         {isSelected ? 'Active' : 'Select'}
                       </Button>
