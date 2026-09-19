@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, toast } from '@repo/ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, LoadingSpinner, toast } from '@repo/ui';
 import { ORE, SHIPS } from '@repo/core-game';
 import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
@@ -46,9 +46,11 @@ const formatPrice = (price: { type: string; amount: number }) => {
 interface HangarModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedShipId: string | null;
+  onSelectShip: (shipId: string) => void;
 }
 
-export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
+export const HangarModal = ({ isOpen, onOpenChange, selectedShipId, onSelectShip }: HangarModalProps) => {
   const { session } = useSession();
   const { refetch: refetchStash } = useStash();
   const authHeaders = { headers: { Authorization: session?.access_token } };
@@ -96,22 +98,39 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
             <h3 className="font-pixel text-2xl text-muted">Ships You Own</h3>
 
             {isLoadingShips ? (
-              <p className="font-title text-xl text-muted-foreground">Loading...</p>
+              <div className="flex items-center justify-center">
+                <LoadingSpinner />
+              </div>
             ) : ownedShips.length === 0 ? (
               <Button disabled={loading} onClick={() => handleBuyShip(FREE_SHIP.id)}>
                 Claim Free Ship
               </Button>
             ) : (
               <ul className="flex flex-col gap-y-2">
-                {ownedShips.map((ship) => (
-                  <li
-                    key={ship.id}
-                    className="font-title text-xl text-muted-foreground flex items-center border border-secondary rounded-xl py-2 px-4"
-                  >
-                    {SHIPS.find((s) => s.id === ship.shipId)?.name}
-                    <span className="text-sm text-muted ml-2">({ship.id.slice(-4)})</span>
-                  </li>
-                ))}
+                {ownedShips.map((ship) => {
+                  const isSelected = selectedShipId === ship.id;
+
+                  return (
+                    <li
+                      key={ship.id}
+                      className="font-title text-xl text-muted-foreground flex justify-between border border-secondary rounded-xl py-2 px-4"
+                    >
+                      <div className="flex flex-row items-center gap-2">
+                        {SHIPS.find((s) => s.id === ship.shipId)?.name}
+                        <span className="text-sm text-muted">({ship.id.slice(-4)})</span>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant={isSelected ? 'secondary' : 'default'}
+                        disabled={isSelected}
+                        onClick={() => onSelectShip(ship.id)}
+                      >
+                        {isSelected ? 'Active' : 'Select'}
+                      </Button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>

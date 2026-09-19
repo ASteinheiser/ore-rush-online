@@ -33,6 +33,7 @@ export const Game = () => {
   const [isMarketplaceModalOpen, setIsMarketplaceModalOpen] = useSearchParamFlag(SEARCH_PARAMS.MARKETPLACE);
   const [isHangarModalOpen, setIsHangarModalOpen] = useSearchParamFlag(SEARCH_PARAMS.HANGAR);
   const [isHomeBaseActive, setIsHomeBaseActive] = useState(false);
+  const [selectedShipId, setSelectedShipId] = useState<string | null>(null);
 
   const setPhaserInputEnabled = useCallback(() => {
     const disabled =
@@ -164,7 +165,12 @@ export const Game = () => {
       <NewPasswordModal isOpen={isNewPasswordModalOpen} onOpenChange={setIsNewPasswordModalOpen} />
       <StashModal isOpen={isStashModalOpen} onOpenChange={setIsStashModalOpen} />
       <MarketplaceModal isOpen={isMarketplaceModalOpen} onOpenChange={setIsMarketplaceModalOpen} />
-      <HangarModal isOpen={isHangarModalOpen} onOpenChange={setIsHangarModalOpen} />
+      <HangarModal
+        isOpen={isHangarModalOpen}
+        onOpenChange={setIsHangarModalOpen}
+        selectedShipId={selectedShipId}
+        onSelectShip={setSelectedShipId}
+      />
     </>
   );
 };
