@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { type AuthPayload, PLAYER_VX_PER_TICK } from '@repo/core-game';
+import { type AuthPayload, type EntityPosition, PLAYER_SIZE, PLAYER_VX_PER_TICK } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { Player, PLAYER_ANIM } from '../objects/Player';
 import { Interactable } from '../objects/Interactable';
@@ -8,6 +8,8 @@ import { revealScene, transitionToScene } from '../transitions';
 
 /** Constant movement speed (px/s), derived from the player's VX tick constant */
 const PLAYER_SPEED = 1.5 * PLAYER_VX_PER_TICK;
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 interface InputKeys {
   W: Phaser.Input.Keyboard.Key;
@@ -70,12 +72,13 @@ export class HomeBase extends Phaser.Scene {
       const { width, height } = this.scale;
 
       this.physics.world.setBounds(0, 0, width, height);
+      this.movePlayer({ x: this.player.entity.x, y: this.player.entity.y });
 
       this.interactables.forEach((interactable) => interactable.resize(width, height));
     };
 
     layout();
-    this.player.forceMove({ x: this.scale.width / 2, y: this.scale.height / 2 });
+    this.movePlayer({ x: this.scale.width / 2, y: this.scale.height / 2 });
 
     this.scale.on(Phaser.Scale.Events.RESIZE, layout);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -105,7 +108,22 @@ export class HomeBase extends Phaser.Scene {
     if (this.inputKeys.UP.isDown || this.inputKeys.W.isDown) direction.y -= PLAYER_SPEED;
     if (this.inputKeys.DOWN.isDown || this.inputKeys.S.isDown) direction.y += PLAYER_SPEED;
 
-    this.player.forceMove({ x: this.player.entity.x + direction.x, y: this.player.entity.y + direction.y });
+    this.movePlayer({
+      x: this.player.entity.x + direction.x,
+      y: this.player.entity.y + direction.y,
+    });
+  }
+
+  /** Move the player, keeping their center position within the scene so the full sprite stays on-screen */
+  private movePlayer({ x, y }: EntityPosition) {
+    const halfWidth = PLAYER_SIZE.width / 2;
+    const halfHeight = PLAYER_SIZE.height / 2;
+    const { width, height } = this.scale;
+
+    this.player.forceMove({
+      x: clamp(x, halfWidth, width - halfWidth),
+      y: clamp(y, halfHeight, height - halfHeight),
+    });
   }
 
   /** Finds the nearest interactable within range, shows a prompt, and handles the interact key */
