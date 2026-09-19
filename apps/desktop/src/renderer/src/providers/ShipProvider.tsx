@@ -1,8 +1,10 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import type { Desktop_GetProfileShipsQuery, Desktop_GetProfileShipsQueryVariables } from '../graphql';
+
+const SELECTED_SHIP_LOCAL_STORAGE_KEY = 'selected_ship_id';
 
 const GET_PROFILE_SHIPS = gql`
   query Desktop_GetProfileShips {
@@ -19,7 +21,7 @@ type OwnedShip = NonNullable<NonNullable<Desktop_GetProfileShipsQuery['profile']
 
 interface ShipContextType {
   selectedShip: OwnedShip | null;
-  setSelectedShip: (ship: OwnedShip | null) => void;
+  setSelectedShip: (shipId: string | null) => void;
   ownedShips: Array<OwnedShip>;
   loading: boolean;
   error: Error | undefined;
@@ -45,7 +47,9 @@ export const useShip = () => {
 
 export const ShipProvider = ({ children }: { children: React.ReactNode }) => {
   const { session } = useSession();
-  const [selectedShip, setSelectedShip] = useState<OwnedShip | null>(null);
+  const [selectedShipId, setSelectedShipId] = useState<string | null>(() =>
+    localStorage.getItem(SELECTED_SHIP_LOCAL_STORAGE_KEY)
+  );
 
   const { data, loading, error, refetch } = useQuery<
     Desktop_GetProfileShipsQuery,
@@ -56,9 +60,29 @@ export const ShipProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   const ownedShips = data?.profile?.ships ?? [];
+  const selectedShip = ownedShips.find((ship) => ship.id === selectedShipId) ?? null;
+
+  const handleSetSelectedShip = (shipId: string | null) => {
+    setSelectedShipId(shipId);
+
+    if (shipId) {
+      localStorage.setItem(SELECTED_SHIP_LOCAL_STORAGE_KEY, shipId);
+    } else {
+      localStorage.removeItem(SELECTED_SHIP_LOCAL_STORAGE_KEY);
+    }
+  };
 
   return (
-    <ShipContext.Provider value={{ selectedShip, setSelectedShip, ownedShips, loading, error, refetch }}>
+    <ShipContext.Provider
+      value={{
+        selectedShip,
+        setSelectedShip: handleSetSelectedShip,
+        ownedShips,
+        loading,
+        error,
+        refetch,
+      }}
+    >
       {children}
     </ShipContext.Provider>
   );

@@ -115,7 +115,7 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
                         size="sm"
                         variant={isSelected ? 'secondary' : 'default'}
                         disabled={isSelected}
-                        onClick={() => setSelectedShip(ship)}
+                        onClick={() => setSelectedShip(ship.id)}
                       >
                         {isSelected ? 'Active' : 'Select'}
                       </Button>
