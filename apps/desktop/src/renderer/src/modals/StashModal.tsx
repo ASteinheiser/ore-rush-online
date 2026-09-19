@@ -25,7 +25,10 @@ export const StashModal = ({ isOpen, onOpenChange }: StashModalProps) => {
           {stashItems.length > 0 ? (
             stashItems.map((item) => <OreItem key={item.id} oreId={item.id} quantity={item.quantity} />)
           ) : (
-            <p className="font-title text-xl text-center text-muted-foreground">Empty...</p>
+            <div className="flex-1 flex-col justify-center text-center font-title text-xl text-muted-foreground">
+              <p className="pb-2">Nothing here...</p>
+              <p>Time to hit the mines!</p>
+            </div>
           )}
         </DialogBody>
       </DialogContent>
