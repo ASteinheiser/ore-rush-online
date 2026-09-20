@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS } from '@repo/core-game';
+import { type EntityPosition, type DRILL_DIRECTION, DRILL_DIRECTIONS, SHIPS } from '@repo/core-game';
 import { ASSET, DEPTH } from '../constants';
 import { CustomText } from './CustomText';
 
@@ -227,5 +227,12 @@ export class Player {
   private stopAnimation() {
     this.entity.anims.stop();
     this.outline.setFrame(this.entity.frame.name);
+  }
+
+  public updateActiveShip(shipId: string) {
+    const ship = SHIPS.find((ship) => ship.id === shipId);
+    if (!ship) return;
+    this.entity.setTint(ship.color.fill);
+    this.outline.setTint(ship.color.outline);
   }
 }

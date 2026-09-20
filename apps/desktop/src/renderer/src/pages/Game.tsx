@@ -18,11 +18,13 @@ import { HomeBaseOverlay } from '../components/HomeBaseOverlay';
 import { SEARCH_PARAMS } from '../router/constants';
 import { useAudioSettings } from '../providers/AudioSettingsProvider';
 import { useStash } from '../providers/StashProvider';
+import { useShip } from '../providers/ShipProvider';
 
 export const Game = () => {
   const { session } = useSession();
   const { isMuted, volume } = useAudioSettings();
   const { refetch: refetchStash } = useStash();
+  const { selectedShip } = useShip();
 
   const phaserRef = useRef<PhaserGameRef | null>(null);
 
@@ -68,6 +70,7 @@ export const Game = () => {
 
     if (scene.scene.key === SCENE.HOME_BASE) {
       setIsHomeBaseActive(true);
+      (scene as HomeBase).updateActiveShip?.(selectedShip?.shipId ?? '');
       await refetchStash();
     } else {
       setIsHomeBaseActive(false);
@@ -152,6 +155,14 @@ export const Game = () => {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
+
+  // handle updating the active ship in home base scene
+  useEffect(() => {
+    const scene = phaserRef?.current?.scene as HomeBase;
+    if (!scene) return;
+
+    scene.updateActiveShip?.(selectedShip?.shipId ?? '');
+  }, [selectedShip]);
 
   return (
     <>

@@ -105,6 +105,10 @@ export class HomeBase extends Phaser.Scene {
     transitionToScene(this, SCENE.GAME, { token });
   }
 
+  public updateActiveShip(shipId: string) {
+    this.player.updateActiveShip(shipId);
+  }
+
   /** Moves the player at a constant velocity in the direction(s) held down */
   private handleMovement(delta: number) {
     const direction = { x: 0, y: 0 };
