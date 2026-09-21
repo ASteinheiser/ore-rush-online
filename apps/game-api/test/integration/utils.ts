@@ -60,15 +60,20 @@ export const generateTestJWT = ({
 
 interface JoinTestRoomArgs {
   server: ColyseusTestServer;
-  token: string;
-  user?: TestUser;
+  user: TestUser;
+  /** Defaults to 10 seconds (10000ms); ignored when `token` is provided */
+  expiresInMs?: number;
+  /** Override the derived JWT. When omitted, generated from `user`. */
+  token?: string;
+  /** Override the derived ship id. When omitted, derived from `user`. */
   shipId?: string;
 }
 /** join or create a room on a test server */
 export const joinTestRoom = async ({
   server,
-  token,
-  user = TEST_USERS[0],
+  user,
+  expiresInMs,
+  token = generateTestJWT({ user, expiresInMs }),
   shipId = getTestShipId(user),
 }: JoinTestRoomArgs) => {
   const client = new Client(server.sdk.settings);
