@@ -60,6 +60,7 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
   >(BUY_SHIP, { context: authHeaders });
 
   const loading = isLoadingShips || isBuying;
+  const hasNoShips = ownedShips.length === 0;
 
   const handleBuyShip = async (shipId: string) => {
     try {
@@ -95,11 +96,11 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
           <section className="flex flex-col gap-y-3">
             <h3 className="font-label text-xl text-muted">Owned Ships</h3>
 
-            {isLoadingShips ? (
+            {isLoadingShips && hasNoShips ? (
               <div className="flex items-center justify-center">
                 <LoadingSpinner />
               </div>
-            ) : ownedShips.length === 0 ? (
+            ) : hasNoShips ? (
               <Button disabled={loading} onClick={() => handleBuyShip(FREE_SHIP.id)}>
                 Claim Free Ship
               </Button>
