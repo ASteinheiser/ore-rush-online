@@ -33,8 +33,8 @@ export const SHIPS = [
     name: 'C0-993R',
     description: 'Slick looking copper extraction vessel.',
     color: {
-      fill: 0xcccccc,
-      outline: 0xffffff,
+      fill: 0x966622,
+      outline: 0xcd7f32,
     },
     fuelCapacity: 6000,
     weightCapacity: 100,
@@ -48,8 +48,8 @@ export const SHIPS = [
     name: 'G0LD3-N',
     description: "It's f*king gold!",
     color: {
-      fill: 0xffffff,
-      outline: 0x999999,
+      fill: 0xccaa00,
+      outline: 0xffdd00,
     },
     fuelCapacity: 10000,
     weightCapacity: 200,
