@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { FIXED_TIME_STEP, type AuthPayload } from '@repo/core-game';
+import { FIXED_TIME_STEP, type AuthPayload, type JoinRoomOptions } from '@repo/core-game';
 import { EventBus, EVENT_BUS } from '../EventBus';
 import { SCENE } from '../constants';
 import { fadeSceneIn, slideBackdrop, transitionToScene } from '../transitions';
@@ -28,13 +28,13 @@ export class Game extends Phaser.Scene {
     this.inputSystem.setupInputSystem();
   }
 
-  async create({ token }: AuthPayload) {
+  async create({ token, shipId }: AuthPayload & JoinRoomOptions) {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.roomSystem.cleanupRoom();
       this.cleanupScene();
     });
 
-    await this.roomSystem.joinRoom(token);
+    await this.roomSystem.joinRoom({ token, shipId });
     if (!this.roomSystem.room) {
       return this.sendToHomeBase('Failed to join room');
     }

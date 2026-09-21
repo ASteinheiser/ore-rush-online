@@ -98,16 +98,20 @@ export const Game = () => {
   useEffect(() => {
     EventBus.on(EVENT_BUS.GAME_START, () => {
       if (!session?.access_token) return;
+      if (!selectedShip) {
+        toast.error('Select a ship in the Hangar before starting');
+        return;
+      }
       const scene = phaserRef?.current?.scene as HomeBase;
 
       handleCloseModals();
-      scene?.startGame?.({ token: session.access_token });
+      scene?.startGame?.({ token: session.access_token, shipId: selectedShip.id });
     });
 
     return () => {
       EventBus.off(EVENT_BUS.GAME_START);
     };
-  }, [session]);
+  }, [session, selectedShip]);
 
   useEffect(() => {
     EventBus.on(EVENT_BUS.PROFILE_OPEN, () => setIsProfileModalOpen(true));

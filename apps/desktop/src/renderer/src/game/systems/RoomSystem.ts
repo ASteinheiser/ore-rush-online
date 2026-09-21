@@ -4,6 +4,7 @@ import {
   WS_ROOM,
   WS_CODE,
   type AuthPayload,
+  type JoinRoomOptions,
   type GameRoomState,
   type Player as ServerPlayer,
   type Block as ServerBlock,
@@ -45,8 +46,8 @@ export class RoomSystem {
     this.room = undefined;
   }
 
-  public async joinRoom(authToken: string) {
-    this.client.auth.token = authToken;
+  public async joinRoom({ token, shipId }: AuthPayload & JoinRoomOptions) {
+    this.client.auth.token = token;
 
     const reconnectToken = this.getStoredReconnectionToken();
     if (reconnectToken) {
@@ -59,7 +60,7 @@ export class RoomSystem {
     }
     try {
       if (!this.room) {
-        this.room = await this.client.joinOrCreate(WS_ROOM.GAME_ROOM);
+        this.room = await this.client.joinOrCreate(WS_ROOM.GAME_ROOM, { shipId });
       }
     } catch (error) {
       console.error('Failed to join room:', error);

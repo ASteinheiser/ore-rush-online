@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import {
   type AuthPayload,
+  type JoinRoomOptions,
   type EntityPosition,
   PLAYER_SIZE,
   PLAYER_VX_PER_TICK,
@@ -101,8 +102,8 @@ export class HomeBase extends Phaser.Scene {
     this.handleInteraction();
   }
 
-  public startGame({ token }: AuthPayload) {
-    transitionToScene(this, SCENE.GAME, { token });
+  public startGame({ token, shipId }: AuthPayload & JoinRoomOptions) {
+    transitionToScene(this, SCENE.GAME, { token, shipId });
   }
 
   public updateActiveShip(shipId: string) {
