@@ -17,14 +17,16 @@ type Documents = {
     "\n  mutation Desktop_BuyShip($shipId: String!) {\n    buyShip(shipId: $shipId) {\n      id\n      shipId\n    }\n  }\n": typeof types.Desktop_BuyShipDocument,
     "\n  mutation Desktop_BuyItem($itemId: String!, $quantity: Int!) {\n    buyItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": typeof types.Desktop_BuyItemDocument,
     "\n  mutation Desktop_SellItem($itemId: String!, $quantity: Int!) {\n    sellItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": typeof types.Desktop_SellItemDocument,
-    "\n  query Desktop_GetProfileShips {\n    profile {\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n": typeof types.Desktop_GetProfileShipsDocument,
+    "\n  query Desktop_GetProfileShips {\n    profile {\n      selectedShipId\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n": typeof types.Desktop_GetProfileShipsDocument,
+    "\n  mutation Desktop_SelectShip($shipId: String!) {\n    selectShip(shipId: $shipId) {\n      selectedShipId\n    }\n  }\n": typeof types.Desktop_SelectShipDocument,
     "\n  query Desktop_GetProfileStash {\n    profile {\n      coins\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n": typeof types.Desktop_GetProfileStashDocument,
 };
 const documents: Documents = {
     "\n  mutation Desktop_BuyShip($shipId: String!) {\n    buyShip(shipId: $shipId) {\n      id\n      shipId\n    }\n  }\n": types.Desktop_BuyShipDocument,
     "\n  mutation Desktop_BuyItem($itemId: String!, $quantity: Int!) {\n    buyItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": types.Desktop_BuyItemDocument,
     "\n  mutation Desktop_SellItem($itemId: String!, $quantity: Int!) {\n    sellItem(itemId: $itemId, quantity: $quantity) {\n      coins\n    }\n  }\n": types.Desktop_SellItemDocument,
-    "\n  query Desktop_GetProfileShips {\n    profile {\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n": types.Desktop_GetProfileShipsDocument,
+    "\n  query Desktop_GetProfileShips {\n    profile {\n      selectedShipId\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n": types.Desktop_GetProfileShipsDocument,
+    "\n  mutation Desktop_SelectShip($shipId: String!) {\n    selectShip(shipId: $shipId) {\n      selectedShipId\n    }\n  }\n": types.Desktop_SelectShipDocument,
     "\n  query Desktop_GetProfileStash {\n    profile {\n      coins\n      stash {\n        id\n        quantity\n      }\n    }\n  }\n": types.Desktop_GetProfileStashDocument,
 };
 
@@ -57,7 +59,11 @@ export function graphql(source: "\n  mutation Desktop_SellItem($itemId: String!,
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query Desktop_GetProfileShips {\n    profile {\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n"): (typeof documents)["\n  query Desktop_GetProfileShips {\n    profile {\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query Desktop_GetProfileShips {\n    profile {\n      selectedShipId\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n"): (typeof documents)["\n  query Desktop_GetProfileShips {\n    profile {\n      selectedShipId\n      ships {\n        id\n        shipId\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation Desktop_SelectShip($shipId: String!) {\n    selectShip(shipId: $shipId) {\n      selectedShipId\n    }\n  }\n"): (typeof documents)["\n  mutation Desktop_SelectShip($shipId: String!) {\n    selectShip(shipId: $shipId) {\n      selectedShipId\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -20,8 +20,9 @@ type Documents = {
     "\n          query Test_GetProfileStash {\n            profile {\n              stash {\n                id\n                quantity\n              }\n            }\n          }\n        ": typeof types.Test_GetProfileStashDocument,
     "\n          mutation Test_SellItem($itemId: String!, $quantity: Int!) {\n            sellItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": typeof types.Test_SellItemDocument,
     "\n          mutation Test_BuyItem($itemId: String!, $quantity: Int!) {\n            buyItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": typeof types.Test_BuyItemDocument,
-    "\n          query Test_GetProfileShips {\n            profile {\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        ": typeof types.Test_GetProfileShipsDocument,
+    "\n          query Test_GetProfileShips {\n            profile {\n              selectedShipId\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        ": typeof types.Test_GetProfileShipsDocument,
     "\n          mutation Test_BuyShip($shipId: String!) {\n            buyShip(shipId: $shipId) {\n              id\n              shipId\n            }\n          }\n        ": typeof types.Test_BuyShipDocument,
+    "\n          mutation Test_SelectShip($shipId: String!) {\n            selectShip(shipId: $shipId) {\n              selectedShipId\n            }\n          }\n        ": typeof types.Test_SelectShipDocument,
 };
 const documents: Documents = {
     "\n          query Test_GetTotalPlayers {\n            totalPlayers\n          }\n        ": types.Test_GetTotalPlayersDocument,
@@ -30,8 +31,9 @@ const documents: Documents = {
     "\n          query Test_GetProfileStash {\n            profile {\n              stash {\n                id\n                quantity\n              }\n            }\n          }\n        ": types.Test_GetProfileStashDocument,
     "\n          mutation Test_SellItem($itemId: String!, $quantity: Int!) {\n            sellItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": types.Test_SellItemDocument,
     "\n          mutation Test_BuyItem($itemId: String!, $quantity: Int!) {\n            buyItem(itemId: $itemId, quantity: $quantity) {\n              coins\n            }\n          }\n        ": types.Test_BuyItemDocument,
-    "\n          query Test_GetProfileShips {\n            profile {\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        ": types.Test_GetProfileShipsDocument,
+    "\n          query Test_GetProfileShips {\n            profile {\n              selectedShipId\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        ": types.Test_GetProfileShipsDocument,
     "\n          mutation Test_BuyShip($shipId: String!) {\n            buyShip(shipId: $shipId) {\n              id\n              shipId\n            }\n          }\n        ": types.Test_BuyShipDocument,
+    "\n          mutation Test_SelectShip($shipId: String!) {\n            selectShip(shipId: $shipId) {\n              selectedShipId\n            }\n          }\n        ": types.Test_SelectShipDocument,
 };
 
 /**
@@ -75,11 +77,15 @@ export function graphql(source: "\n          mutation Test_BuyItem($itemId: Stri
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n          query Test_GetProfileShips {\n            profile {\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        "): (typeof documents)["\n          query Test_GetProfileShips {\n            profile {\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        "];
+export function graphql(source: "\n          query Test_GetProfileShips {\n            profile {\n              selectedShipId\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        "): (typeof documents)["\n          query Test_GetProfileShips {\n            profile {\n              selectedShipId\n              ships {\n                id\n                shipId\n              }\n            }\n          }\n        "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n          mutation Test_BuyShip($shipId: String!) {\n            buyShip(shipId: $shipId) {\n              id\n              shipId\n            }\n          }\n        "): (typeof documents)["\n          mutation Test_BuyShip($shipId: String!) {\n            buyShip(shipId: $shipId) {\n              id\n              shipId\n            }\n          }\n        "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n          mutation Test_SelectShip($shipId: String!) {\n            selectShip(shipId: $shipId) {\n              selectedShipId\n            }\n          }\n        "): (typeof documents)["\n          mutation Test_SelectShip($shipId: String!) {\n            selectShip(shipId: $shipId) {\n              selectedShipId\n            }\n          }\n        "];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

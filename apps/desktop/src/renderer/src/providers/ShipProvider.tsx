@@ -1,14 +1,18 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext } from 'react';
 import { useSession } from '@repo/client-auth/provider';
 import { gql } from '@apollo/client';
-import { useQuery } from '@apollo/client/react';
-import type { Desktop_GetProfileShipsQuery, Desktop_GetProfileShipsQueryVariables } from '../graphql';
-
-const SELECTED_SHIP_LOCAL_STORAGE_KEY = 'selected_ship_id';
+import { useMutation, useQuery } from '@apollo/client/react';
+import type {
+  Desktop_GetProfileShipsQuery,
+  Desktop_GetProfileShipsQueryVariables,
+  Desktop_SelectShipMutation,
+  Desktop_SelectShipMutationVariables,
+} from '../graphql';
 
 const GET_PROFILE_SHIPS = gql`
   query Desktop_GetProfileShips {
     profile {
+      selectedShipId
       ships {
         id
         shipId
@@ -17,11 +21,19 @@ const GET_PROFILE_SHIPS = gql`
   }
 `;
 
+const SELECT_SHIP = gql`
+  mutation Desktop_SelectShip($shipId: String!) {
+    selectShip(shipId: $shipId) {
+      selectedShipId
+    }
+  }
+`;
+
 type OwnedShip = NonNullable<NonNullable<Desktop_GetProfileShipsQuery['profile']>['ships']>[number];
 
 interface ShipContextType {
   selectedShip: OwnedShip | null;
-  setSelectedShip: (shipId: string | null) => void;
+  setSelectedShip: (shipId: string) => Promise<void>;
   ownedShips: Array<OwnedShip>;
   loading: boolean;
   error: Error | undefined;
@@ -30,7 +42,7 @@ interface ShipContextType {
 
 const ShipContext = createContext<ShipContextType>({
   selectedShip: null,
-  setSelectedShip: () => {},
+  setSelectedShip: () => Promise.resolve(),
   ownedShips: [],
   loading: false,
   error: undefined,
@@ -47,38 +59,37 @@ export const useShip = () => {
 
 export const ShipProvider = ({ children }: { children: React.ReactNode }) => {
   const { session } = useSession();
-  const [selectedShipId, setSelectedShipId] = useState<string | null>(() =>
-    localStorage.getItem(SELECTED_SHIP_LOCAL_STORAGE_KEY)
-  );
+  const authHeaders = { headers: { Authorization: session?.access_token } };
 
   const { data, loading, error, refetch } = useQuery<
     Desktop_GetProfileShipsQuery,
     Desktop_GetProfileShipsQueryVariables
   >(GET_PROFILE_SHIPS, {
     skip: !session?.access_token,
-    context: { headers: { Authorization: session?.access_token } },
+    context: authHeaders,
   });
 
+  const [selectShip, { loading: isSelecting }] = useMutation<
+    Desktop_SelectShipMutation,
+    Desktop_SelectShipMutationVariables
+  >(SELECT_SHIP, { context: authHeaders });
+
   const ownedShips = data?.profile?.ships ?? [];
+  const selectedShipId = data?.profile?.selectedShipId ?? null;
   const selectedShip = ownedShips.find((ship) => ship.id === selectedShipId) ?? null;
 
-  const handleSetSelectedShip = (shipId: string | null) => {
-    setSelectedShipId(shipId);
-
-    if (shipId) {
-      localStorage.setItem(SELECTED_SHIP_LOCAL_STORAGE_KEY, shipId);
-    } else {
-      localStorage.removeItem(SELECTED_SHIP_LOCAL_STORAGE_KEY);
-    }
+  const setSelectedShip = async (shipId: string) => {
+    await selectShip({ variables: { shipId } });
+    await refetch();
   };
 
   return (
     <ShipContext.Provider
       value={{
         selectedShip,
-        setSelectedShip: handleSetSelectedShip,
+        setSelectedShip,
         ownedShips,
-        loading,
+        loading: loading || isSelecting,
         error,
         refetch,
       }}

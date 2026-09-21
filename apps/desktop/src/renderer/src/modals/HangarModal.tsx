@@ -71,6 +71,15 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
     }
   };
 
+  const handleSelectShip = async (shipId: string) => {
+    try {
+      await setSelectedShip(shipId);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
@@ -115,7 +124,7 @@ export const HangarModal = ({ isOpen, onOpenChange }: HangarModalProps) => {
                         size="sm"
                         variant={isSelected ? 'secondary' : 'default'}
                         disabled={isSelected}
-                        onClick={() => setSelectedShip(ship.id)}
+                        onClick={() => handleSelectShip(ship.id)}
                       >
                         {isSelected ? 'Active' : 'Select'}
                       </Button>

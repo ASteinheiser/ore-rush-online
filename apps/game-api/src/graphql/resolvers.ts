@@ -67,5 +67,9 @@ export const resolvers: Resolvers<Context> = {
       if (!user) return null;
       return dataSources.shipsDb.buyShip({ profileId: user.id, shipId });
     },
+    selectShip: async (_, { shipId }, { dataSources, user }) => {
+      if (!user) return null;
+      return dataSources.shipsDb.selectShip({ profileId: user.id, shipId });
+    },
   },
 };

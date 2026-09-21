@@ -24,6 +24,7 @@ export type Mutation = {
   buyShip?: Maybe<Ship>;
   createProfile?: Maybe<Profile>;
   deleteProfile?: Maybe<Scalars['Boolean']['output']>;
+  selectShip?: Maybe<Profile>;
   sellItem?: Maybe<Profile>;
   updateProfile?: Maybe<Profile>;
 };
@@ -45,6 +46,11 @@ export type MutationCreateProfileArgs = {
 };
 
 
+export type MutationSelectShipArgs = {
+  shipId: Scalars['String']['input'];
+};
+
+
 export type MutationSellItemArgs = {
   itemId: Scalars['String']['input'];
   quantity: Scalars['Int']['input'];
@@ -58,6 +64,7 @@ export type MutationUpdateProfileArgs = {
 export type Profile = {
   __typename?: 'Profile';
   coins: Scalars['Int']['output'];
+  selectedShipId?: Maybe<Scalars['String']['output']>;
   ships?: Maybe<Array<Ship>>;
   stash?: Maybe<Array<Item>>;
   userName: Scalars['String']['output'];
@@ -188,12 +195,14 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   buyShip?: Resolver<Maybe<ResolversTypes['Ship']>, ParentType, ContextType, RequireFields<MutationBuyShipArgs, 'shipId'>>;
   createProfile?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType, RequireFields<MutationCreateProfileArgs, 'userName'>>;
   deleteProfile?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  selectShip?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType, RequireFields<MutationSelectShipArgs, 'shipId'>>;
   sellItem?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType, RequireFields<MutationSellItemArgs, 'itemId' | 'quantity'>>;
   updateProfile?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType, RequireFields<MutationUpdateProfileArgs, 'userName'>>;
 }>;
 
 export type ProfileResolvers<ContextType = any, ParentType extends ResolversParentTypes['Profile'] = ResolversParentTypes['Profile']> = ResolversObject<{
   coins?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  selectedShipId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   ships?: Resolver<Maybe<Array<ResolversTypes['Ship']>>, ParentType, ContextType>;
   stash?: Resolver<Maybe<Array<ResolversTypes['Item']>>, ParentType, ContextType>;
   userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

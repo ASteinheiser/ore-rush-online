@@ -8,11 +8,13 @@ datasource db {
 }
 
 model Profile {
-  userId   String @id
-  userName String @unique @db.VarChar(255)
-  coins    Int    @default(0)
-  stash    Item[]
-  ships    Ship[]
+  userId         String  @id
+  userName       String  @unique @db.VarChar(255)
+  coins          Int     @default(0)
+  stash          Item[]
+  ships          Ship[]  @relation("OwnedShips")
+  selectedShipId String? @unique
+  selectedShip   Ship?   @relation("SelectedShip", fields: [selectedShipId], references: [id], onDelete: SetNull)
 }
 
 model Item {
@@ -27,10 +29,11 @@ model Item {
 }
 
 model Ship {
-  id        String   @id @default(uuid())
-  shipId    String
-  profileId String
-  profile   Profile  @relation(fields: [profileId], references: [userId], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  shipId     String
+  profileId  String
+  profile    Profile  @relation("OwnedShips", fields: [profileId], references: [userId], onDelete: Cascade)
+  selectedBy Profile? @relation("SelectedShip")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

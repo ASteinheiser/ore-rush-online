@@ -3,6 +3,7 @@ type Profile {
   coins: Int!
   stash: [Item!]
   ships: [Ship!]
+  selectedShipId: String
 }
 
 type Item {
@@ -29,4 +30,5 @@ type Mutation {
   sellItem(itemId: String!, quantity: Int!): Profile
   buyItem(itemId: String!, quantity: Int!): Profile
   buyShip(shipId: String!): Ship
+  selectShip(shipId: String!): Profile
 }

@@ -23,6 +23,19 @@ export class ShipsRepository {
     return this.prisma.ship.delete({ where: { id } });
   }
 
+  /** Sets the profile's active ship, ensuring it is owned by the requesting profile */
+  async selectShip({ shipId, profileId }: { shipId: string; profileId: string }) {
+    const ship = await this.getUserOwnedShipById(shipId, profileId);
+    if (!ship) {
+      throw new Error('ship not found or not owned by this profile');
+    }
+
+    return this.prisma.profile.update({
+      where: { userId: profileId },
+      data: { selectedShipId: shipId },
+    });
+  }
+
   /** Placeholder for future ship purchase/crafting logic.
    * This currently handles:
    * - giving free ships to players with no ships

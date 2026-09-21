@@ -34,6 +34,8 @@ import type {
   Test_BuyItemMutationVariables,
   Test_BuyShipMutation,
   Test_BuyShipMutationVariables,
+  Test_SelectShipMutation,
+  Test_SelectShipMutationVariables,
 } from '../graphql';
 
 describe('GQLServer', () => {
@@ -433,14 +435,18 @@ describe('GQLServer', () => {
     expect(item?.quantity).toBe(initialItemQuantity);
   });
 
-  it("should fetch a user profile's ships", async () => {
+  it("should fetch a user profile's ships and selectedShipId", async () => {
     const testUser = TEST_USERS[9];
     const ships = [{ shipId: SHIPS[0].id }, { shipId: SHIPS[1].id }];
 
-    await Promise.all([
+    const [firstShip] = await Promise.all([
       prisma.ship.create({ data: { profileId: testUser.id, ...ships[0] } }),
       prisma.ship.create({ data: { profileId: testUser.id, ...ships[1] } }),
     ]);
+    await prisma.profile.update({
+      where: { userId: testUser.id },
+      data: { selectedShipId: firstShip.id },
+    });
 
     const context = makeDefaultContext();
     context.contextValue.user = makeTestContextUser(testUser);
@@ -453,6 +459,7 @@ describe('GQLServer', () => {
         query: gql`
           query Test_GetProfileShips {
             profile {
+              selectedShipId
               ships {
                 id
                 shipId
@@ -469,6 +476,39 @@ describe('GQLServer', () => {
     expect(profile?.ships).toEqual(
       expect.arrayContaining(ships.map((ship) => expect.objectContaining(ship)))
     );
+    expect(profile?.selectedShipId).toBe(firstShip.id);
+  });
+
+  it("should default a user profile's selectedShipId to null when no ship has been selected", async () => {
+    const testUser = TEST_USERS[17];
+    await prisma.ship.create({ data: { profileId: testUser.id, shipId: SHIPS[0].id } });
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<
+      Test_GetProfileShipsQuery,
+      Test_GetProfileShipsQueryVariables
+    >(
+      {
+        query: gql`
+          query Test_GetProfileShips {
+            profile {
+              selectedShipId
+              ships {
+                id
+                shipId
+              }
+            }
+          }
+        `,
+      },
+      context
+    );
+
+    const { profile } = parseGQLData(result);
+
+    expect(profile?.selectedShipId).toBeNull();
   });
 
   it('should give a free ship to a player with no ships', async () => {
@@ -693,6 +733,128 @@ describe('GQLServer', () => {
 
     expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
       'invalid shipId'
+    );
+  });
+
+  it('should select an owned ship', async () => {
+    const testUser = TEST_USERS[18];
+    const ships = await Promise.all([
+      prisma.ship.create({ data: { profileId: testUser.id, shipId: SHIPS[0].id } }),
+      prisma.ship.create({ data: { profileId: testUser.id, shipId: SHIPS[1].id } }),
+    ]);
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_SelectShipMutation, Test_SelectShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_SelectShip($shipId: String!) {
+            selectShip(shipId: $shipId) {
+              selectedShipId
+            }
+          }
+        `,
+        variables: { shipId: ships[1].id },
+      },
+      context
+    );
+
+    const profile = parseGQLData(result).selectShip;
+
+    expect(profile?.selectedShipId).toBe(ships[1].id);
+
+    const dbProfile = await prisma.profile.findUnique({ where: { userId: testUser.id } });
+    expect(dbProfile?.selectedShipId).toBe(ships[1].id);
+  });
+
+  it('should update the selected ship when selecting a different owned ship', async () => {
+    const testUser = TEST_USERS[19];
+    const ships = await Promise.all([
+      prisma.ship.create({ data: { profileId: testUser.id, shipId: SHIPS[0].id } }),
+      prisma.ship.create({ data: { profileId: testUser.id, shipId: SHIPS[1].id } }),
+    ]);
+    await prisma.profile.update({
+      where: { userId: testUser.id },
+      data: { selectedShipId: ships[0].id },
+    });
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_SelectShipMutation, Test_SelectShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_SelectShip($shipId: String!) {
+            selectShip(shipId: $shipId) {
+              selectedShipId
+            }
+          }
+        `,
+        variables: { shipId: ships[1].id },
+      },
+      context
+    );
+
+    const profile = parseGQLData(result).selectShip;
+
+    expect(profile?.selectedShipId).toBe(ships[1].id);
+  });
+
+  it('should not select a ship that is not owned by the profile', async () => {
+    const testUser = TEST_USERS[20];
+    const otherUser = TEST_USERS[21];
+    const otherUsersShip = await prisma.ship.create({
+      data: { profileId: otherUser.id, shipId: SHIPS[0].id },
+    });
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_SelectShipMutation, Test_SelectShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_SelectShip($shipId: String!) {
+            selectShip(shipId: $shipId) {
+              selectedShipId
+            }
+          }
+        `,
+        variables: { shipId: otherUsersShip.id },
+      },
+      context
+    );
+
+    expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
+      'ship not found or not owned by this profile'
+    );
+
+    const dbProfile = await prisma.profile.findUnique({ where: { userId: testUser.id } });
+    expect(dbProfile?.selectedShipId).toBeNull();
+  });
+
+  it('should not select a ship with a non-existent ship id', async () => {
+    const testUser = TEST_USERS[22];
+
+    const context = makeDefaultContext();
+    context.contextValue.user = makeTestContextUser(testUser);
+
+    const result = await server.executeOperation<Test_SelectShipMutation, Test_SelectShipMutationVariables>(
+      {
+        query: gql`
+          mutation Test_SelectShip($shipId: String!) {
+            selectShip(shipId: $shipId) {
+              selectedShipId
+            }
+          }
+        `,
+        variables: { shipId: 'non-existent-ship-id' },
+      },
+      context
+    );
+
+    expect(result.body.kind === 'single' && result.body.singleResult.errors?.[0]?.message).toBe(
+      'ship not found or not owned by this profile'
     );
   });
 });
