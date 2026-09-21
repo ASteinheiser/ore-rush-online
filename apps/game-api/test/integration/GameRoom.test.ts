@@ -70,6 +70,29 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
   const getRoom = (roomId: string) => server.getRoomById(roomId) as GameRoom;
 
   describe('room onJoin error handling', () => {
+    it('should throw an error if a client joins without a ship id', async () => {
+      try {
+        server.sdk.auth.token = generateTestJWT({});
+        await server.sdk.joinOrCreate(WS_ROOM.GAME_ROOM);
+
+        expect.fail('should have thrown an error');
+      } catch (error) {
+        expect((error as ServerError).code).toBe(WS_CODE.BAD_REQUEST);
+        expect((error as ServerError).message).toBe(ROOM_ERROR.SHIP_ID_REQUIRED);
+      }
+    });
+
+    it('should throw an error if a client joins with an empty ship id', async () => {
+      try {
+        await joinTestRoom({ server, token: generateTestJWT({}), shipId: '' });
+
+        expect.fail('should have thrown an error');
+      } catch (error) {
+        expect((error as ServerError).code).toBe(WS_CODE.BAD_REQUEST);
+        expect((error as ServerError).message).toBe(ROOM_ERROR.SHIP_ID_REQUIRED);
+      }
+    });
+
     it('should throw an error if a client joins with an invalid token', async () => {
       try {
         await joinTestRoom({ server, token: 'invalid-token' });

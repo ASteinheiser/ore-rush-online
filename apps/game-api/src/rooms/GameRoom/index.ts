@@ -1,5 +1,5 @@
 import { Room, type AuthContext, type Client } from '@colyseus/core';
-import { GameRoomState, FIXED_TIME_STEP, WS_EVENT, WS_CODE } from '@repo/core-game';
+import { GameRoomState, FIXED_TIME_STEP, WS_EVENT, WS_CODE, type JoinRoomOptions } from '@repo/core-game';
 import type { PrismaClient } from '../../repo/prisma-client/client';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
@@ -73,11 +73,11 @@ export class GameRoom extends Room {
     }, this.patchRate);
   }
 
-  onAuth(_: Client, __: unknown, context: AuthContext) {
-    return this.auth.onAuth(context);
+  onAuth(_: Client, options: JoinRoomOptions | undefined, context: AuthContext) {
+    return this.auth.onAuth(options, context);
   }
 
-  onJoin(client: Client, _: unknown, authResult: AuthResult) {
+  onJoin(client: Client, _: JoinRoomOptions | undefined, authResult: AuthResult) {
     const { player, isExistingPlayer } = this.auth.onJoin(client, authResult);
 
     this.playerMovement.spawnPlayer(client.sessionId, player, isExistingPlayer);

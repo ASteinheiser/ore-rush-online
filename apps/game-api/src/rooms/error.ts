@@ -4,6 +4,7 @@ export const ROOM_ERROR = {
   CONNECTION_NOT_FOUND: 'Connection not found',
   NEW_CONNECTION_FOUND: 'A new connection has been made for this user',
   PROFILE_NOT_FOUND: 'Profile not found',
+  SHIP_ID_REQUIRED: 'Ship id is required',
   TOKEN_EXPIRED: 'Token has expired',
   PLAYER_INACTIVITY: 'Player kicked for inactivity',
   INVALID_PAYLOAD: 'Invalid message payload',

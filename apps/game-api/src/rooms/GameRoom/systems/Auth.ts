@@ -6,6 +6,7 @@ import {
   WS_EVENT,
   Player,
   type AuthPayload,
+  type JoinRoomOptions,
 } from '@repo/core-game';
 import { logger } from '../../../logger';
 import type { Profile } from '../../../repo/prisma-client/client';
@@ -40,11 +41,13 @@ export class Auth {
   }
 
   /**
-   * Validates the user's token and fetches their profile from the DB
+   * Validates the user's token, join options, and fetches their profile from the DB
    *
    * Errors in onAuth will not allow reconnection
    */
-  public async onAuth(context: AuthContext): Promise<AuthResult> {
+  public async onAuth(options: JoinRoomOptions | undefined, context: AuthContext): Promise<AuthResult> {
+    if (!options?.shipId) throw new ServerError(WS_CODE.BAD_REQUEST, ROOM_ERROR.SHIP_ID_REQUIRED);
+
     const authUser = validateJwt(context.token);
     if (!authUser) throw new ServerError(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN);
 

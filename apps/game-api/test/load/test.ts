@@ -18,13 +18,16 @@ export async function main(options: Options) {
 
   const websocketUrl = `${IS_PROD ? 'wss' : 'ws'}://${options.endpoint}`;
 
+  const userIndex = playerCount++;
   const client = new Client(websocketUrl);
   client.auth.token = generateTestJWT({
-    user: TEST_USERS[playerCount++],
+    user: TEST_USERS[userIndex],
     expiresInMs: TEST_USER_EXPIRES_IN_MS,
   });
 
-  const room = await client.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM);
+  const room = await client.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM, {
+    id: `test-ship-${userIndex}`,
+  });
   console.log('joined room successfully!');
 
   room.onStateChange((state) => {

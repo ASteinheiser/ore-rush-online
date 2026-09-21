@@ -55,11 +55,12 @@ export const generateTestJWT = ({
 interface JoinTestRoomArgs {
   server: ColyseusTestServer;
   token: string;
+  shipId?: string;
 }
 /** join or create a room on a test server */
-export const joinTestRoom = async ({ server, token }: JoinTestRoomArgs) => {
+export const joinTestRoom = async ({ server, token, shipId = 'test-ship-0' }: JoinTestRoomArgs) => {
   server.sdk.auth.token = token;
-  const client = await server.sdk.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM);
+  const client = await server.sdk.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM, { shipId });
 
   return client;
 };

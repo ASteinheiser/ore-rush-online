@@ -35,6 +35,12 @@ export interface AuthPayload {
   token: string;
 }
 
+/** Options passed to `joinOrCreate` / `join` when connecting to the "GameRoom" */
+export interface JoinRoomOptions {
+  /** Owned ship instance id (`Ship.id`) */
+  shipId: string;
+}
+
 /** The interval at which the server will check client connections (in ms) */
 export const CONNECTION_CHECK_INTERVAL = 2 * 1000; // 2 seconds
 /** The timeout for the connection to the server (in ms) */
