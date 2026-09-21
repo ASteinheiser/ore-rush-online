@@ -22,7 +22,6 @@ type OwnedShip = NonNullable<NonNullable<Desktop_GetProfileShipsQuery['profile']
 interface ShipContextType {
   selectedShip: OwnedShip | null;
   setSelectedShip: (shipId: string | null) => void;
-  autoSelectShip: () => void;
   ownedShips: Array<OwnedShip>;
   loading: boolean;
   error: Error | undefined;
@@ -32,7 +31,6 @@ interface ShipContextType {
 const ShipContext = createContext<ShipContextType>({
   selectedShip: null,
   setSelectedShip: () => {},
-  autoSelectShip: () => {},
   ownedShips: [],
   loading: false,
   error: undefined,
@@ -74,18 +72,11 @@ export const ShipProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const autoSelectShip = () => {
-    if (selectedShip) return;
-    if (ownedShips.length === 0) return;
-    setSelectedShipId(ownedShips[0].id);
-  };
-
   return (
     <ShipContext.Provider
       value={{
         selectedShip,
         setSelectedShip: handleSetSelectedShip,
-        autoSelectShip,
         ownedShips,
         loading,
         error,
