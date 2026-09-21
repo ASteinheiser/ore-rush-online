@@ -3,7 +3,13 @@ import { Client } from '@colyseus/sdk';
 import { cli, type Options } from '@colyseus/loadtest';
 import { WS_ROOM, WS_EVENT, type InputPayload, type GameRoomState, type Block } from '@repo/core-game';
 import { prisma } from '../../src/repo/client';
-import { generateTestJWT, setupTestDb, cleanupTestDb, TEST_USERS } from '../integration/utils';
+import {
+  generateTestJWT,
+  setupTestDb,
+  setupTestShips,
+  cleanupTestDb,
+  TEST_USERS,
+} from '../integration/utils';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 
@@ -26,7 +32,7 @@ export async function main(options: Options) {
   });
 
   const room = await client.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM, {
-    id: `test-ship-${userIndex}`,
+    shipId: `test-ship-${userIndex}`,
   });
   console.log('joined room successfully!');
 
@@ -65,6 +71,7 @@ export async function main(options: Options) {
 if (!IS_PROD) {
   await cleanupTestDb(prisma);
   await setupTestDb(prisma);
+  await setupTestShips(prisma);
 }
 
 cli(main);

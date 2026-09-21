@@ -35,7 +35,9 @@ import {
   reconnectTestRoom,
   generateTestJWT,
   setupTestDb,
+  setupTestShips,
   cleanupTestDb,
+  getTestShipId,
 } from './utils';
 
 /** A shorter interval than the default to speed up tests (in ms) */
@@ -49,6 +51,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
   beforeAll(async () => {
     await cleanupTestDb(prisma);
     await setupTestDb(prisma);
+    await setupTestShips(prisma);
     const app = makeApp({
       prisma,
       authClient,
@@ -129,6 +132,36 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
         expect((error as ServerError).message).toBe(ROOM_ERROR.PROFILE_NOT_FOUND);
       }
     });
+
+    it('should throw an error if a client joins with a ship that does not exist', async () => {
+      try {
+        await joinTestRoom({
+          server,
+          token: generateTestJWT({}),
+          shipId: 'non-existent-ship-id',
+        });
+
+        expect.fail('should have thrown an error');
+      } catch (error) {
+        expect((error as ServerError).code).toBe(WS_CODE.NOT_FOUND);
+        expect((error as ServerError).message).toBe(ROOM_ERROR.SHIP_NOT_FOUND);
+      }
+    });
+
+    it("should throw an error if a client joins with another user's ship", async () => {
+      try {
+        await joinTestRoom({
+          server,
+          token: generateTestJWT({ user: TEST_USERS[0] }),
+          shipId: getTestShipId(TEST_USERS[1]),
+        });
+
+        expect.fail('should have thrown an error');
+      } catch (error) {
+        expect((error as ServerError).code).toBe(WS_CODE.NOT_FOUND);
+        expect((error as ServerError).message).toBe(ROOM_ERROR.SHIP_NOT_FOUND);
+      }
+    });
   });
 
   describe('basic room functionality', () => {
@@ -144,6 +177,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       const keepAliveClient = await joinTestRoom({
         server,
         token: generateTestJWT({ user: TEST_USERS[1] }),
+        user: TEST_USERS[1],
       });
       const client = await joinTestRoom({ server, token: generateTestJWT({}) });
       const room = getRoom(keepAliveClient.roomId);
@@ -287,7 +321,11 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
     it('should only process the first request when a player sends two extraction requests in sequence', async () => {
       // use a different user to get a fresh "stash" to work with
-      const client = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[1] }) });
+      const client = await joinTestRoom({
+        server,
+        token: generateTestJWT({ user: TEST_USERS[1] }),
+        user: TEST_USERS[1],
+      });
       const room = getRoom(client.roomId);
       const player = positionPlayerInSpawnArea(room, client.sessionId);
 
@@ -441,7 +479,11 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
       });
 
       // ensure that this user matches the userId of the orphaned player above
-      const client = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[1] }) });
+      const client = await joinTestRoom({
+        server,
+        token: generateTestJWT({ user: TEST_USERS[1] }),
+        user: TEST_USERS[1],
+      });
 
       // @ts-expect-error - allow use of private property for testing
       expect(room.auth.forcedDisconnects.size).toBe(0);
@@ -457,7 +499,7 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
 
     it('should connect multiple clients to the same room when joining at the same time', async () => {
       const [client1, client2, client3, client4] = await Promise.all(
-        TEST_USERS.slice(0, 4).map((user) => joinTestRoom({ server, token: generateTestJWT({ user }) }))
+        TEST_USERS.slice(0, 4).map((user) => joinTestRoom({ server, token: generateTestJWT({ user }), user }))
       );
       const roomIds = Array.from(new Set([client1.roomId, client2.roomId, client3.roomId, client4.roomId]));
 
@@ -638,8 +680,16 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
     });
 
     it('should show player position only when in vision (username always visible, x/y when in range)', async () => {
-      const observer = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[0] }) });
-      const observed = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[1] }) });
+      const observer = await joinTestRoom({
+        server,
+        token: generateTestJWT({ user: TEST_USERS[0] }),
+        user: TEST_USERS[0],
+      });
+      const observed = await joinTestRoom({
+        server,
+        token: generateTestJWT({ user: TEST_USERS[1] }),
+        user: TEST_USERS[1],
+      });
       const room = getRoom(observer.roomId);
 
       assertBasicPlayerState({ room, clientIds: [observer.sessionId, observed.sessionId] });
@@ -1066,8 +1116,16 @@ describe(`Colyseus WebSocket Server - ${WS_ROOM.GAME_ROOM}`, () => {
     });
 
     it('should kick clients that are inactive for too long (allowing reconnection)', async () => {
-      const client1 = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[0] }) });
-      const client2 = await joinTestRoom({ server, token: generateTestJWT({ user: TEST_USERS[1] }) });
+      const client1 = await joinTestRoom({
+        server,
+        token: generateTestJWT({ user: TEST_USERS[0] }),
+        user: TEST_USERS[0],
+      });
+      const client2 = await joinTestRoom({
+        server,
+        token: generateTestJWT({ user: TEST_USERS[1] }),
+        user: TEST_USERS[1],
+      });
       const room = getRoom(client1.roomId);
 
       assertBasicPlayerState({

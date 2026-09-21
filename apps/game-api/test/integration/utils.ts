@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import jwt from 'jsonwebtoken';
+import { Client } from '@colyseus/sdk';
 import type { ColyseusTestServer } from '@colyseus/testing';
 import type { GraphQLResponse } from '@apollo/server';
-import { WS_ROOM, type GameRoomState } from '@repo/core-game';
+import { SHIPS, WS_ROOM, type GameRoomState } from '@repo/core-game';
 import type { PrismaClient } from '../../src/repo/prisma-client/client';
 import type { DecodedToken, User } from '../../src/auth/jwt';
 
@@ -24,6 +25,11 @@ export const TEST_USERS: Array<TestUser> = Array(TEST_USER_COUNT)
     userName: `test-user-name-${i + 1}`,
     email: `test-user-${i + 1}@email.com`,
   }));
+
+export const getTestShipId = (user: TestUser) => {
+  const index = TEST_USERS.findIndex((u) => u.id === user.id);
+  return `test-ship-${index}`;
+};
 
 export const makeTestContextUser = (user: TestUser): User => {
   return {
@@ -55,14 +61,19 @@ export const generateTestJWT = ({
 interface JoinTestRoomArgs {
   server: ColyseusTestServer;
   token: string;
+  user?: TestUser;
   shipId?: string;
 }
 /** join or create a room on a test server */
-export const joinTestRoom = async ({ server, token, shipId = 'test-ship-0' }: JoinTestRoomArgs) => {
-  server.sdk.auth.token = token;
-  const client = await server.sdk.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM, { shipId });
-
-  return client;
+export const joinTestRoom = async ({
+  server,
+  token,
+  user = TEST_USERS[0],
+  shipId = getTestShipId(user),
+}: JoinTestRoomArgs) => {
+  const client = new Client(server.sdk.settings);
+  client.auth.token = token;
+  return client.joinOrCreate<GameRoomState>(WS_ROOM.GAME_ROOM, { shipId });
 };
 
 interface ReconnectTestRoomArgs {
@@ -96,8 +107,25 @@ export const setupTestDb = async (prisma: PrismaClient) => {
   );
 };
 
+/** seeds an owned ship for each test user */
+export const setupTestShips = async (prisma: PrismaClient) => {
+  await Promise.all(
+    TEST_USERS.map((user) =>
+      prisma.ship.create({
+        data: {
+          id: getTestShipId(user),
+          shipId: SHIPS[0].id,
+          profileId: user.id,
+        },
+      })
+    )
+  );
+};
+
 /** deletes test data from each table */
 export const cleanupTestDb = async (prisma: PrismaClient) => {
+  await prisma.ship.deleteMany();
+  await prisma.item.deleteMany();
   await prisma.profile.deleteMany();
 };
 
