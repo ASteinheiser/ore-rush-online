@@ -54,9 +54,15 @@ export class ShipsRepository {
         throw new Error('player already has a ship');
       }
 
-      return this.prisma.ship.create({
+      const newShip = await this.prisma.ship.create({
         data: { shipId, profileId },
       });
+      await this.prisma.profile.update({
+        where: { userId: profileId },
+        data: { selectedShipId: newShip.id },
+      });
+
+      return newShip;
     } // otherwise, check if the player can buy the ship
     else if (ship.price.type === 'coins') {
       // transaction to remove coins from player profile and create new ship
