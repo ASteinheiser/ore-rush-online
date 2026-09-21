@@ -46,8 +46,6 @@ export class Auth {
    * Errors in onAuth will not allow reconnection
    */
   public async onAuth(options: JoinRoomOptions | undefined, context: AuthContext): Promise<AuthResult> {
-    if (!options?.shipId) throw new ServerError(WS_CODE.BAD_REQUEST, ROOM_ERROR.SHIP_ID_REQUIRED);
-
     const authUser = validateJwt(context.token);
     if (!authUser) throw new ServerError(WS_CODE.UNAUTHORIZED, ROOM_ERROR.INVALID_TOKEN);
 
@@ -55,6 +53,10 @@ export class Auth {
       where: { userId: authUser.id },
     });
     if (!dbUser) throw new ServerError(WS_CODE.NOT_FOUND, ROOM_ERROR.PROFILE_NOT_FOUND);
+
+    if (!options?.shipId) throw new ServerError(WS_CODE.BAD_REQUEST, ROOM_ERROR.SHIP_ID_REQUIRED);
+    const ship = await this.room.shipsRepository?.getUserOwnedShipById(options.shipId, dbUser.userId);
+    if (!ship) throw new ServerError(WS_CODE.NOT_FOUND, ROOM_ERROR.SHIP_NOT_FOUND);
 
     return {
       user: dbUser,

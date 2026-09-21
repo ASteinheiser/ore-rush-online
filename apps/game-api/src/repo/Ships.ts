@@ -15,8 +15,8 @@ export class ShipsRepository {
     return this.prisma.ship.findMany({ where: { profileId } });
   }
 
-  getShipById(id: string) {
-    return this.prisma.ship.findUnique({ where: { id } });
+  getUserOwnedShipById(id: string, profileId: string) {
+    return this.prisma.ship.findUnique({ where: { id, profileId } });
   }
 
   removeShip(id: string) {

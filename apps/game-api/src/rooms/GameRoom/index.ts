@@ -1,6 +1,8 @@
 import { Room, type AuthContext, type Client } from '@colyseus/core';
 import { GameRoomState, FIXED_TIME_STEP, WS_EVENT, WS_CODE, type JoinRoomOptions } from '@repo/core-game';
 import type { PrismaClient } from '../../repo/prisma-client/client';
+import { ProfilesRepository } from '../../repo/Profiles';
+import { ShipsRepository } from '../../repo/Ships';
 import { logger } from '../../logger';
 import { ROOM_ERROR } from '../error';
 import { Auth, type AuthResult } from './systems/Auth';
@@ -27,6 +29,8 @@ export class GameRoom extends Room {
   readonly maxClients = MAX_PLAYERS_PER_ROOM;
 
   public prisma?: PrismaClient;
+  public profilesRepository?: ProfilesRepository;
+  public shipsRepository?: ShipsRepository;
   public auth = new Auth(this);
 
   private elapsedTime = 0;
@@ -46,6 +50,8 @@ export class GameRoom extends Room {
     });
 
     this.prisma = prisma;
+    this.profilesRepository = new ProfilesRepository(prisma);
+    this.shipsRepository = new ShipsRepository(prisma);
 
     this.auth.setupRefreshTokenHandler();
     this.auth.startConnectionCheck(connectionCheckInterval);
